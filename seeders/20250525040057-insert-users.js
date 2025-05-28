@@ -7,7 +7,7 @@ module.exports = {
     const now = new Date();
 
     // 1. Hash the password
-    const password = await bcrypt.hash("SuperAdmin@123", 10);
+    const password = await bcrypt.hash("admin123", 10);
 
     // 2. Find the super-admin role
     const [roles] = await queryInterface.sequelize.query(`
@@ -24,7 +24,7 @@ module.exports = {
     await queryInterface.bulkInsert("users", [
       {
         name: "Super Admin",
-        email: "superadmin@example.com",
+        email: "superadmin@yopmail.com",
         password: password,
         role_id: superAdminRoleId,
         created_at: now,
@@ -34,8 +34,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete("users", {
-      email: "superadmin@example.com",
-    });
+    await queryInterface.bulkDelete("users");
   },
 };
