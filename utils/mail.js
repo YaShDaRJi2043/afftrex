@@ -18,7 +18,9 @@ function replacePlaceholders(template, data) {
   });
 }
 
-async function sendMail(to, templateSlug, data = {}) {
+async function sendMail(to, templateSlug, subjectData, data = {}) {
+  console.log(to, templateSlug, data);
+
   const template = await EmailTemplate.findOne({
     where: {
       slug: templateSlug,
@@ -29,6 +31,7 @@ async function sendMail(to, templateSlug, data = {}) {
   if (!template)
     throw new Error(`Email template '${templateSlug}' not found or inactive.`);
 
+  const subject = replacePlaceholders(template.subject, subjectData);
   const html = replacePlaceholders(template.body, data);
 
   const mailOptions = {

@@ -67,6 +67,8 @@ exports.forgotPassword = async (email) => {
     serverInfo.front_url
   }/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
+  const emailSubject = { app_name: "Afftrex" };
+
   const emailData = {
     app_name: "Afftrex",
     user_name: user.name,
@@ -74,11 +76,7 @@ exports.forgotPassword = async (email) => {
     expiry_time: "5 minutes",
   };
 
-  await mailer.sendMail({
-    to: user.email,
-    templateSlug: "forgot-password",
-    data: emailData,
-  });
+  await mailer.sendMail(user.email, "forgot-password", emailSubject, emailData);
 
   return { message: "Password reset email sent" };
 };
