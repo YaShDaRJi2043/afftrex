@@ -15,12 +15,7 @@ const sequelize = new Sequelize(
     port: database.port, // The database port (default: 5432 for postgres)
     dialect: database.dialect, // The type of database (e.g., 'mysql', 'postgres', etc.)
     logging: console.log, // Enable logging of SQL queries to the console
-    dialectOptions: {
-      ssl: {
-        require: true,
-        rejectUnauthorized: false, // Required if you're not providing a CA
-      },
-    },
+    dialectOptions: database.dialectOptions,
   }
 );
 if (process.env.NODE_ENV === "local") {
