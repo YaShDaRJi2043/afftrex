@@ -18,14 +18,15 @@ const commonConfig = {
   host: process.env.DB_MYSQL_HOST || "127.0.0.1", // Database host (default: '127.0.0.1')
   port: process.env.DB_MYSQL_PORT || 5432, // MySQL port (default: 3306)
   dialect: process.env.DB_DIALECT || "postgres", // Database DB_DIALECT (default: 'mysql')
-  dialectOptions: environment
-    ? {}
-    : {
-        ssl: {
-          require: true,
-          rejectUnauthorized: false,
+  dialectOptions:
+    environment == "local"
+      ? {}
+      : {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
         },
-      },
 };
 
 // Export the configuration object
