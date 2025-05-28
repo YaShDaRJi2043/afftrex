@@ -1,0 +1,53 @@
+{
+  "name": "afftrex-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "create:migration": "sequelize migration:create --name",
+    "create:seed": "sequelize seed:create --name",
+    "migrate": "sequelize db:migrate",
+    "migrate:undo": "sequelize db:migrate:undo:all",
+    "seed": "sequelize db:seed:all",
+    "seed:undo": "sequelize db:seed:undo:all",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "crypto": "^1.0.1",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "module-alias": "^2.2.3",
+    "mongoose": "^8.15.0",
+    "morgan": "^1.10.0",
+    "nodemailer": "^7.0.3",
+    "path": "^0.12.7",
+    "pg": "^8.16.0",
+    "pg-hstore": "^2.3.4",
+    "sequelize": "^6.37.7",
+    "sequelize-cli": "^6.6.3"
+  },
+  "_moduleAliases": {
+    "@root": ".",
+    "@config": "config",
+    "@controllers": "controllers",
+    "@DB": "DB",
+    "@helper": "helper",
+    "@middleware": "middleware",
+    "@models": "models",
+    "@routes": "routes",
+    "@services": "services",
+    "@uploads": "uploads",
+    "@utils": "utils"
+  }
+}
