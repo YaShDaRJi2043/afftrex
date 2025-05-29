@@ -1,4 +1,4 @@
-const Role = require("@models/role.model");
+const { Role } = require("@models");
 
 async function canManage(targetUser, currentUser) {
   const [currentRole, targetRole] = await Promise.all([
@@ -14,12 +14,6 @@ async function canManage(targetUser, currentUser) {
 }
 
 async function canAccessFeature(user, featureKey) {
-  // If permissions array exists in user (from token), use it directly
-  if (Array.isArray(user.permissions)) {
-    if (user.permissions.includes("*")) return true; // Super user shortcut
-    return user.permissions.includes(featureKey);
-  }
-
   // Otherwise, fetch role + permissions from DB
   const role = await Role.findByPk(user.role_id, {
     include: ["permissions"],

@@ -26,24 +26,12 @@ exports.login = async (req) => {
 
   // Get role and permission IDs
   const role = user.role;
-  const permissionIds = role?.permissions_id || [];
-
-  // Fetch actual permission objects
-  const permissions = await Permission.findAll({
-    where: {
-      id: permissionIds,
-    },
-  });
-
-  // Prepare permission names array (optional)
-  const permissionNames = permissions.map((perm) => perm.name);
 
   const payload = {
     id: user.id,
     name: user.name,
     email: user.email,
     role: role.name,
-    permissions: permissionNames,
   };
 
   return generateToken(payload);

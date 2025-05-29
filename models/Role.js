@@ -8,7 +8,13 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "role_id",
         as: "users",
       });
-      // No many-to-many association here
+
+      Role.belongsToMany(models.Permission, {
+        through: "role_permissions",
+        foreignKey: "role_id",
+        otherKey: "permission_id",
+        as: "permissions",
+      });
     }
   }
 
@@ -29,12 +35,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
         comment: "Lower number = higher rank",
-      },
-      permissions_id: {
-        type: DataTypes.ARRAY(DataTypes.INTEGER),
-        allowNull: true,
-        defaultValue: [],
-        comment: "Stores array of permission IDs",
       },
       is_system_role: {
         type: DataTypes.BOOLEAN,

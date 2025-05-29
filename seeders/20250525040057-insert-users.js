@@ -4,36 +4,59 @@ const bcrypt = require("bcryptjs");
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    const now = new Date();
+    const roles = await queryInterface.sequelize.query(
+      `SELECT id, name FROM roles`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+    const roleMap = Object.fromEntries(roles.map((r) => [r.name, r.id]));
 
-    // 1. Hash the password
-    const password = await bcrypt.hash("admin123", 10);
-
-    // 2. Find the super-admin role
-    const [roles] = await queryInterface.sequelize.query(`
-      SELECT id FROM roles WHERE name = 'super-admin' LIMIT 1;
-    `);
-
-    if (!roles.length) {
-      throw new Error("Role 'super-admin' not found. Please seed roles first.");
-    }
-
-    const superAdminRoleId = roles[0].id;
-
-    // 3. Insert the user
     await queryInterface.bulkInsert("users", [
       {
         name: "Super Admin",
         email: "superadmin@yopmail.com",
-        password: password,
-        role_id: superAdminRoleId,
-        created_at: now,
-        updated_at: now,
+        password: await bcrypt.hash("admin123", 10),
+        role_id: roleMap["super-admin"],
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        name: "Alice Advertiser",
+        email: "advertiser@yopmail.com",
+        password: await bcrypt.hash("password123", 10),
+        role_id: roleMap["advertiser"],
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        name: "Paul Publisher",
+        email: "publisher@yopmail.com",
+        password: await bcrypt.hash("password123", 10),
+        role_id: roleMap["publisher"],
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        name: "Tom Team",
+        email: "team@yopmail.com",
+        password: await bcrypt.hash("password123", 10),
+        role_id: roleMap["team-member"],
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        name: "Victor Viewer",
+        email: "viewer@yopmail.com",
+        password: await bcrypt.hash("password123", 10),
+        role_id: roleMap["viewer"],
+        created_at: new Date(),
+        updated_at: new Date(),
       },
     ]);
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete("users");
+    await queryInterface.bulkDelete("users", {
+      email: "superadmin@yopmail.com",
+    });
   },
 };
