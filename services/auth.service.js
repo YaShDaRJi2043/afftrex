@@ -53,7 +53,7 @@ exports.forgotPassword = async (email) => {
 
   const resetUrl = `${
     serverInfo.front_url
-  }/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+  }reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
   const emailSubject = { app_name: "Afftrex" };
 
