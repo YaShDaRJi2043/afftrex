@@ -13,4 +13,10 @@ router.put(
   companyController.approveCompany
 );
 
+router.post(
+  "/list",
+  checkFeature("manage_company"),
+  companyController.listCompany
+);
+
 module.exports = router;

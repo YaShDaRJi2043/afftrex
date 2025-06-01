@@ -15,7 +15,6 @@ const authMiddleware = async (req, res, next) => {
     const decoded = jwt.verify(token, secret.JWT_TOKEN_SECRET);
 
     const user = await User.findByPk(decoded.id, { include: ["role"] });
-    console.log(user);
 
     if (!user) {
       return res

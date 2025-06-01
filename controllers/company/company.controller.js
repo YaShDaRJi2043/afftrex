@@ -42,3 +42,17 @@ exports.approveCompany = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.listCompany = async (req, res) => {
+  try {
+    const result = await CompanyService.list(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Company registration submitted",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
