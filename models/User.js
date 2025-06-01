@@ -9,6 +9,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "role_id",
         as: "role",
       });
+
+      User.belongsTo(models.Company, {
+        foreignKey: "company_id",
+        as: "company",
+      });
     }
 
     async validPassword(password) {
@@ -55,6 +60,14 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         references: {
           model: "roles",
+          key: "id",
+        },
+      },
+      company_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: "companies",
           key: "id",
         },
       },

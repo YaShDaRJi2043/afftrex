@@ -8,6 +8,9 @@ exports.loginSchema = Joi.object({
   password: Joi.string().required().messages({
     "string.empty": "Password is required",
   }),
+  subdomain: Joi.string().required().messages({
+    "string.empty": "Subdomain is required",
+  }),
 });
 
 exports.forgotPasswordSchema = Joi.object({

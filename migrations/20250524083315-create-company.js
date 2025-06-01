@@ -2,7 +2,7 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("users", {
+    await queryInterface.createTable("companies", {
       id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -13,42 +13,23 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      email: {
+      admin_email: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      subdomain: {
         type: Sequelize.STRING,
         allowNull: false,
         unique: true,
       },
-      password: {
-        type: Sequelize.STRING,
-        allowNull: false,
-      },
-      role_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "roles",
-          key: "id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "RESTRICT",
-      },
-      company_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "companies",
-          key: "id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "RESTRICT",
-      },
-      password_reset_token: {
+      logo: {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      password_reset_expiry: {
-        type: Sequelize.DATE,
-        allowNull: true,
+      status: {
+        type: Sequelize.ENUM("pending", "approved", "rejected"),
+        allowNull: false,
+        defaultValue: "pending",
       },
       created_at: {
         type: Sequelize.DATE,
@@ -64,6 +45,9 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("users");
+    await queryInterface.dropTable("companies");
+    await queryInterface.sequelize.query(
+      'DROP TYPE IF EXISTS "enum_companies_status";'
+    );
   },
 };

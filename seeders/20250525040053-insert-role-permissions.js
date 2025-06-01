@@ -22,8 +22,9 @@ module.exports = {
         "request_campaign_access",
         "setup_postback_url",
       ],
-      "team-member": [
+      "head-admin": [
         "manage_publishers",
+        "manage_advertiser",
         "moderate_fraud_logs",
         "review_campaigns",
         "approve_requests",

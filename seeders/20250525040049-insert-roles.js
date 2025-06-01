@@ -12,7 +12,7 @@ module.exports = {
         updated_at: new Date(),
       },
       {
-        name: "team-member",
+        name: "head-admin",
         level: 2,
         is_system_role: false,
         created_at: new Date(),

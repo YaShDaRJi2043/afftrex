@@ -125,6 +125,12 @@ module.exports = {
         updated_at: new Date(),
       },
       {
+        name: "manage_advertiser",
+        label: "Manage Advertiser",
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
         name: "moderate_fraud_logs",
         label: "Moderate Fraud Logs",
         created_at: new Date(),

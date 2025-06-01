@@ -1,37 +1,49 @@
 const crypto = require("crypto");
 
-const { User, Role, Permission } = require("@models/index");
+const { User, Role, Company } = require("@models/index");
 const { generateToken } = require("@root/utils/token");
 const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
 
 exports.login = async (req) => {
-  const { email, password } = req;
+  const { email, password, subdomain } = req;
 
-  // Find user and include role
+  const company = await Company.findOne({ where: { subdomain } });
+  if (!company) {
+    const error = new Error("Invalid company subdomain");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (company.status !== "approved") {
+    const error = new Error("Company is not approved yet");
+    error.statusCode = 403;
+    throw error;
+  }
+
   const user = await User.findOne({
-    where: { email },
+    where: {
+      email,
+      company_id: company.id,
+    },
     include: {
       model: Role,
       as: "role",
     },
   });
 
-  // Check user credentials
   if (!user || !(await user.validPassword(password))) {
     const error = new Error("Invalid email or password");
     error.statusCode = 401;
     throw error;
   }
 
-  // Get role and permission IDs
-  const role = user.role;
-
   const payload = {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: role.name,
+    role: user.role.name,
+    company: company.name,
   };
 
   return generateToken(payload);

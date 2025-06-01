@@ -524,13 +524,6 @@ module.exports = {
         <div class="email-footer">
             <div class="footer-text">
                 Thanks for joining {{app_name}}<br>
-                {{company_address}}
-            </div>
-            
-            <div class="footer-links">
-                <a href="{{support_url}}">Support</a>
-                <a href="{{privacy_url}}">Privacy Policy</a>
-                <a href="{{terms_url}}">Terms of Service</a>
             </div>
         </div>
     </div>

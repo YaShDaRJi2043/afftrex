@@ -10,12 +10,21 @@ module.exports = {
     );
     const roleMap = Object.fromEntries(roles.map((r) => [r.name, r.id]));
 
+    const companies = await queryInterface.sequelize.query(
+      `SELECT id, subdomain FROM companies`,
+      { type: Sequelize.QueryTypes.SELECT }
+    );
+    const companyMap = Object.fromEntries(
+      companies.map((c) => [c.subdomain, c.id])
+    );
+
     await queryInterface.bulkInsert("users", [
       {
         name: "Super Admin",
         email: "superadmin@yopmail.com",
         password: await bcrypt.hash("admin123", 10),
         role_id: roleMap["super-admin"],
+        company_id: companyMap["afftrex"],
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -24,6 +33,7 @@ module.exports = {
         email: "advertiser@yopmail.com",
         password: await bcrypt.hash("password123", 10),
         role_id: roleMap["advertiser"],
+        company_id: companyMap["technova"],
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -32,6 +42,7 @@ module.exports = {
         email: "publisher@yopmail.com",
         password: await bcrypt.hash("password123", 10),
         role_id: roleMap["publisher"],
+        company_id: companyMap["innocore"],
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -39,7 +50,8 @@ module.exports = {
         name: "Tom Team",
         email: "team@yopmail.com",
         password: await bcrypt.hash("password123", 10),
-        role_id: roleMap["team-member"],
+        role_id: roleMap["publisher"],
+        company_id: companyMap["technova"],
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -48,6 +60,7 @@ module.exports = {
         email: "viewer@yopmail.com",
         password: await bcrypt.hash("password123", 10),
         role_id: roleMap["viewer"],
+        company_id: companyMap["innocore"],
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -55,8 +68,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete("users", {
-      email: "superadmin@yopmail.com",
-    });
+    await queryInterface.bulkDelete("users");
   },
 };
