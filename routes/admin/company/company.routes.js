@@ -13,7 +13,7 @@ router.put(
   companyController.approveCompany
 );
 
-router.post(
+router.get(
   "/list",
   checkFeature("manage_company"),
   companyController.listCompany
