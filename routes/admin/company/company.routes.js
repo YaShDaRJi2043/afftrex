@@ -19,4 +19,15 @@ router.get(
   companyController.listCompany
 );
 
+router.put(
+  "/:id/extend-subscription",
+  checkFeature("manage_company"),
+  companyController.extendSubscriptionCompany
+);
+router.put(
+  "/:id/send-subscription-reminder",
+  checkFeature("manage_company"),
+  companyController.sendSubscriptionReminderCompany
+);
+
 module.exports = router;

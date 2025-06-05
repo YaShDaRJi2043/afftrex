@@ -37,6 +37,28 @@ module.exports = (sequelize, DataTypes) => {
           this.setDataValue("logo", value);
         },
       },
+      subscription_type: {
+        type: DataTypes.ENUM("free", "paid"),
+        allowNull: false,
+        defaultValue: "free",
+      },
+      subscription_days: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        defaultValue: 30,
+      },
+      subscription_start_date: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      amount: {
+        type: DataTypes.FLOAT,
+        allowNull: false,
+        defaultValue: 0,
+        validate: {
+          min: 0,
+        },
+      },
       status: {
         type: DataTypes.ENUM("pending", "approved", "rejected"),
         defaultValue: "pending",

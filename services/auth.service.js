@@ -21,6 +21,7 @@ exports.login = async (req) => {
     throw error;
   }
 
+  // 3. Find user
   const user = await User.findOne({
     where: {
       email,
@@ -36,6 +37,26 @@ exports.login = async (req) => {
     const error = new Error("Invalid email or password");
     error.statusCode = 401;
     throw error;
+  }
+
+  const isAfftrex = company.name.toLowerCase() === "afftrex";
+  const isSuperAdmin = user.role.name === "super-admin";
+
+  if (!isAfftrex && !isSuperAdmin) {
+    const startDate = new Date(company.subscription_start_date);
+    const now = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + company.subscription_days);
+
+    const remainingDays = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
+
+    if (remainingDays <= 0) {
+      const error = new Error(
+        "Your subscription has expired. Please renew to continue."
+      );
+      error.statusCode = 403;
+      throw error;
+    }
   }
 
   const payload = {

@@ -8,6 +8,10 @@ module.exports = {
         admin_email: "superadmin@yopmail.com",
         subdomain: "afftrex",
         logo: null,
+        subscription_type: "free",
+        subscription_days: 30,
+        subscription_start_date: null,
+        amount: 0,
         status: "approved",
         created_at: new Date(),
         updated_at: new Date(),
@@ -17,6 +21,10 @@ module.exports = {
         admin_email: "technovaadmin@yopmail.com",
         subdomain: "technova",
         logo: null,
+        subscription_type: "free",
+        subscription_days: 30,
+        subscription_start_date: null,
+        amount: 0,
         status: "pending",
         created_at: new Date(),
         updated_at: new Date(),
@@ -26,7 +34,11 @@ module.exports = {
         admin_email: "innorcoreadmin@yopmail.com",
         subdomain: "innocore",
         logo: null,
-        status: "approved",
+        subscription_type: "free",
+        subscription_days: 30,
+        subscription_start_date: null,
+        amount: 0,
+        status: "pending",
         created_at: new Date(),
         updated_at: new Date(),
       },
@@ -34,6 +46,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete("companies");
+    await queryInterface.bulkDelete("companies", null, {});
   },
 };

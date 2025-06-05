@@ -752,6 +752,860 @@ module.exports = {
         created_at: new Date(),
         updated_at: new Date(),
       },
+      {
+        slug: "company-rejection",
+        name: "Company Application Rejection",
+        subject: "Update on Your {{app_name}} Company Application",
+        body: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Application Update</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #dc3545 0%, #c62828 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .email-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .email-body {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .message {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #555555;
+            line-height: 1.7;
+        }
+        
+        .rejection-notice {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-left: 4px solid #dc3545;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        
+        .rejection-notice h3 {
+            color: #721c24;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .rejection-notice p {
+            color: #721c24;
+            font-size: 15px;
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .feedback-section {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .feedback-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .feedback-section ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .feedback-section li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 15px;
+            color: #555555;
+        }
+        
+        .feedback-section li:last-child {
+            border-bottom: none;
+        }
+        
+        .feedback-section li:before {
+            content: "•";
+            color: #dc3545;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .reapply-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s ease;
+        }
+        
+        .reapply-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .footer-text {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links {
+            margin-top: 20px;
+        }
+        
+        .footer-links a {
+            color: #dc3545;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 0;
+            }
+            
+            .email-header, .email-body, .email-footer {
+                padding: 20px;
+            }
+            
+            .email-header h1 {
+                font-size: 24px;
+            }
+            
+            .reapply-button {
+                display: block;
+                text-align: center;
+                margin: 20px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>{{app_name}}</h1>
+            <p>Company Application Update</p>
+        </div>
+        
+        <div class="email-body">
+            <div class="greeting">Dear {{company_name}} Team,</div>
+            
+            <div class="message">
+                Thank you for your interest in joining {{app_name}} and for taking the time to submit your company application. We appreciate the effort you put into your submission.
+            </div>
+            
+            <div class="rejection-notice">
+                <h3>Application Status Update</h3>
+                <p>After careful review of your application, we regret to inform you that we are unable to approve your company registration at this time.</p>
+            </div>
+            
+            <div class="message">
+                If you have any questions about this decision or need clarification on the feedback provided, please don't hesitate to contact our support team. We're here to help you succeed.
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <div class="footer-text">
+                Best regards,<br>
+                The {{app_name}} Team
+            </div>
+        </div>
+    </div>
+</body>
+</html>`,
+        status: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        slug: "subscription-extension",
+        name: "Subscription Extension Notification",
+        subject: "Great News! Your {{app_name}} Subscription Has Been Extended",
+        body: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Extended</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .email-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .email-body {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .message {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #555555;
+            line-height: 1.7;
+        }
+        
+        .extension-details {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            border-left: 4px solid #28a745;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .extension-details h3 {
+            color: #155724;
+            margin-bottom: 15px;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .detail-item {
+            background-color: white;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #28a745;
+            font-size: 15px;
+        }
+        
+        .detail-item strong {
+            color: #155724;
+            display: inline-block;
+            width: 140px;
+        }
+        
+        .celebration-icon {
+            text-align: center;
+            font-size: 48px;
+            margin: 20px 0;
+        }
+        
+        .access-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s ease;
+        }
+        
+        .access-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .benefits-list {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .benefits-list h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .benefits-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .benefits-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 15px;
+            color: #555555;
+        }
+        
+        .benefits-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .benefits-list li:before {
+            content: "🎉";
+            margin-right: 10px;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .footer-text {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links {
+            margin-top: 20px;
+        }
+        
+        .footer-links a {
+            color: #28a745;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 0;
+            }
+            
+            .email-header, .email-body, .email-footer {
+                padding: 20px;
+            }
+            
+            .email-header h1 {
+                font-size: 28px;
+            }
+            
+            .access-button {
+                display: block;
+                text-align: center;
+                margin: 20px 0;
+            }
+            
+            .detail-item {
+                padding: 10px 12px;
+            }
+            
+            .detail-item strong {
+                display: block;
+                width: auto;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>Subscription Extended!</h1>
+            <p>Your {{app_name}} journey continues</p>
+        </div>
+        
+        <div class="email-body">
+            <div class="celebration-icon">🎉</div>
+            
+            <div class="greeting">Hello {{user_name}},</div>
+            
+            <div class="message">
+                We have some fantastic news! Your {{app_name}} subscription has been extended. You can now continue enjoying all the premium features and benefits without any interruption.
+            </div>
+            
+            <div class="extension-details">
+                <h3>📋 Extension Details</h3>
+                <div class="detail-item">
+                    <strong>Plan:</strong> {{subscription_type}}
+                </div>
+                <div class="detail-item">
+                    <strong>Extended Until:</strong> {{new_expiry_date}}
+                </div>
+                <div class="detail-item">
+                    <strong>Extension Period:</strong> {{extension_period}}
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <a href="{{dashboard_url}}" class="access-button">Access Your Dashboard</a>
+            </div>
+            
+            <div class="benefits-list">
+                <h3>Continue enjoying these benefits:</h3>
+                <ul>
+                    <li>Full access to all premium features</li>
+                    <li>Priority customer support</li>
+                    <li>Advanced analytics and reporting</li>
+                    <li>Unlimited usage limits</li>
+                    <li>Early access to new features</li>
+                </ul>
+            </div>
+            
+            <div class="message">
+                Thank you for being a valued member of the {{app_name}} community. We're committed to providing you with the best possible experience, and this extension is our way of showing appreciation for your loyalty.
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <div class="footer-text">
+                Keep enjoying {{app_name}}!<br>
+                The {{app_name}} Team
+            </div>
+        </div>
+    </div>
+</body>
+</html>`,
+        status: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
+      {
+        slug: "subscription-expiration-warning",
+        name: "Subscription Expiration Warning",
+        subject:
+          "⚠️ Your {{app_name}} Subscription Expires in {{days_remaining}} Days",
+        body: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subscription Expiration Warning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .email-header p {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+        
+        .email-body {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 18px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .message {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #555555;
+            line-height: 1.7;
+        }
+        
+        .warning-notice {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-left: 4px solid #ffc107;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .warning-notice h3 {
+            color: #856404;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        
+        .countdown {
+            font-size: 36px;
+            font-weight: bold;
+            color: #ff6b00;
+            margin: 15px 0;
+        }
+        
+        .expiry-details {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .expiry-details h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .detail-item {
+            background-color: white;
+            padding: 12px 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border-left: 4px solid #ffc107;
+            font-size: 15px;
+        }
+        
+        .detail-item strong {
+            color: #2c3e50;
+            display: inline-block;
+            width: 120px;
+        }
+        
+        .renew-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            text-decoration: none;
+            padding: 18px 35px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s ease;
+        }
+        
+        .renew-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.4);
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .consequences-list {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .consequences-list h3 {
+            color: #721c24;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .consequences-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .consequences-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f1b0b7;
+            font-size: 15px;
+            color: #721c24;
+        }
+        
+        .consequences-list li:last-child {
+            border-bottom: none;
+        }
+        
+        .consequences-list li:before {
+            content: "⚠️";
+            margin-right: 10px;
+        }
+        
+        .contact-support {
+            background-color: #e2e3e5;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .contact-support h4 {
+            color: #383d41;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .contact-support p {
+            color: #383d41;
+            font-size: 14px;
+            margin: 0;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .footer-text {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links {
+            margin-top: 20px;
+        }
+        
+        .footer-links a {
+            color: #ffc107;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 0;
+            }
+            
+            .email-header, .email-body, .email-footer {
+                padding: 20px;
+            }
+            
+            .email-header h1 {
+                font-size: 24px;
+            }
+            
+            .renew-button {
+                display: block;
+                text-align: center;
+                margin: 20px 0;
+                font-size: 16px;
+                padding: 15px 25px;
+            }
+            
+            .countdown {
+                font-size: 28px;
+            }
+            
+            .detail-item {
+                padding: 10px 12px;
+            }
+            
+            .detail-item strong {
+                display: block;
+                width: auto;
+                margin-bottom: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>{{app_name}}</h1>
+            <p>Subscription Expiration Alert</p>
+        </div>
+        
+        <div class="email-body">
+            <div class="greeting">Hello {{user_name}},</div>
+            
+            <div class="message">
+                This is an important reminder about your {{app_name}} subscription. Your current plan is set to expire soon, and we want to make sure you don't lose access to your premium features.
+            </div>
+            
+            <div class="warning-notice">
+                <h3>⚠️ Your Subscription Expires In:</h3>
+                <div class="countdown">{{days_remaining}} DAYS</div>
+                <p style="color: #856404; font-size: 16px; margin-top: 10px;">Don't let your access expire!</p>
+            </div>
+            
+            <div class="expiry-details">
+                <h3>📋 Subscription Details</h3>
+                <div class="detail-item">
+                    <strong>Current Plan:</strong> {{subscription_type}}
+                </div>
+                <div class="detail-item">
+                    <strong>Expiry Date:</strong> {{expiry_date}}
+                </div>
+            </div>
+            
+            <div class="consequences-list">
+                <h3>What happens if your subscription expires:</h3>
+                <ul>
+                    <li>Loss of access to premium features</li>
+                    <li>Reduced usage limits</li>
+                    <li>Limited customer support</li>
+                    <li>Data export restrictions</li>
+                    <li>Account will be downgraded to free tier</li>
+                </ul>
+            </div>
+            
+            <div class="message">
+                Renewing is quick and easy! Click the button above to choose your preferred plan and continue enjoying uninterrupted access to all {{app_name}} features.
+            </div>
+            
+            <div class="contact-support">
+                <h4>Need Help?</h4>
+                <p>If you have questions about renewal or need assistance, our support team is ready to help. Contact us at {{support_email}} or visit our help center.</p>
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <div class="footer-text">
+                Don't wait - Renew today!<br>
+                The {{app_name}} Team
+            </div>
+        </div>
+    </div>
+</body>
+</html>`,
+        status: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
     ];
 
     await queryInterface.bulkInsert("email_templates", emailTemplates);
