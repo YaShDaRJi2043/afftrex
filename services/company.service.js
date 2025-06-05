@@ -139,84 +139,84 @@ exports.reject = async (companyId) => {
 };
 
 exports.list = async (req, res) => {
-  try {
-    const {
-      search = "",
-      status,
-      subscription_type,
-      page = 1,
-      limit = 10,
-      sort_by = "created_at",
-      order = "DESC",
-    } = req.query;
+  const {
+    search = "",
+    status,
+    subscription_type,
+    // page = 1,
+    // limit = 10,
+    sort_by = "created_at",
+    order = "DESC",
+  } = req.query;
 
-    const where = {};
+  const where = {};
 
-    if (status) {
-      where.status = status.toLowerCase();
-    }
-
-    if (subscription_type) {
-      where.subscription_type = subscription_type.toLowerCase();
-    }
-
-    if (search) {
-      where[Op.or] = [
-        { name: { [Op.iLike]: `%${search}%` } },
-        { admin_email: { [Op.iLike]: `%${search}%` } },
-      ];
-    }
-
-    const result = await Company.paginate({
-      page: parseInt(page),
-      paginate: parseInt(limit),
-      where,
-      order: [[sort_by, order.toUpperCase()]],
-    });
-
-    const formatted = result.docs.map((company) => {
-      const data = {
-        id: company.id,
-        name: company.name,
-        admin_email: company.admin_email,
-        subdomain: company.subdomain,
-        logo: company.logo,
-        status: company.status,
-        subscription_type: company.subscription_type,
-        created_at: company.created_at,
-        updated_at: company.updated_at,
-      };
-
-      if (company.status === "approved") {
-        const startDate = new Date(company.subscription_start_date);
-        const now = new Date();
-        const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + company.subscription_days);
-
-        const remainingDays = Math.max(
-          0,
-          Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
-        );
-
-        data.subscription_days = company.subscription_days;
-        data.subscription_start_date = company.subscription_start_date;
-        data.subscription_remain_day = remainingDays;
-        data.amount = company.amount;
-      }
-
-      return data;
-    });
-
-    return {
-      data: formatted,
-      total: result.total,
-      page: result.page,
-      pages: result.pages,
-    };
-  } catch (error) {
-    console.error("Error fetching companies:", error);
-    return res.status(500).json({ message: "Server Error" });
+  if (status) {
+    where.status = status.toLowerCase();
   }
+
+  if (subscription_type) {
+    where.subscription_type = subscription_type.toLowerCase();
+  }
+
+  if (search) {
+    where[Op.or] = [
+      { name: { [Op.iLike]: `%${search}%` } },
+      { admin_email: { [Op.iLike]: `%${search}%` } },
+    ];
+  }
+
+  // const result = await Company.paginate({
+  //   page: parseInt(page),
+  //   paginate: parseInt(limit),
+  //   where,
+  //   order: [[sort_by, order.toUpperCase()]],
+  // });
+
+  // Fetch all without pagination for testing
+  const result = await Company.findAll({
+    where,
+    order: [[sort_by, order.toUpperCase()]],
+  });
+
+  const formatted = result.map((company) => {
+    const data = {
+      id: company.id,
+      name: company.name,
+      admin_email: company.admin_email,
+      subdomain: company.subdomain,
+      logo: company.logo,
+      status: company.status,
+      subscription_type: company.subscription_type,
+      created_at: company.created_at,
+      updated_at: company.updated_at,
+    };
+
+    if (company.status === "approved") {
+      const startDate = new Date(company.subscription_start_date);
+      const now = new Date();
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + company.subscription_days);
+
+      const remainingDays = Math.max(
+        0,
+        Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
+      );
+
+      data.subscription_days = company.subscription_days;
+      data.subscription_start_date = company.subscription_start_date;
+      data.subscription_remain_day = remainingDays;
+      data.amount = company.amount;
+    }
+
+    return data;
+  });
+
+  // Return all results (no pagination)
+  return {
+    data: formatted,
+    total: formatted.length,
+  };
 };
 
 exports.extendSubscription = async (req, res) => {
