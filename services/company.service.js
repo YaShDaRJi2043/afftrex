@@ -192,31 +192,26 @@ exports.list = async (req, res) => {
       updated_at: company.updated_at,
     };
 
-    if (company.status === "approved") {
-      const startDate = new Date(company.subscription_start_date);
-      const now = new Date();
-      const endDate = new Date(startDate);
-      endDate.setDate(endDate.getDate() + company.subscription_days);
+    const startDate = new Date(company.subscription_start_date);
+    const now = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + company.subscription_days);
 
-      const remainingDays = Math.max(
-        0,
-        Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
-      );
+    const remainingDays = Math.max(
+      0,
+      Math.ceil((endDate - now) / (1000 * 60 * 60 * 24))
+    );
 
-      data.subscription_days = company.subscription_days;
-      data.subscription_start_date = company.subscription_start_date;
-      data.subscription_remain_day = remainingDays;
-      data.amount = company.amount;
-    }
+    data.subscription_days = company.subscription_days;
+    data.subscription_start_date = company.subscription_start_date;
+    data.subscription_remain_day = remainingDays;
+    data.amount = company.amount;
 
     return data;
   });
 
   // Return all results (no pagination)
-  return {
-    data: formatted,
-    total: formatted.length,
-  };
+  return formatted;
 };
 
 exports.extendSubscription = async (req, res) => {
