@@ -1,8 +1,18 @@
+"use strict";
+const { Model } = require("sequelize");
 const { s3Bucket } = require("@config/config");
 
 module.exports = (sequelize, DataTypes) => {
-  const Company = sequelize.define(
-    "Company",
+  class Company extends Model {
+    static associate(models) {
+      Company.hasMany(models.User, {
+        foreignKey: "company_id",
+        as: "users",
+      });
+    }
+  }
+
+  Company.init(
     {
       id: {
         type: DataTypes.INTEGER,

@@ -149,7 +149,9 @@ exports.list = async (req, res) => {
     order = "DESC",
   } = req.query;
 
-  const where = {};
+  const where = {
+    name: { [Op.ne]: "Afftrex" }, // Exclude company named 'Afftrex'
+  };
 
   if (status) {
     where.status = status.toLowerCase();
@@ -166,6 +168,22 @@ exports.list = async (req, res) => {
     ];
   }
 
+  const superAdminCompanies = await Company.findAll({
+    include: {
+      model: User,
+      as: "users",
+      required: true,
+      include: {
+        model: Role,
+        where: { name: "super-admin" },
+        required: true,
+        as: "role",
+      },
+    },
+  });
+
+  const excludeIds = superAdminCompanies.map((c) => c.id);
+
   // const result = await Company.paginate({
   //   page: parseInt(page),
   //   paginate: parseInt(limit),
@@ -175,7 +193,10 @@ exports.list = async (req, res) => {
 
   // Fetch all without pagination for testing
   const result = await Company.findAll({
-    where,
+    where: {
+      ...where,
+      id: { [Op.notIn]: excludeIds }, // Exclude companies with super-admin users
+    },
     order: [[sort_by, order.toUpperCase()]],
   });
 
