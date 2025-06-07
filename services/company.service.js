@@ -70,7 +70,7 @@ exports.register = async (req) => {
 //for super-admin
 exports.approve = async (req) => {
   const { id } = req.params;
-  const { subscription_days = 30, amount = 0 } = req.body;
+  const { subscription_days = 30, amount = 0 } = req.body || {};
 
   const company = await Company.findByPk(id);
   if (!company) throw new Error("Company not found");
