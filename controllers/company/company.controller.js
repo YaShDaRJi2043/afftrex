@@ -98,3 +98,17 @@ exports.createUser = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.listCompanyUsers = async (req, res) => {
+  try {
+    const result = await CompanyService.listCompanyUsers(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Company users fetched successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

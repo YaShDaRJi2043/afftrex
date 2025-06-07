@@ -23,6 +23,7 @@ module.exports = {
         "setup_postback_url",
       ],
       "head-admin": [
+        "manage_users",
         "manage_publishers",
         "manage_advertiser",
         "moderate_fraud_logs",

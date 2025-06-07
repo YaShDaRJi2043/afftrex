@@ -24,15 +24,23 @@ router.put(
   checkFeature("manage_company"),
   companyController.extendSubscriptionCompany
 );
+
 router.put(
   "/:id/send-subscription-reminder",
   checkFeature("manage_company"),
   companyController.sendSubscriptionReminderCompany
 );
+
 router.post(
   "/createEmployee",
-  checkFeature("manage_publishers"),
+  checkFeature("manage_users"),
   companyController.createUser
+);
+
+router.get(
+  "/company-users",
+  checkFeature("manage_users"),
+  companyController.listCompanyUsers
 );
 
 module.exports = router;

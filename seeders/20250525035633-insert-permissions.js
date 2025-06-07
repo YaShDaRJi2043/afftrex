@@ -11,26 +11,8 @@ module.exports = {
         updated_at: new Date(),
       },
       {
-        name: "view_users",
-        label: "View Users",
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        name: "create_users",
-        label: "Create Users",
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        name: "edit_users",
-        label: "Edit Users",
-        created_at: new Date(),
-        updated_at: new Date(),
-      },
-      {
-        name: "delete_users",
-        label: "Delete Users",
+        name: "manage_users",
+        label: "Manage Users",
         created_at: new Date(),
         updated_at: new Date(),
       },

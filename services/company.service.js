@@ -391,3 +391,60 @@ exports.createUser = async (req) => {
 
   return user;
 };
+
+exports.listCompanyUsers = async (req) => {
+  const companyId = req.user.company_id;
+  const { search = "", role = "" } = req.query;
+
+  // 1. Fetch current user's role level
+  const currentUser = await User.findByPk(req.user.id, {
+    include: [
+      {
+        model: Role,
+        as: "role",
+        attributes: ["level"],
+      },
+    ],
+  });
+
+  if (!currentUser || !currentUser.role) {
+    throw new Error("Unable to determine current user's role level.");
+  }
+
+  const currentUserLevel = currentUser.role.level;
+
+  // 2. Build search condition
+  const where = {
+    company_id: companyId,
+  };
+
+  if (search) {
+    where[Op.or] = [
+      { name: { [Op.iLike]: `%${search}%` } },
+      { email: { [Op.iLike]: `%${search}%` } },
+    ];
+  }
+
+  // 3. Include users only with role level < current user's level
+  const include = [
+    {
+      model: Role,
+      as: "role",
+      attributes: ["name", "level"],
+      where: {
+        ...(role ? { name: role } : {}),
+        level: { [Op.gt]: currentUserLevel },
+      },
+    },
+  ];
+
+  // 4. Fetch users
+  const users = await User.findAll({
+    where,
+    attributes: ["id", "name", "email", "created_at"],
+    include,
+    order: [["created_at", "DESC"]],
+  });
+
+  return users;
+};
