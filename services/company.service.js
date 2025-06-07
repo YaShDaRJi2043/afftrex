@@ -1,5 +1,6 @@
 const { Op } = require("sequelize");
 const moment = require("moment");
+const bcrypt = require("bcryptjs");
 
 const { Company, User, Role } = require("@models");
 const { uploadToS3 } = require("@utils/s3");
@@ -314,7 +315,6 @@ exports.sendSubscriptionReminder = async (req, res) => {
     throw new Error("The subscription has already expired.");
   }
 
-  // const emailSubject = `⚠️ Your ${app_name} Subscription Expires in ${days_remaining} Days`;
   const emailSubject = {
     app_name: "Afftrex",
     days_remaining: days_remaining,
@@ -337,4 +337,57 @@ exports.sendSubscriptionReminder = async (req, res) => {
   );
 
   return `Reminder email sent successfully to ${company.admin_email}`;
+};
+
+exports.createUser = async (req) => {
+  const { name, email, password, role, notify = false } = req.body;
+  const companyId = req.user.company_id;
+
+  // Get role data
+  const roleData = await Role.findOne({ where: { name: role } });
+  if (!roleData) throw new Error("Invalid role provided");
+
+  // Generate and hash password
+  const plainPassword = password || generatePassword();
+  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+  // Create the user
+  const user = await User.create({
+    name,
+    email,
+    password: hashedPassword,
+    company_id: companyId,
+    role_id: roleData.id,
+  });
+
+  // Only send email if notify flag is true
+  if (notify) {
+    // 🔍 Fetch company details
+    const company = await Company.findByPk(companyId);
+    if (!company) throw new Error("Company not found");
+
+    const admin = req.user;
+
+    const emailSubject = {
+      company_name: company.name,
+      app_name: "Afftrex",
+    };
+
+    const emailData = {
+      app_name: "Afftrex",
+      company_name: company.name,
+      company_initial: company.name?.[0]?.toUpperCase() || "A",
+      employee_name: name,
+      employee_email: email,
+      employee_password: plainPassword,
+      employee_role: roleData.name,
+      login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
+      admin_name: admin.name,
+      admin_role: admin.role?.name || "Admin",
+    };
+
+    await mailer.sendMail(email, "employee-welcome", emailSubject, emailData);
+  }
+
+  return user;
 };

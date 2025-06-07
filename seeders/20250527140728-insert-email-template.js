@@ -1606,6 +1606,424 @@ module.exports = {
         created_at: new Date(),
         updated_at: new Date(),
       },
+
+      {
+        slug: "employee-welcome",
+        name: "Employee Welcome - Added by Admin",
+        subject:
+          "Welcome to {{company_name}} - Your {{app_name}} Account is Ready!",
+        body: `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to {{company_name}}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333333;
+            background-color: #f4f4f4;
+        }
+        
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .email-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+        
+        .email-header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .email-header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .company-logo {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .email-body {
+            padding: 40px 30px;
+        }
+        
+        .greeting {
+            font-size: 20px;
+            font-weight: 500;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+        
+        .message {
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #555555;
+            line-height: 1.7;
+        }
+        
+        .welcome-notice {
+            background-color: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-left: 4px solid #4f46e5;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: center;
+        }
+        
+        .welcome-notice h3 {
+            color: #1e40af;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .welcome-notice p {
+            color: #1e40af;
+            font-size: 15px;
+            margin: 5px 0;
+        }
+        
+        .login-credentials {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .login-credentials h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        .credential-item {
+            background-color: white;
+            padding: 15px;
+            margin: 12px 0;
+            border-radius: 6px;
+            border-left: 4px solid #4f46e5;
+            font-size: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .credential-label {
+            color: #2c3e50;
+            font-weight: 600;
+            min-width: 80px;
+        }
+        
+        .credential-value {
+            color: #4f46e5;
+            font-weight: 500;
+            background-color: #f1f5f9;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .role-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-block;
+            margin: 10px 0;
+        }
+        
+        .login-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            text-decoration: none;
+            padding: 18px 35px;
+            border-radius: 6px;
+            font-size: 18px;
+            font-weight: 600;
+            margin: 20px 0;
+            transition: transform 0.2s ease;
+        }
+        
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+        
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        
+        .security-warning {
+            background-color: #fef3c7;
+            border: 1px solid #fcd34d;
+            border-left: 4px solid #f59e0b;
+            border-radius: 6px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        
+        .security-warning h4 {
+            color: #92400e;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .security-warning p {
+            color: #92400e;
+            font-size: 14px;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        
+        .company-info {
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .company-info h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .info-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 15px;
+            color: #555555;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .info-label {
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .next-steps {
+            background-color: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 6px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+        
+        .next-steps h3 {
+            color: #065f46;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        
+        .next-steps ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .next-steps li {
+            padding: 8px 0;
+            font-size: 15px;
+            color: #065f46;
+        }
+        
+        .next-steps li:before {
+            content: "✓";
+            color: #10b981;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        
+        .email-footer {
+            background-color: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .footer-text {
+            font-size: 14px;
+            color: #666666;
+            margin-bottom: 10px;
+        }
+        
+        .footer-links {
+            margin-top: 20px;
+        }
+        
+        .footer-links a {
+            color: #4f46e5;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+        }
+        
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+        
+        @media only screen and (max-width: 600px) {
+            .email-container {
+                margin: 10px;
+                border-radius: 0;
+            }
+            
+            .email-header, .email-body, .email-footer {
+                padding: 20px;
+            }
+            
+            .email-header h1 {
+                font-size: 28px;
+            }
+            
+            .login-button {
+                display: block;
+                text-align: center;
+                margin: 20px 0;
+                font-size: 16px;
+                padding: 15px 25px;
+            }
+            
+            .credential-item {
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 12px;
+            }
+            
+            .credential-label {
+                margin-bottom: 5px;
+            }
+            
+            .credential-value {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .info-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .info-label {
+                margin-bottom: 3px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <div class="company-logo">{{company_initial}}</div>
+            <h1>Welcome to {{company_name}}!</h1>
+            <p>Your account has been created</p>
+        </div>
+        
+        <div class="email-body">
+            <div class="greeting">Hello {{employee_name}},</div>
+            
+            <div class="message">
+                Welcome to {{company_name}}! We're excited to have you join our team. {{admin_name}} has created your {{app_name}} account, and you're all set to get started.
+            </div>
+            
+            <div class="welcome-notice">
+                <h3>🎉 Account Successfully Created!</h3>
+                <p>Your role: <span class="role-badge">{{employee_role}}</span></p>
+                <p>Added by: {{admin_name}} ({{admin_role}})</p>
+            </div>
+            
+            <div class="login-credentials">
+                <h3>🔐 Your Login Credentials</h3>
+                <div class="credential-item">
+                    <span class="credential-label">Email:</span>
+                    <span class="credential-value">{{employee_email}}</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">Password:</span>
+                    <span class="credential-value">{{employee_password}}</span>
+                </div>
+                <div class="credential-item">
+                    <span class="credential-label">Login URL:</span>
+                    <span class="credential-value">{{login_url}}</span>
+                </div>
+            </div>
+            
+            <div class="security-warning">
+                <h4>🔒 Important Security Notice</h4>
+                <p><strong>Please change your password immediately</strong> after your first login for security purposes.</p>
+                <p>Keep your credentials confidential and never share them with anyone outside your organization.</p>
+                <p>If you suspect any unauthorized access, contact your admin immediately.</p>
+            </div>
+            
+            <div class="button-container">
+                <a href="{{login_url}}" class="login-button">Login to Your Account</a>
+            </div>
+            
+            <div class="company-info">
+                <h3>📋 Company & Role Information</h3>
+                <div class="info-item">
+                    <span class="info-label">Company:</span>
+                    <span>{{company_name}}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Your Role:</span>
+                    <span>{{employee_role}}</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="email-footer">
+            <div class="footer-text">
+                Welcome aboard!<br>
+                {{company_name}} Team via {{app_name}}
+            </div>
+        </div>
+    </div>
+</body>
+</html>`,
+        status: true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      },
     ];
 
     await queryInterface.bulkInsert("email_templates", emailTemplates);

@@ -62,7 +62,7 @@ module.exports = {
 
   //email service
   email: {
-    emailService: process.env.EMAILSERVICE,
+    emailHost: process.env.EMAILHOST,
     emailUser: process.env.EMAILUSER,
     emailPassword: process.env.EMAILPASSWORD,
     emailPort: process.env.EMAILPORT,

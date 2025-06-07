@@ -84,3 +84,17 @@ exports.sendSubscriptionReminderCompany = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.createUser = async (req, res) => {
+  try {
+    const result = await CompanyService.createUser(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "User created successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

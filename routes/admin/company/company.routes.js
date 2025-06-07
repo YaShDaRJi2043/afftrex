@@ -29,5 +29,10 @@ router.put(
   checkFeature("manage_company"),
   companyController.sendSubscriptionReminderCompany
 );
+router.post(
+  "/createEmployee",
+  checkFeature("manage_publishers"),
+  companyController.createUser
+);
 
 module.exports = router;

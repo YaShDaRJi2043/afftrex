@@ -4,8 +4,9 @@ const { EmailTemplate } = require("@models/index");
 const { email } = require("@config/config");
 
 const transporter = nodemailer.createTransport({
-  service: email.emailService,
-  port: parseInt(email.emailPort, 10),
+  host: email.emailHost,
+  port: 465,
+  secure: true,
   auth: {
     user: email.emailUser,
     pass: email.emailPassword,
