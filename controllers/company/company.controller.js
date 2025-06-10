@@ -43,6 +43,20 @@ exports.approveCompany = async (req, res) => {
   }
 };
 
+exports.rejectCompany = async (req, res) => {
+  try {
+    const result = await CompanyService.reject(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Company registration submitted",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
+
 exports.listCompany = async (req, res) => {
   try {
     const result = await CompanyService.list(req);
@@ -78,34 +92,6 @@ exports.sendSubscriptionReminderCompany = async (req, res) => {
       req,
       res,
       "Company Subscription extended",
-      result
-    );
-  } catch (err) {
-    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
-  }
-};
-
-exports.createUser = async (req, res) => {
-  try {
-    const result = await CompanyService.createUser(req);
-    responseHelper.successResponse(
-      req,
-      res,
-      "User created successfully",
-      result
-    );
-  } catch (err) {
-    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
-  }
-};
-
-exports.listCompanyUsers = async (req, res) => {
-  try {
-    const result = await CompanyService.listCompanyUsers(req);
-    responseHelper.successResponse(
-      req,
-      res,
-      "Company users fetched successfully",
       result
     );
   } catch (err) {

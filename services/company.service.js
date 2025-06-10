@@ -1,6 +1,5 @@
 const { Op } = require("sequelize");
 const moment = require("moment");
-const bcrypt = require("bcryptjs");
 
 const { Company, User, Role } = require("@models");
 const { uploadToS3 } = require("@utils/s3");
@@ -338,5 +337,3 @@ exports.sendSubscriptionReminder = async (req, res) => {
 
   return `Reminder email sent successfully to ${company.admin_email}`;
 };
-
-

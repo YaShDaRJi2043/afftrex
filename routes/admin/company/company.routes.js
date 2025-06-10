@@ -13,6 +13,12 @@ router.put(
   companyController.approveCompany
 );
 
+router.put(
+  "/reject/:id",
+  checkFeature("manage_company"),
+  companyController.rejectCompany
+);
+
 router.get(
   "/list",
   checkFeature("manage_company"),
@@ -29,18 +35,6 @@ router.put(
   "/:id/send-subscription-reminder",
   checkFeature("manage_company"),
   companyController.sendSubscriptionReminderCompany
-);
-
-router.post(
-  "/createEmployee",
-  checkFeature("manage_users"),
-  companyController.createUser
-);
-
-router.get(
-  "/company-users",
-  checkFeature("manage_users"),
-  companyController.listCompanyUsers
 );
 
 module.exports = router;
