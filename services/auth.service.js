@@ -21,7 +21,6 @@ exports.login = async (req) => {
     throw error;
   }
 
-  // 3. Find user
   const user = await User.findOne({
     where: {
       email,
@@ -36,6 +35,12 @@ exports.login = async (req) => {
   if (!user || !(await user.validPassword(password))) {
     const error = new Error("Invalid email or password");
     error.statusCode = 401;
+    throw error;
+  }
+
+  if (user.status !== "Active") {
+    const error = new Error("Your account is inactive. Contact admin.");
+    error.statusCode = 403;
     throw error;
   }
 
@@ -58,6 +63,8 @@ exports.login = async (req) => {
       throw error;
     }
   }
+
+  await user.update({ last_login: new Date() });
 
   const payload = {
     id: user.id,

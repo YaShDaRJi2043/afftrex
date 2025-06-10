@@ -22,6 +22,19 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      number: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      status: {
+        type: Sequelize.ENUM("Active", "Inactive"),
+        allowNull: false,
+        defaultValue: "Active",
+      },
+      last_login: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
       role_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -65,5 +78,8 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable("users");
+    await queryInterface.sequelize.query(
+      'DROP TYPE IF EXISTS "enum_users_status";'
+    );
   },
 };

@@ -55,6 +55,25 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
+      number: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        validate: {
+          len: {
+            args: [0, 10],
+            msg: "Number must be less than or equal to 10 characters",
+          },
+        },
+      },
+      status: {
+        type: DataTypes.ENUM("Active", "Inactive"),
+        allowNull: false,
+        defaultValue: "Active",
+      },
+      last_login: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       role_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

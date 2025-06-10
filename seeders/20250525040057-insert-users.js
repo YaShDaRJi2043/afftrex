@@ -23,6 +23,9 @@ module.exports = {
         name: "Super Admin",
         email: "superadmin@yopmail.com",
         password: await bcrypt.hash("admin123", 10),
+        number: "9999999999",
+        status: "Active",
+        last_login: null,
         role_id: roleMap["super-admin"],
         company_id: companyMap["afftrex"],
         created_at: new Date(),
@@ -32,6 +35,9 @@ module.exports = {
         name: "Alice Advertiser",
         email: "advertiser@yopmail.com",
         password: await bcrypt.hash("password123", 10),
+        number: "8888888888",
+        status: "Active",
+        last_login: null,
         role_id: roleMap["advertiser"],
         company_id: companyMap["technova"],
         created_at: new Date(),
@@ -41,6 +47,9 @@ module.exports = {
         name: "Paul Publisher",
         email: "publisher@yopmail.com",
         password: await bcrypt.hash("password123", 10),
+        number: "7777777777",
+        status: "Active",
+        last_login: null,
         role_id: roleMap["publisher"],
         company_id: companyMap["innocore"],
         created_at: new Date(),
@@ -50,6 +59,9 @@ module.exports = {
         name: "Tom Team",
         email: "team@yopmail.com",
         password: await bcrypt.hash("password123", 10),
+        number: "6666666666",
+        status: "Active",
+        last_login: null,
         role_id: roleMap["publisher"],
         company_id: companyMap["technova"],
         created_at: new Date(),
@@ -59,6 +71,9 @@ module.exports = {
         name: "Victor Viewer",
         email: "viewer@yopmail.com",
         password: await bcrypt.hash("password123", 10),
+        number: "5555555555",
+        status: "Active",
+        last_login: null,
         role_id: roleMap["viewer"],
         company_id: companyMap["innocore"],
         created_at: new Date(),
@@ -68,6 +83,6 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.bulkDelete("users");
+    await queryInterface.bulkDelete("users", null, {});
   },
 };

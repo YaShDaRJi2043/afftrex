@@ -7,9 +7,9 @@ const create = Joi.object({
   logo: Joi.any(),
 });
 
-exports.extendSubscriptionSchema = Joi.object({
+const extendSubscriptionSchema = Joi.object({
   days: Joi.number().integer().min(1).required(),
   amount: Joi.number().min(0).required(),
 });
 
-module.exports = { create };
+module.exports = { create, extendSubscriptionSchema };
