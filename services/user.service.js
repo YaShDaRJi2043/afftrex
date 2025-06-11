@@ -102,7 +102,7 @@ exports.listCompanyUsers = async (req) => {
     ];
   }
 
-  // 3. Include users only with role level < current user's level
+  // 3. Include only roles with level > current user's level
   const include = [
     {
       model: Role,
@@ -123,7 +123,19 @@ exports.listCompanyUsers = async (req) => {
     order: [["created_at", "DESC"]],
   });
 
-  return users;
+  // 5. Format users to flatten the role object to just the role name
+  const formattedUsers = users.map((user) => ({
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    status: user.status,
+    last_login: user.last_login,
+    created_at: user.created_at,
+    role: user.role?.name || null,
+  }));
+
+  // 6. Return raw array (not wrapped in `data`)
+  return formattedUsers;
 };
 
 exports.getUserById = async (req, res) => {
