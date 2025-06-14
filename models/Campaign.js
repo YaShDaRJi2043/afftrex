@@ -22,12 +22,12 @@ module.exports = (sequelize, DataTypes) => {
   Campaign.init(
     {
       id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
+        type: DataTypes.INTEGER,
         primaryKey: true,
+        autoIncrement: true,
       },
       companyId: {
-        type: DataTypes.UUID,
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
       objective: {

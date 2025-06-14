@@ -18,8 +18,8 @@ const validate = require("@middleware/validate");
 router.post(
   "/",
   upload.single("thumbnail"),
-  checkFeature("review_campaigns"),
-  validate(campaignValidator.createCampaignValidator),
+  // checkFeature("review_campaigns"),
+  // validate(campaignValidator.createCampaignValidator),
   campaignController.createCampaign
 );
 

@@ -1,10 +1,9 @@
 const Joi = require("joi");
 
 const createCampaignValidator = Joi.object({
-  companyId: Joi.string().guid({ version: "uuidv4" }).required().messages({
-    "string.guid": "Company ID must be a valid UUID",
-    "any.required": "Company ID is required",
-  }),
+  companyId: Joi.string()
+    .required()
+    .messages({ "any.required": "Company ID is required" }),
   objective: Joi.string()
     .valid(
       "conversions",
@@ -32,9 +31,10 @@ const createCampaignValidator = Joi.object({
     "string.uri": "Default campaign URL must be a valid URL",
     "any.required": "Default campaign URL is required",
   }),
-  previewUrl: Joi.string().uri().optional().messages({
-    "string.uri": "Preview URL must be a valid URL",
-  }),
+  previewUrl: Joi.string()
+    .uri()
+    .optional()
+    .messages({ "string.uri": "Preview URL must be a valid URL" }),
   timezone: Joi.string()
     .pattern(/^GMT[+-]\d{2}:\d{2}$/)
     .optional()
@@ -53,23 +53,9 @@ const createCampaignValidator = Joi.object({
     "number.min": "End hour must be between 0 and 23",
     "number.max": "End hour must be between 0 and 23",
   }),
-  activeDays: Joi.array()
-    .items(
-      Joi.string().valid(
-        "monday",
-        "tuesday",
-        "wednesday",
-        "thursday",
-        "friday",
-        "saturday",
-        "sunday"
-      )
-    )
+  activeDays: Joi.string()
     .optional()
-    .messages({
-      "array.base": "Active days must be an array",
-      "array.includes": "Invalid day in active days", // This message might not be perfectly accurate for individual invalid items in Joi, but it's close.
-    }),
+    .messages({ "string.base": "Active days must be a string" }),
   uniqueClickSessionDuration: Joi.number()
     .integer()
     .min(1)
@@ -77,119 +63,112 @@ const createCampaignValidator = Joi.object({
     .messages({
       "number.base": "Unique click session duration must be a number",
       "number.integer": "Unique click session duration must be an integer",
-      "number.min": "Unique click session duration must be positive integer",
+      "number.min": "Unique click session duration must be a positive integer",
     }),
   duplicateClickAction: Joi.string()
     .valid("blank_page", "redirect_to_url", "show_message")
     .optional()
-    .messages({
-      "any.only": "Invalid duplicate click action",
-    }),
+    .messages({ "any.only": "Invalid duplicate click action" }),
   campaignStartDate: Joi.string().isoDate().optional().messages({
     "string.isoDate": "Campaign start date must be valid ISO date",
   }),
-  campaignEndDate: Joi.string().isoDate().optional().messages({
-    "string.isoDate": "Campaign end date must be valid ISO date",
-  }),
+  campaignEndDate: Joi.string()
+    .isoDate()
+    .optional()
+    .messages({ "string.isoDate": "Campaign end date must be valid ISO date" }),
   campaignStatus: Joi.string()
     .valid("active", "paused", "expired")
     .optional()
-    .messages({
-      "any.only": "Invalid campaign status",
-    }),
-  statusToBeSet: Joi.string().valid("active", "paused").optional().messages({
-    "any.only": "Invalid status to be set",
-  }),
-  scheduleDate: Joi.string().isoDate().optional().messages({
-    "string.isoDate": "Schedule date must be valid ISO date",
-  }),
+    .messages({ "any.only": "Invalid campaign status" }),
+  statusToBeSet: Joi.string()
+    .valid("active", "paused")
+    .optional()
+    .messages({ "any.only": "Invalid status to be set" }),
+  scheduleDate: Joi.string()
+    .isoDate()
+    .optional()
+    .messages({ "string.isoDate": "Schedule date must be valid ISO date" }),
   publisherNotifyTime: Joi.string().isoDate().optional().messages({
     "string.isoDate": "Publisher notify time must be valid ISO date",
   }),
-  conversionFlowLanguages: Joi.array().optional().messages({
-    "array.base": "Conversion flow languages must be an array",
-  }),
-  unsubscribeUrl: Joi.string().uri().optional().messages({
-    "string.uri": "Unsubscribe URL must be valid URL",
-  }),
-  suppressionUrl: Joi.string().uri().optional().messages({
-    "string.uri": "Suppression URL must be valid URL",
-  }),
+  conversionFlowLanguages: Joi.string()
+    .optional()
+    .messages({ "string.base": "Conversion flow languages must be a string" }),
+  unsubscribeUrl: Joi.string()
+    .uri()
+    .optional()
+    .messages({ "string.uri": "Unsubscribe URL must be a valid URL" }),
+  suppressionUrl: Joi.string()
+    .uri()
+    .optional()
+    .messages({ "string.uri": "Suppression URL must be a valid URL" }),
   conversionHoldPeriod: Joi.number().integer().min(0).optional().messages({
     "number.base": "Conversion hold period must be a number",
     "number.integer": "Conversion hold period must be an integer",
-    "number.min": "Conversion hold period must be non-negative integer",
+    "number.min": "Conversion hold period must be non-negitive integer",
   }),
   conversionStatusAfterHold: Joi.string()
     .valid("approved", "rejected", "pending")
     .optional()
-    .messages({
-      "any.only": "Invalid conversion status after hold",
-    }),
+    .messages({ "any.only": "Invalid conversion status after hold" }),
   revenueModel: Joi.string()
     .valid("fixed", "revshare", "hybrid")
     .optional()
-    .messages({
-      "any.only": "Invalid revenue model",
-    }),
-  currency: Joi.string().length(3).optional().messages({
-    "string.length": "Currency must be 3 character code",
-  }),
-  revenue: Joi.number().precision(2).optional().messages({
-    // Using precision(2) for decimal, adjust if more precision is needed
-    "number.base": "Revenue must be a valid decimal number",
-  }),
-  payout: Joi.number().precision(2).optional().messages({
-    // Using precision(2) for decimal, adjust if more precision is needed
-    "number.base": "Payout must be a valid decimal number",
-  }),
-  geoCoverage: Joi.array().optional().messages({
-    "array.base": "Geo coverage must be an array",
-  }),
-  category: Joi.array().optional().messages({
-    "array.base": "Category must be an array",
-  }),
-  devices: Joi.array().optional().messages({
-    "array.base": "Devices must be an array",
-  }),
-  operatingSystem: Joi.array().optional().messages({
-    "array.base": "Operating system must be an array",
-  }),
-  carrierTargeting: Joi.array().optional().messages({
-    "array.base": "Carrier targeting must be an array",
-  }),
-  allowedTrafficChannels: Joi.array().optional().messages({
-    "array.base": "Allowed traffic channels must be an array",
-  }),
+    .messages({ "any.only": "Invalid revenue model" }),
+  currency: Joi.string()
+    .length(3)
+    .optional()
+    .messages({ "string.length": "Currency must be 3 character code" }),
+  revenue: Joi.number()
+    .precision(2)
+    .optional()
+    .messages({ "number.base": "Revenue must be a valid decimal number" }),
+  payout: Joi.number()
+    .precision(2)
+    .optional()
+    .messages({ "number.base": "Payout must be a valid decimal number" }),
+  geoCoverage: Joi.string()
+    .optional()
+    .messages({ "string.base": "Geo coverage must be a string" }),
+  category: Joi.string()
+    .optional()
+    .messages({ "string.base": "Category must be a string" }),
+  devices: Joi.string()
+    .optional()
+    .messages({ "string.base": "Devices must be a string" }),
+  operatingSystem: Joi.string()
+    .optional()
+    .messages({ "string.base": "Operating system must be a string" }),
+  carrierTargeting: Joi.string()
+    .optional()
+    .messages({ "string.base": "Carrier targeting must be a string" }),
+  allowedTrafficChannels: Joi.string()
+    .optional()
+    .messages({ "string.base": "Allowed traffic channels must be a string" }),
   conversionTracking: Joi.string()
     .valid("server_postback", "web_sdk", "iframe_pixel", "image_pixel")
     .optional()
-    .messages({
-      "any.only": "Invalid conversion tracking method",
-    }),
+    .messages({ "any.only": "Invalid conversion tracking method" }),
   status: Joi.string()
     .valid("active", "pending", "paused")
     .optional()
-    .messages({
-      "any.only": "Invalid status",
-    }),
-  redirectType: Joi.string().valid("301", "302").optional().messages({
-    "any.only": "Redirect type must be 301 or 302",
-  }),
+    .messages({ "any.only": "Invalid status" }),
+  redirectType: Joi.string()
+    .valid("301", "302")
+    .optional()
+    .messages({ "any.only": "Redirect type must be 301 or 302" }),
   visibility: Joi.string()
     .valid("public", "private", "ask_permission")
     .optional()
-    .messages({
-      "any.only": "Invalid visibility setting",
-    }),
+    .messages({ "any.only": "Invalid visibility setting" }),
 });
 
+// Update, Get, Get List, UpdateStatus remain the same
 const updateCampaignValidator = Joi.object({
   id: Joi.string().guid({ version: "uuidv4" }).required().messages({
     "string.guid": "Campaign ID must be a valid UUID",
     "any.required": "Campaign ID is required",
   }),
-  // All fields from createCampaignValidator become optional for updates
   ...Object.fromEntries(
     Object.entries(createCampaignValidator.describe().keys).map(
       ([key, value]) => [
@@ -200,7 +179,7 @@ const updateCampaignValidator = Joi.object({
       ]
     )
   ),
-}).unknown(true); // Allow unknown fields as the param 'id' is added directly.
+}).unknown(true);
 
 const getCampaignValidator = Joi.object({
   id: Joi.string().guid({ version: "uuidv4" }).required().messages({
@@ -213,7 +192,7 @@ const getCampaignsValidator = Joi.object({
   page: Joi.number().integer().min(1).optional().messages({
     "number.base": "Page must be a number",
     "number.integer": "Page must be an integer",
-    "number.min": "Page must be positive integer",
+    "number.min": "Page must be a positive integer",
   }),
   limit: Joi.number().integer().min(1).max(100).optional().messages({
     "number.base": "Limit must be a number",
@@ -224,9 +203,7 @@ const getCampaignsValidator = Joi.object({
   status: Joi.string()
     .valid("active", "pending", "paused")
     .optional()
-    .messages({
-      "any.only": "Invalid status filter",
-    }),
+    .messages({ "any.only": "Invalid status filter" }),
   objective: Joi.string()
     .valid(
       "conversions",
@@ -237,12 +214,11 @@ const getCampaignsValidator = Joi.object({
       "clicks"
     )
     .optional()
-    .messages({
-      "any.only": "Invalid objective filter",
-    }),
-  companyId: Joi.string().guid({ version: "uuidv4" }).optional().messages({
-    "string.guid": "Company ID must be valid UUID",
-  }),
+    .messages({ "any.only": "Invalid objective filter" }),
+  companyId: Joi.string()
+    .guid({ version: "uuidv4" })
+    .optional()
+    .messages({ "string.guid": "Company ID must be valid UUID" }),
 });
 
 const updateStatusValidator = Joi.object({
