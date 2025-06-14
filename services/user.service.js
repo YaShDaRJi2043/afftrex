@@ -139,100 +139,78 @@ exports.listCompanyUsers = async (req) => {
 };
 
 exports.getUserById = async (req, res) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const user = await User.findByPk(id, {
-      include: [
-        { model: Role, as: "role", attributes: ["id", "name"] },
-        {
-          model: Company,
-          as: "company",
-          attributes: ["id", "name", "subdomain"],
-        },
-      ],
-      attributes: { exclude: ["password"] },
-    });
+  const user = await User.findByPk(id, {
+    include: [
+      { model: Role, as: "role", attributes: ["name"] },
+      {
+        model: Company,
+        as: "company",
+        attributes: ["name", "subdomain"],
+      },
+    ],
+    attributes: { exclude: ["password"] },
+  });
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    return res.status(200).json(user);
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ message: "Server error", error: err.message });
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
   }
+
+  return user;
 };
 
 exports.updateUser = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, email, number, role, status } = req.body;
+  const { id } = req.params;
+  const { name, email, number, role, status } = req.body;
 
-    const user = await User.findByPk(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+  const user = await User.findByPk(id);
+  if (!user) return "User not found";
 
-    if (role) {
-      const roleData = await Role.findOne({ where: { name: role } });
-      if (!roleData) return res.status(400).json({ message: "Invalid role" });
-      user.role_id = roleData.id;
-    }
-
-    user.name = name || user.name;
-    user.email = email || user.email;
-    user.number = number || user.number;
-    user.status = status || user.status;
-
-    await user.save();
-
-    return res.status(200).json({ message: "User updated successfully", user });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ message: "Server error", error: err.message });
+  if (role) {
+    const roleData = await Role.findOne({ where: { name: role } });
+    if (!roleData) return "Invalid role";
+    user.role_id = roleData.id;
   }
+
+  user.name = name || user.name;
+  user.email = email || user.email;
+  user.number = number || user.number;
+  user.status = status || user.status;
+
+  await user.save();
+
+  return { message: "User updated successfully", user };
 };
 
 exports.deleteUser = async (req, res) => {
-  try {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    const user = await User.findByPk(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+  const user = await User.findByPk(id);
+  if (!user) return res.status(404).json({ message: "User not found" });
 
-    await user.destroy();
+  await user.destroy();
 
-    return res.status(200).json({ message: "User deleted successfully" });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ message: "Server error", error: err.message });
-  }
+  return "User deleted successfully";
 };
 
 exports.changeUserStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
+  const { id } = req.params;
+  console.log(id);
 
-    if (!["active", "inactive"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status value" });
-    }
+  const { status } = req.body;
 
-    const user = await User.findByPk(id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    user.status = status;
-    await user.save();
-
-    return res
-      .status(200)
-      .json({ message: `User status updated to ${status}` });
-  } catch (err) {
-    return res
-      .status(500)
-      .json({ message: "Server error", error: err.message });
+  if (!["Active", "Inactive"].includes(status)) {
+    return res.status(400).json({ message: "Invalid status value" });
   }
+
+  const user = await User.findByPk(id);
+  console.log(user);
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  user.status = status;
+  await user.save();
+
+  return `User status updated to ${status}`;
 };
