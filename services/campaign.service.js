@@ -18,7 +18,7 @@ exports.generateUniqueSlug = async (baseSlug) => {
 
 exports.createCampaign = async (req) => {
   const {
-    companyId,
+    company_id,
     title,
     enableCampaignSchedule,
     campaignStartDate,
@@ -57,13 +57,18 @@ exports.createCampaign = async (req) => {
     status,
     redirectType,
     visibility,
+    thumbnail,
     ...restOfData
   } = req.body;
 
   const file = req.file;
 
   // 1. Check company
-  const company = await Company.findByPk(companyId);
+  const company = await Company.findOne({
+    where: {
+      id: company_id,
+    },
+  });
   if (!company) {
     const error = new Error("Company not found");
     error.statusCode = 404;
@@ -72,7 +77,7 @@ exports.createCampaign = async (req) => {
 
   // 2. Generate unique slug
   const baseSlug = slugify(title, { lower: true, strict: true });
-  const trackingSlug = await CampaignHelpers.generateUniqueSlug(baseSlug);
+  const trackingSlug = await this.generateUniqueSlug(baseSlug);
 
   // 3. Validate dates
   if (enableCampaignSchedule && campaignStartDate && campaignEndDate) {
@@ -97,10 +102,11 @@ exports.createCampaign = async (req) => {
   // 5. Create campaign
   const newCampaignData = {
     ...restOfData,
-    companyId,
+    company_id,
     title,
     trackingSlug,
     thumbnail: thumbnailKey,
+    // thumbnail,
     defaultLandingPageName: defaultLandingPageName || "Default",
     enableTimeTargeting: enableTimeTargeting || false,
     timezone: timezone || "GMT+05:30",
@@ -148,7 +154,7 @@ exports.createCampaign = async (req) => {
       {
         model: Company,
         as: "company",
-        attributes: ["id", "name", "email"],
+        attributes: ["id", "name", "admin_email"],
       },
     ],
   });
@@ -157,13 +163,13 @@ exports.createCampaign = async (req) => {
 };
 
 exports.getCampaigns = async (filters) => {
-  const { page, limit, status, objective, companyId, search } = filters;
+  const { page, limit, status, objective, company_id, search } = filters;
   const offset = (page - 1) * limit;
   const where = {};
 
   if (status) where.status = status;
   if (objective) where.objective = objective;
-  if (companyId) where.companyId = companyId;
+  if (company_id) where.company_id = company_id;
   if (search) {
     where[Op.or] = [
       { title: { [Op.iLike]: `%${search}%` } },
@@ -182,7 +188,7 @@ exports.getCampaigns = async (filters) => {
         attributes: ["id", "name", "email"],
       },
     ],
-    order: [["createdAt", "DESC"]],
+    order: [["created_at", "DESC"]],
   });
 
   const formattedCampaigns = rows.map(CampaignHelpers.formatCampaignResponse);

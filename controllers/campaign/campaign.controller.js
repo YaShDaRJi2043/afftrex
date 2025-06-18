@@ -3,7 +3,7 @@ const responseHelper = require("@helper/response");
 
 exports.createCampaign = async (req, res) => {
   try {
-    const campaign = await CampaignService.createCampaign(req.body);
+    const campaign = await CampaignService.createCampaign(req);
     responseHelper.successResponse(
       req,
       res,

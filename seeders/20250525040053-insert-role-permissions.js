@@ -27,7 +27,7 @@ module.exports = {
         "manage_publishers",
         "manage_advertiser",
         "moderate_fraud_logs",
-        "review_campaigns",
+        "manage_campaigns",
         "approve_requests",
       ],
       viewer: ["view_campaigns", "view_reports", "view_fraud_review"],

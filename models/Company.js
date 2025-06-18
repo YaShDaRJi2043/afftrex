@@ -9,6 +9,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "company_id",
         as: "users",
       });
+
+      Company.hasMany(models.Campaign, {
+        foreignKey: "company_id",
+        as: "campaigns",
+      });
     }
   }
 
@@ -90,6 +95,8 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "companies",
       underscored: true,
       timestamps: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
     }
   );
 

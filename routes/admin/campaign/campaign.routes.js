@@ -1,25 +1,21 @@
 const router = require("express").Router();
 
 const campaignController = require("@controllers/campaign/campaign.controller");
-// const {
-//   createCampaignValidator,
-//   updateCampaignValidator,
-//   getCampaignValidator,
-//   getCampaignsValidator,
-//   updateStatusValidator,
-// } = require("@controllers/campaign/campaign.validator");
-
 const campaignValidator = require("@controllers/campaign/campaign.validator");
 
 const { checkFeature } = require("@middleware/checkFeature");
 const upload = require("@middleware/multer");
 const validate = require("@middleware/validate");
+const authMiddleware = require("@root/middleware/auth.middleware");
+
+// Apply JWT auth to all routes in this router
+router.use(authMiddleware);
 
 router.post(
   "/",
   upload.single("thumbnail"),
-  // checkFeature("review_campaigns"),
-  // validate(campaignValidator.createCampaignValidator),
+  checkFeature("manage_campaigns"),
+  validate(campaignValidator.createCampaignValidator),
   campaignController.createCampaign
 );
 

@@ -119,8 +119,8 @@ module.exports = {
         updated_at: new Date(),
       },
       {
-        name: "review_campaigns",
-        label: "Review Campaigns",
+        name: "manage_campaigns",
+        label: "Manage Campaigns",
         created_at: new Date(),
         updated_at: new Date(),
       },

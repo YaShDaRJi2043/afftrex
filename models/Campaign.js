@@ -1,11 +1,12 @@
 "use strict";
 const { Model } = require("sequelize");
+const { s3Bucket } = require("@root/config/config");
 
 module.exports = (sequelize, DataTypes) => {
   class Campaign extends Model {
     static associate(models) {
       Campaign.belongsTo(models.Company, {
-        foreignKey: "companyId",
+        foreignKey: "company_id",
         as: "company",
       });
       Campaign.hasMany(models.CampaignAssignment, {
@@ -26,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      companyId: {
+      company_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
@@ -43,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       title: { type: DataTypes.STRING, allowNull: false },
       description: DataTypes.TEXT,
-      previewUrl: DataTypes.STRING,
+      preview_url: DataTypes.STRING,
       defaultCampaignUrl: { type: DataTypes.TEXT, allowNull: false },
       defaultLandingPageName: {
         type: DataTypes.STRING,
@@ -149,15 +150,26 @@ module.exports = (sequelize, DataTypes) => {
       },
       trackingDomain: DataTypes.STRING,
       trackingSlug: { type: DataTypes.STRING, unique: true },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
     },
     {
       sequelize,
       modelName: "Campaign",
       tableName: "campaigns",
       timestamps: true,
-      underscored: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
       indexes: [
-        { fields: ["companyId"] },
+        { fields: ["company_id"] },
         { fields: ["status"] },
         { unique: true, fields: ["trackingSlug"] },
       ],
