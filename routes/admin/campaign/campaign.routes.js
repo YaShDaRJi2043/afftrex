@@ -19,11 +19,7 @@ router.post(
   campaignController.createCampaign
 );
 
-router.get(
-  "/",
-  validate(campaignValidator.getCampaignsValidator),
-  campaignController.getCampaigns
-);
+router.post("/list", campaignController.getCampaigns);
 
 router.get(
   "/:id",

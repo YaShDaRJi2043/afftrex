@@ -14,7 +14,9 @@ const authMiddleware = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, secret.JWT_TOKEN_SECRET);
 
-    const user = await User.findByPk(decoded.id, { include: ["role"] });
+    const user = await User.findByPk(decoded.id, {
+      include: ["role", "company"],
+    });
 
     if (!user) {
       return res

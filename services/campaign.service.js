@@ -162,46 +162,35 @@ exports.createCampaign = async (req) => {
   return CampaignHelpers.formatCampaignResponse(createdCampaign);
 };
 
-exports.getCampaigns = async (filters) => {
-  const { page, limit, status, objective, company_id, search } = filters;
-  const offset = (page - 1) * limit;
-  const where = {};
+exports.getCampaigns = async (req) => {
+  const filters = req.body; // direct destructure of request body
+  const companyName = req.user?.company?.name;
+  console.log(companyName);
 
-  if (status) where.status = status;
-  if (objective) where.objective = objective;
-  if (company_id) where.company_id = company_id;
-  if (search) {
-    where[Op.or] = [
-      { title: { [Op.iLike]: `%${search}%` } },
-      { description: { [Op.iLike]: `%${search}%` } },
-    ];
+  const whereFilter = {};
+
+  // Build dynamic where clause
+  for (const key in filters) {
+    if (filters[key]) {
+      whereFilter[key] = { [Op.iLike]: `%${filters[key]}%` };
+    }
   }
 
-  const { count, rows } = await Campaign.findAndCountAll({
-    where,
-    limit: parseInt(limit),
-    offset: parseInt(offset),
+  const campaigns = await Campaign.findAll({
+    whereFilter,
     include: [
       {
         model: Company,
         as: "company",
-        attributes: ["id", "name", "email"],
+        where: { name: companyName },
+        attributes: ["id", "name", "admin_email"],
+        required: true,
       },
     ],
     order: [["created_at", "DESC"]],
   });
 
-  const formattedCampaigns = rows.map(CampaignHelpers.formatCampaignResponse);
-
-  return {
-    campaigns: formattedCampaigns,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(count / limit),
-      totalItems: count,
-      itemsPerPage: limit,
-    },
-  };
+  return campaigns.map(CampaignHelpers.formatCampaignResponse);
 };
 
 exports.getCampaignById = async (id) => {

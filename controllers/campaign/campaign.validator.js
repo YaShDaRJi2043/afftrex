@@ -96,23 +96,6 @@ const getCampaignValidator = Joi.object({
   id: Joi.number().integer().positive().required(),
 });
 
-const getCampaignsValidator = Joi.object({
-  page: Joi.number().integer().min(1).optional(),
-  limit: Joi.number().integer().min(1).max(100).optional(),
-  status: Joi.string().valid("active", "pending", "paused").optional(),
-  objective: Joi.string()
-    .valid(
-      "conversions",
-      "sale",
-      "app_installs",
-      "leads",
-      "impressions",
-      "clicks"
-    )
-    .optional(),
-  company_id: Joi.number().integer().positive().optional(),
-});
-
 const updateStatusValidator = Joi.object({
   id: Joi.number().integer().positive().required(),
   status: Joi.string().valid("active", "paused", "expired").required(),
@@ -122,6 +105,5 @@ module.exports = {
   createCampaignValidator,
   updateCampaignValidator,
   getCampaignValidator,
-  getCampaignsValidator,
   updateStatusValidator,
 };

@@ -40,8 +40,8 @@ function isActiveBySchedule(campaign) {
 
 function getEffectiveStatus(campaign) {
   if (campaign.campaignStatus !== "active") return campaign.campaignStatus;
-  if (!this.isActiveBySchedule(campaign)) return "expired";
-  if (!this.isActiveByTime(campaign)) return "paused";
+  if (isActiveBySchedule(campaign)) return "expired";
+  if (isActiveByTime(campaign)) return "paused";
 
   return "active";
 }
@@ -111,10 +111,10 @@ function formatCampaignResponse(campaign) {
 
   return {
     ...campaignData,
-    effectiveStatus: this.getEffectiveStatus(campaignData),
-    trackingUrl: this.generateTrackingUrl(campaignData),
-    isActiveByTime: this.isActiveByTime(campaignData),
-    isActiveBySchedule: this.isActiveBySchedule(campaignData),
+    effectiveStatus: getEffectiveStatus(campaignData),
+    trackingUrl: generateTrackingUrl(campaignData),
+    isActiveByTime: isActiveByTime(campaignData),
+    isActiveBySchedule: isActiveBySchedule(campaignData),
   };
 }
 

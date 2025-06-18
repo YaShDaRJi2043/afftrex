@@ -19,22 +19,13 @@ exports.createCampaign = async (req, res) => {
 
 exports.getCampaigns = async (req, res) => {
   try {
-    const { page, limit, status, objective, companyId, search } = req.query;
-    const { campaigns, pagination } = await CampaignService.getCampaigns({
-      page: parseInt(page) || 1,
-      limit: parseInt(limit) || 10,
-      status,
-      objective,
-      companyId,
-      search,
-    });
+    const campaigns = await CampaignService.getCampaigns(req);
     responseHelper.successResponse(
       req,
       res,
       "Campaigns fetched successfully",
       campaigns,
-      200,
-      pagination
+      200
     );
   } catch (err) {
     console.error("Get campaigns error:", err);
