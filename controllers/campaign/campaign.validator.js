@@ -97,7 +97,6 @@ const getCampaignValidator = Joi.object({
 });
 
 const updateStatusValidator = Joi.object({
-  id: Joi.number().integer().positive().required(),
   status: Joi.string().valid("active", "paused", "expired").required(),
 });
 
