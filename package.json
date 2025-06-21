@@ -11,8 +11,8 @@
     "migrate:undo": "sequelize db:migrate:undo:all",
     "seed": "sequelize db:seed:all",
     "seed:undo": "sequelize db:seed:undo:all",
-    "dev": "concurrently \"dotenv -e .env.local nodemon index.js\" \"dotenv -e .env.local nodemon workers/campaignWorker.js\"",
-    "start": "concurrently \"node index.js\" \"node workers/campaignWorker.js\""
+    "dev": "dotenv -e .env.local nodemon index.js nodemon workers/campaignWorker.js",
+    "start": "node index.js node workers/campaignWorker.js"
   },
   "keywords": [],
   "author": "",
@@ -63,7 +63,6 @@
     "@workers": "workers"
   },
   "devDependencies": {
-    "concurrently": "^9.1.2",
     "dotenv-cli": "^8.0.0"
   }
 }
