@@ -1,4 +1,8 @@
 const moment = require("moment-timezone");
+const { Op } = require("sequelize");
+
+const { Campaign } = require("@models/index");
+const { campaignQueue, redis } = require("@helper/campaignScheduler");
 
 function isActiveByTime(campaign) {
   if (!campaign.enableTimeTargeting) return true;
@@ -118,6 +122,54 @@ function formatCampaignResponse(campaign) {
   };
 }
 
+async function updateScheduledCampaignStatuses() {
+  const now = new Date();
+
+  const campaignsToUpdate = await Campaign.findAll({
+    where: {
+      enableScheduleStatusChange: true,
+      scheduleDate: { [Op.lte]: now },
+    },
+  });
+
+  for (const campaign of campaignsToUpdate) {
+    const delay = new Date(campaign.scheduleDate).getTime() - Date.now();
+
+    const job = await campaignQueue.add(
+      "scheduleStatusChange",
+      {
+        campaignId: campaign.id,
+        statusToBeSet: campaign.statusToBeSet,
+      },
+      {
+        delay: delay > 0 ? delay : 0,
+        attempts: 3,
+        jobId: `campaign-${campaign.id}-${new Date(
+          campaign.scheduleDate
+        ).getTime()}`,
+      }
+    );
+
+    await campaign.update({
+      scheduledJobId: job.id,
+      lastScheduledAt: now,
+    });
+
+    await redis.setex(
+      `campaign:schedule:${campaign.id}`,
+      Math.ceil(delay / 1000) + 60,
+      JSON.stringify({
+        jobId: job.id,
+        scheduleDate: campaign.scheduleDate,
+        campaignId: campaign.id,
+        statusToBeSet: campaign.statusToBeSet,
+      })
+    );
+  }
+
+  return campaignsToUpdate;
+}
+
 module.exports = {
   isActiveByTime,
   isActiveBySchedule,
@@ -129,4 +181,5 @@ module.exports = {
   isTrafficChannelAllowed,
   calculateRevenue,
   formatCampaignResponse,
+  updateScheduledCampaignStatuses,
 };

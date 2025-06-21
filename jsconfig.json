@@ -12,7 +12,8 @@
       "@routes/*": ["routes/*"],
       "@services/*": ["services/*"],
       "@uploads/*": ["uploads/*"],
-      "@utils/*": ["utils/*"]
+      "@utils/*": ["utils/*"],
+      "@workers/*": ["workers/*"]
     }
   }
 }

@@ -2,7 +2,7 @@
 const { Campaign, Company } = require("@models/index");
 const { Op } = require("sequelize");
 const slugify = require("slugify");
-const CampaignHelpers = require("@utils/campaignHelpers");
+const CampaignHelpers = require("@root/helper/campaignHelpers");
 const { uploadToS3 } = require("@root/utils/s3");
 
 exports.generateUniqueSlug = async (baseSlug) => {

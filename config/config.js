@@ -75,4 +75,11 @@ module.exports = {
     region: process.env.AWS_DEFAULT_REGION,
     bucket: process.env.AWS_BUCKET,
   },
+
+  //redis service
+  redisConfigs: {
+    redisUser: process.env.REDIS_USERNAME,
+    redisPassword: process.env.REDIS_PASSWORD,
+    redisHost: process.env.REDIS_HOST,
+  },
 };
