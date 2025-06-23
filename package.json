@@ -11,10 +11,8 @@
     "migrate:undo": "sequelize db:migrate:undo:all",
     "seed": "sequelize db:seed:all",
     "seed:undo": "sequelize db:seed:undo:all",
-    "start-worker": "nodemon workers/campaignWorker.js",
-    "start-server": "nodemon index.js",
-    "dev": "dotenv -e .env.local run-p start-server start-worker",
-    "start": "run-p start-server start-worker"
+    "dev": "concurrently -n api,worker -c green,blue \"dotenv -e .env.local nodemon index.js\" \"node workers/campaignWorker.js\"",
+    "start": "concurrently -n api,worker -c green,blue \"node index.js\" \"node workers/campaignWorker.js\""
   },
   "keywords": [],
   "author": "",
@@ -26,6 +24,7 @@
     "bull-arena": "^4.5.1",
     "bullmq": "^5.55.0",
     "cors": "^2.8.5",
+    "concurrently": "^8.2.2",
     "crypto": "^1.0.1",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
@@ -65,7 +64,7 @@
     "@workers": "workers"
   },
   "devDependencies": {
-    "dotenv-cli": "^8.0.0",
-    "npm-run-all": "^4.1.5"
+    "concurrently": "^9.2.0",
+    "dotenv-cli": "^8.0.0"
   }
 }
