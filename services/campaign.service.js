@@ -170,21 +170,59 @@ exports.createCampaign = async (req) => {
 };
 
 exports.getCampaigns = async (req) => {
-  const filters = req.body; // direct destructure of request body
+  const filters = req.body;
   const companyName = req.user?.company?.name;
-  console.log(companyName);
+
+  const stringFields = [
+    "title",
+    "description",
+    "defaultLandingPageName",
+    "appName",
+    "appId",
+    "erid",
+    "note",
+    "termsAndConditions",
+    "primaryTrackingDomain",
+    "externalOfferId",
+    "trackingDomain",
+    "trackingSlug",
+  ];
+
+  const exactFields = [
+    "objective",
+    "campaignStatus",
+    "enableScheduleStatusChange",
+    "statusToBeSet",
+    "enableTimeTargeting",
+    "enableInactiveHours",
+    "enableDuplicateClickAction",
+    "enableCampaignSchedule",
+    "enablePublisherEmailNotify",
+    "conversionStatusAfterHold",
+    "revenueModel",
+    "currency",
+    "requireTermsAcceptance",
+    "conversionTracking",
+    "status",
+    "redirectType",
+    "visibility",
+  ];
 
   const whereFilter = {};
-
-  // Build dynamic where clause
   for (const key in filters) {
-    if (filters[key]) {
-      whereFilter[key] = { [Op.iLike]: `%${filters[key]}%` };
+    const value = filters[key];
+
+    if (value !== undefined && value !== null && value !== "") {
+      if (stringFields.includes(key)) {
+        whereFilter[key] = { [Op.iLike]: `%${value}%` };
+      } else if (exactFields.includes(key)) {
+        whereFilter[key] = value;
+      }
     }
   }
 
   const campaigns = await Campaign.findAll({
-    whereFilter,
+    where: whereFilter,
     include: [
       {
         model: Company,
