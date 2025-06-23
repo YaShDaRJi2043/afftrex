@@ -1,6 +1,7 @@
 require("module-alias/register");
 const { Worker } = require("bullmq");
 const Redis = require("ioredis");
+
 const { Campaign } = require("@models/index");
 const { redisConfigs } = require("@config/config");
 
@@ -16,38 +17,39 @@ const worker = new Worker(
   "campaign-schedule-queue",
   async (job) => {
     const { campaignId, statusToBeSet } = job.data;
+    console.log(campaignId, statusToBeSet);
 
     try {
-      const campaign = await Campaign.findByPk(campaignId);
-      if (!campaign) throw new Error("Campaign not found");
-
-      campaign.campaignStatus = statusToBeSet;
-      campaign.enableScheduleStatusChange = false;
-      campaign.scheduledJobId = null;
-
-      await campaign.save();
+      await Campaign.update(
+        {
+          campaignStatus: statusToBeSet,
+          enableScheduleStatusChange: false,
+          statusToBeSet: null,
+          scheduleDate: null,
+        },
+        { where: { id: campaignId } }
+      );
 
       await redis.del(`campaign:schedule:${campaignId}`);
 
       console.log(
-        `✅ Campaign ${campaignId} status updated to ${statusToBeSet}`
+        `✅ Campaign ${campaignId} status changed to ${statusToBeSet}`
       );
     } catch (err) {
-      console.error(`❌ Job error for campaign ${campaignId}:`, err.message);
+      console.error(`❌ Job failed for campaign ${campaignId}:`, err.message);
       throw err;
     }
   },
   { connection: redis }
 );
 
-// Log events
 worker.on("completed", (job) => {
   console.log(`🎉 Job ${job.id} completed successfully.`);
 });
 
 worker.on("failed", (job, err) => {
   console.error(
-    `❌ Job failed for campaign ${job?.data?.campaignId || "unknown"}:`,
+    `❌ Job failed for campaign ${job?.data?.campaignId}:`,
     err.message
   );
 });

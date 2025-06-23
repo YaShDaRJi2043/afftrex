@@ -1,6 +1,6 @@
 const { Queue } = require("bullmq");
-const { redisConfigs } = require("@config/config");
 const Redis = require("ioredis");
+const { redisConfigs } = require("@config/config");
 
 const redis = new Redis({
   host: redisConfigs.redisHost,
@@ -14,4 +14,7 @@ const campaignQueue = new Queue("campaign-schedule-queue", {
   connection: redis,
 });
 
-module.exports = { campaignQueue, redis };
+module.exports = {
+  campaignQueue,
+  redis,
+};

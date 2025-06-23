@@ -122,52 +122,55 @@ function formatCampaignResponse(campaign) {
   };
 }
 
-async function updateScheduledCampaignStatuses() {
-  const now = new Date();
-
-  const campaignsToUpdate = await Campaign.findAll({
+async function updateScheduledCampaignStatuses(
+  campaignId,
+  statusToBeSet,
+  scheduleDate,
+) {
+  const campaign = await await Campaign.findAll({
     where: {
-      enableScheduleStatusChange: true,
-      scheduleDate: { [Op.lte]: now },
+      id: campaignId,
     },
   });
+  if (!campaign) throw new Error("Campaign not found");
 
-  for (const campaign of campaignsToUpdate) {
-    const delay = new Date(campaign.scheduleDate).getTime() - Date.now();
+  // Remove old job if exists
+  if (campaign.scheduledJobId) {
+    const oldJob = await campaignQueue.getJob(campaign.scheduledJobId);
+    if (oldJob) await oldJob.remove();
+  }
 
-    const job = await campaignQueue.add(
-      "scheduleStatusChange",
-      {
-        campaignId: campaign.id,
-        statusToBeSet: campaign.statusToBeSet,
-      },
-      {
-        delay: delay > 0 ? delay : 0,
-        attempts: 3,
-        jobId: `campaign-${campaign.id}-${new Date(
-          campaign.scheduleDate
-        ).getTime()}`,
-      }
-    );
+  const now = new Date();
+  const delay = new Date(scheduleDate).getTime() - now.getTime();
 
-    await campaign.update({
-      scheduledJobId: job.id,
-      lastScheduledAt: now,
-    });
+  const job = await campaignQueue.add(
+    "campaign-schedule-queue",
+    {
+      campaignId,
+      statusToBeSet,
+    },
+    {
+      delay: delay > 0 ? delay : 0,
+      attempts: 3,
+      jobId: `campaign-${campaignId}-${new Date(scheduleDate).getTime()}`,
+    }
+  );
 
+  if (delay > 0) {
+    const ttl = Math.ceil(delay / 1000) + 60;
     await redis.setex(
       `campaign:schedule:${campaign.id}`,
-      Math.ceil(delay / 1000) + 60,
+      ttl,
       JSON.stringify({
         jobId: job.id,
-        scheduleDate: campaign.scheduleDate,
         campaignId: campaign.id,
-        statusToBeSet: campaign.statusToBeSet,
+        scheduleDate,
+        statusToBeSet,
       })
     );
   }
 
-  return campaignsToUpdate;
+  return job;
 }
 
 module.exports = {

@@ -2,8 +2,8 @@
 const { Campaign, Company } = require("@models/index");
 const { Op } = require("sequelize");
 const slugify = require("slugify");
-const CampaignHelpers = require("@root/helper/campaignHelpers");
-const { uploadToS3 } = require("@root/utils/s3");
+const CampaignHelpers = require("@helper/campaignHelpers");
+const { uploadToS3 } = require("@utils/s3");
 
 exports.generateUniqueSlug = async (baseSlug) => {
   let slug = baseSlug;
@@ -63,7 +63,7 @@ exports.createCampaign = async (req) => {
 
   const file = req.file;
 
-  // 1. Check company
+  // Check company
   const company = await Company.findOne({
     where: {
       id: company_id,
@@ -75,11 +75,11 @@ exports.createCampaign = async (req) => {
     throw error;
   }
 
-  // 2. Generate unique slug
+  // Generate unique slug
   const baseSlug = slugify(title, { lower: true, strict: true });
   const trackingSlug = await this.generateUniqueSlug(baseSlug);
 
-  // 3. Validate dates
+  // Validate dates
   if (enableCampaignSchedule && campaignStartDate && campaignEndDate) {
     if (new Date(campaignStartDate) >= new Date(campaignEndDate)) {
       const error = new Error("Campaign end date must be after start date");
@@ -94,19 +94,18 @@ exports.createCampaign = async (req) => {
     throw error;
   }
 
-  // 4. Upload thumbnail if exists
+  // Upload thumbnail if exists
   const thumbnailKey = file
     ? await uploadToS3(file.buffer, file.originalname, "thumbnails")
     : null;
 
-  // 5. Create campaign
+  // Create campaign
   const newCampaignData = {
     ...restOfData,
     company_id,
     title,
     trackingSlug,
     thumbnail: thumbnailKey,
-    // thumbnail,
     defaultLandingPageName: defaultLandingPageName || "Default",
     enableTimeTargeting: enableTimeTargeting || false,
     timezone: timezone || "GMT+05:30",
@@ -148,7 +147,7 @@ exports.createCampaign = async (req) => {
 
   const campaign = await Campaign.create(newCampaignData);
 
-  // 6. Include company details in response
+  // Include company details in response
   const createdCampaign = await Campaign.findByPk(campaign.id, {
     include: [
       {
@@ -158,6 +157,14 @@ exports.createCampaign = async (req) => {
       },
     ],
   });
+
+  if (enableScheduleStatusChange && scheduleDate && statusToBeSet) {
+    await CampaignHelpers.updateScheduledCampaignStatuses(
+      campaign.id,
+      statusToBeSet,
+      scheduleDate
+    );
+  }
 
   return CampaignHelpers.formatCampaignResponse(createdCampaign);
 };
