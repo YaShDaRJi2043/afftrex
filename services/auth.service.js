@@ -72,6 +72,7 @@ exports.login = async (req) => {
     email: user.email,
     role: user.role.name,
     company: company.name,
+    company_id: company.id,
   };
 
   return generateToken(payload);
