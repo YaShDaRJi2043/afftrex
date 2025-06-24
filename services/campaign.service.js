@@ -18,7 +18,6 @@ exports.generateUniqueSlug = async (baseSlug) => {
 
 exports.createCampaign = async (req) => {
   const {
-    company_id,
     title,
     enableCampaignSchedule,
     campaignStartDate,
@@ -60,6 +59,8 @@ exports.createCampaign = async (req) => {
     thumbnail,
     ...restOfData
   } = req.body;
+
+  const company_id = req.user.company_id;
 
   const file = req.file;
 
