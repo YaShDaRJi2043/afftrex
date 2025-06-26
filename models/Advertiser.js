@@ -1,5 +1,6 @@
 "use strict";
 const { Model } = require("sequelize");
+const bcrypt = require("bcryptjs");
 
 module.exports = (sequelize, DataTypes) => {
   class Advertiser extends Model {
@@ -8,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "company_id",
         as: "company",
       });
+    }
+
+    async validPassword(password) {
+      return await bcrypt.compare(password, this.password);
     }
   }
 
@@ -30,6 +35,25 @@ module.exports = (sequelize, DataTypes) => {
           isEmail: { msg: "Invalid email format" },
         },
       },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: { msg: "Password is required" },
+          len: {
+            args: [6, 100],
+            msg: "Password must be at least 6 characters",
+          },
+        },
+      },
+      password_reset_token: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      password_reset_expiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       status: {
         type: DataTypes.ENUM(
           "Active",
@@ -41,22 +65,9 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: "Pending",
       },
-      reference_id: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      password: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      account_manager: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      notes: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
+      reference_id: DataTypes.STRING,
+      account_manager: DataTypes.STRING,
+      notes: DataTypes.TEXT,
       company_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -84,6 +95,14 @@ module.exports = (sequelize, DataTypes) => {
       underscored: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      hooks: {
+        beforeSave: async (advertiser) => {
+          if (advertiser.changed("password")) {
+            const salt = await bcrypt.genSalt(10);
+            advertiser.password = await bcrypt.hash(advertiser.password, salt);
+          }
+        },
+      },
     }
   );
 

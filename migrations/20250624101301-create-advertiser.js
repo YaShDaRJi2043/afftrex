@@ -18,6 +18,18 @@ module.exports = {
         allowNull: false,
         unique: true,
       },
+      password: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      password_reset_token: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      password_reset_expiry: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
       status: {
         type: Sequelize.ENUM(
           "Active",
@@ -30,10 +42,6 @@ module.exports = {
         defaultValue: "Pending",
       },
       reference_id: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      password: {
         type: Sequelize.STRING,
         allowNull: true,
       },

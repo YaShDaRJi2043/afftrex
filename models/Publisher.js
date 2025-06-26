@@ -1,5 +1,6 @@
 "use strict";
 const { Model } = require("sequelize");
+const bcrypt = require("bcryptjs");
 
 module.exports = (sequelize, DataTypes) => {
   class Publisher extends Model {
@@ -8,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "company_id",
         as: "company",
       });
+    }
+
+    async validPassword(password) {
+      return await bcrypt.compare(password, this.password);
     }
   }
 
@@ -34,6 +39,25 @@ module.exports = (sequelize, DataTypes) => {
           isEmail: { msg: "Invalid email format" },
         },
       },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          notEmpty: { msg: "Password is required" },
+          len: {
+            args: [6, 100],
+            msg: "Password must be at least 6 characters",
+          },
+        },
+      },
+      password_reset_token: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      password_reset_expiry: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
       status: {
         type: DataTypes.ENUM(
           "Active",
@@ -44,58 +68,22 @@ module.exports = (sequelize, DataTypes) => {
         ),
         defaultValue: "Pending",
       },
-      country: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      city: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      state: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      zip_code: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      phone: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      entity_type: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      im_type: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      im_username: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      promotion_method: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      reference_id: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
+      country: DataTypes.STRING,
+      city: DataTypes.STRING,
+      state: DataTypes.STRING,
+      zip_code: DataTypes.STRING,
+      phone: DataTypes.STRING,
+      entity_type: DataTypes.STRING,
+      im_type: DataTypes.STRING,
+      im_username: DataTypes.STRING,
+      promotion_method: DataTypes.STRING,
+      reference_id: DataTypes.STRING,
       notify_by_email: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      signup_company_name: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      signup_company_address: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
+      signup_company_name: DataTypes.STRING,
+      signup_company_address: DataTypes.STRING,
       company_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
@@ -122,6 +110,14 @@ module.exports = (sequelize, DataTypes) => {
       timestamps: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
+      hooks: {
+        beforeSave: async (publisher) => {
+          if (publisher.changed("password")) {
+            const salt = await bcrypt.genSalt(10);
+            publisher.password = await bcrypt.hash(publisher.password, salt);
+          }
+        },
+      },
     }
   );
 

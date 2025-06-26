@@ -29,7 +29,7 @@ const createPublisherSchema = Joi.object({
   im_username: Joi.string().optional().allow(null, ""),
   promotion_method: Joi.string().optional().allow(null, ""),
   reference_id: Joi.string().optional().allow(null, ""),
-  notify_by_email: Joi.boolean().optional(),
+  notify: Joi.boolean().optional(),
   signup_company_name: Joi.string().optional().allow(null, ""),
   signup_company_address: Joi.string().optional().allow(null, ""),
 });
