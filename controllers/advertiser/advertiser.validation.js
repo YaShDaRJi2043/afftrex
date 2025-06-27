@@ -20,6 +20,7 @@ const createAdvertiserSchema = Joi.object({
   password: Joi.string().optional().allow(null, ""),
   account_manager: Joi.string().optional().allow(null, ""),
   notes: Joi.string().optional().allow(null, ""),
+  notify: Joi.string(),
 });
 
 const updateAdvertiserSchema = Joi.object({

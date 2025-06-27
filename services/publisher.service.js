@@ -37,7 +37,8 @@ exports.createPublisher = async (req) => {
     const company = await Company.findByPk(companyId);
     if (!company) throw new Error("Company not found");
 
-    const admin = req.user.name;
+    const adminName = req.user.name;
+    const adminRole = req.user.role.name;
 
     const emailSubject = {
       company_name: company.name,
@@ -53,8 +54,8 @@ exports.createPublisher = async (req) => {
       employee_password: plainPassword,
       employee_role: "Publisher",
       login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
-      admin_name: admin.name,
-      admin_role: admin.role?.name || "Admin",
+      admin_name: adminName,
+      admin_role: adminRole || "Admin",
     };
 
     await mailer.sendMail(email, "employee-welcome", emailSubject, emailData);

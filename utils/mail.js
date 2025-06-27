@@ -36,7 +36,7 @@ async function sendMail(to, templateSlug, subjectData, data = {}) {
   const html = replacePlaceholders(template.body, data);
 
   const mailOptions = {
-    from: `"Your App Name" <${email.emailUser}>`,
+    from: `${data.company_name} <${email.emailUser}>`,
     to,
     subject,
     html,
