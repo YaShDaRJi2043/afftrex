@@ -110,8 +110,10 @@ exports.getAllPublishers = async (req) => {
     "name",
     "username",
     "email",
+    "phone",
     "country",
     "city",
+    "zip_code",
     "state",
     "entity_type",
     "im_type",
@@ -127,7 +129,7 @@ exports.getAllPublishers = async (req) => {
     "tags",
   ];
 
-  const exactFields = ["status", "zip_code", "phone"];
+  const exactFields = ["status"];
 
   const whereFilter = {
     company_id: companyId,
