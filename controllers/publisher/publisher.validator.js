@@ -44,7 +44,7 @@ const createPublisherSchema = Joi.object({
   reference_id: Joi.string().optional().allow(null, ""),
   tax_id: Joi.string().optional().allow(null, ""),
   referred_by: Joi.string().optional().allow(null, ""),
-  Managers: Joi.string().optional().allow(null, ""),
+  managers: Joi.string().optional().allow(null, ""),
   currency: Joi.string().optional().allow(null, ""),
   tags: Joi.array().items(Joi.string()).optional(),
 

@@ -81,7 +81,7 @@ module.exports = (sequelize, DataTypes) => {
       reference_id: DataTypes.STRING,
       tax_id: DataTypes.STRING,
       referred_by: DataTypes.STRING,
-      Managers: DataTypes.STRING,
+      managers: DataTypes.STRING,
       signup_ip: DataTypes.STRING,
       currency: DataTypes.STRING,
       tags: {

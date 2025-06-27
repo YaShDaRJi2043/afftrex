@@ -92,7 +92,7 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      Managers: {
+      managers: {
         type: Sequelize.STRING,
         allowNull: true,
       },
