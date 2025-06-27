@@ -1,42 +1,53 @@
 const { Op } = require("sequelize");
-const bcrypt = require("bcryptjs");
 
-const { Advertiser, Company } = require("@models");
+const { Advertiser, Company } = require("@models/index");
 const { generatePassword } = require("@utils/password");
 const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
 
 exports.createAdvertiser = async (req) => {
   const {
-    full_name,
+    name,
     email,
     password,
     notify = false,
-    status = "Active", // Override default if needed
+    status = "Active",
     reference_id = null,
-    account_manager = null,
+    managers = null,
     notes = null,
+    country = null,
+    city = null,
+    phone = null,
+    currency = null,
+    entity_type = null,
+    website_url = null,
+    tags = [],
+    companyName = null,
   } = req.body;
 
   const companyId = req.user.company_id;
 
-  // Generate and hash password
-  const plainPassword = password || generatePassword();
-  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+  const Password = password || generatePassword();
 
-  // Create advertiser
   const advertiser = await Advertiser.create({
-    full_name,
+    name,
     email,
-    password: hashedPassword,
+    password: Password,
     status,
     reference_id,
-    account_manager,
+    managers,
     notes,
+    country,
+    city,
+    phone,
+    currency,
+    entity_type,
+    website_url,
+    tags,
+    companyName,
     company_id: companyId,
   });
 
-  // Send email if notify is true
   if (notify) {
     const company = await Company.findByPk(companyId);
     if (!company) throw new Error("Company not found");
@@ -52,9 +63,9 @@ exports.createAdvertiser = async (req) => {
       app_name: "Afftrex",
       company_name: company.name,
       company_initial: company.name?.[0]?.toUpperCase() || "A",
-      employee_name: full_name,
+      employee_name: name,
       employee_email: email,
-      employee_password: plainPassword,
+      employee_password: Password,
       employee_role: "Advertiser",
       login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
       admin_name: admin.name,
@@ -72,11 +83,18 @@ exports.getAllAdvertisers = async (req) => {
   const companyId = req.user.company.id;
 
   const stringFields = [
-    "full_name",
+    "name",
     "email",
     "reference_id",
-    "account_manager",
+    "managers",
     "notes",
+    "country",
+    "city",
+    "phone",
+    "currency",
+    "entity_type",
+    "website_url",
+    "companyName",
   ];
 
   const exactFields = ["status"];
@@ -87,7 +105,6 @@ exports.getAllAdvertisers = async (req) => {
 
   for (const key in filters) {
     const value = filters[key];
-
     if (value !== undefined && value !== null && value !== "") {
       if (stringFields.includes(key)) {
         whereFilter[key] = { [Op.iLike]: `%${value}%` };

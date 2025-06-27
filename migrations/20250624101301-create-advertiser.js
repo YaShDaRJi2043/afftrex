@@ -9,9 +9,13 @@ module.exports = {
         autoIncrement: true,
         allowNull: false,
       },
-      full_name: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
+      },
+      companyName: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       email: {
         type: Sequelize.STRING,
@@ -45,12 +49,44 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      account_manager: {
+      managers: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      country: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      currency: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      website_url: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      tags: {
+        type: Sequelize.ARRAY(Sequelize.STRING),
+        allowNull: true,
+      },
+      city: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      phone: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      entity_type: {
         type: Sequelize.STRING,
         allowNull: true,
       },
       notes: {
         type: Sequelize.TEXT,
+        allowNull: true,
+      },
+      last_login: {
+        type: Sequelize.DATE,
         allowNull: true,
       },
       company_id: {

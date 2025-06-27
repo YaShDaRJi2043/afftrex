@@ -23,10 +23,11 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      full_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      companyName: DataTypes.STRING,
       email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -66,7 +67,17 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "Pending",
       },
       reference_id: DataTypes.STRING,
-      account_manager: DataTypes.STRING,
+      managers: DataTypes.STRING,
+      country: DataTypes.STRING,
+      currency: DataTypes.STRING,
+      website_url: DataTypes.STRING,
+      tags: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+      },
+      city: DataTypes.STRING,
+      phone: DataTypes.STRING,
+      entity_type: DataTypes.STRING,
       notes: DataTypes.TEXT,
       company_id: {
         type: DataTypes.INTEGER,
@@ -75,6 +86,10 @@ module.exports = (sequelize, DataTypes) => {
           model: "companies",
           key: "id",
         },
+      },
+      last_login: {
+        type: DataTypes.DATE,
+        allowNull: true,
       },
       created_at: {
         type: DataTypes.DATE,
@@ -92,7 +107,6 @@ module.exports = (sequelize, DataTypes) => {
       modelName: "Advertiser",
       tableName: "advertisers",
       timestamps: true,
-      underscored: true,
       createdAt: "created_at",
       updatedAt: "updated_at",
       hooks: {
