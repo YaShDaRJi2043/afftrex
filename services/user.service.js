@@ -24,8 +24,7 @@ exports.createUser = async (req) => {
   if (!roleData) throw new Error("Invalid role provided");
 
   // Generate and hash password
-  const plainPassword = password || generatePassword();
-  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+  const Password = password || generatePassword();
 
   // Create the user
   const user = await User.create({
@@ -33,7 +32,7 @@ exports.createUser = async (req) => {
     email,
     number,
     status,
-    password: hashedPassword,
+    password: Password,
     company_id: companyId,
     role_id: roleData.id,
   });
@@ -56,7 +55,7 @@ exports.createUser = async (req) => {
       company_initial: company.name?.[0]?.toUpperCase() || "A",
       employee_name: name,
       employee_email: email,
-      employee_password: plainPassword,
+      employee_password: Password,
       employee_role: roleData.name,
       login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
       admin_name: admin.name,
