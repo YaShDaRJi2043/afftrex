@@ -10,57 +10,61 @@ exports.login = async (req) => {
 
   const company = await Company.findOne({ where: { subdomain } });
   if (!company) {
-    const error = new Error("Invalid company subdomain");
-    error.statusCode = 404;
-    throw error;
+    throw newError("Invalid company subdomain", 404);
   }
 
   if (company.status !== "approved") {
-    const error = new Error("Company is not approved yet");
-    error.statusCode = 403;
-    throw error;
+    throw newError("Company is not approved yet", 403);
   }
 
-  const user = await User.findOne({
-    where: {
-      email,
-      company_id: company.id,
-    },
-    include: {
-      model: Role,
-      as: "role",
-    },
+  // Try User
+  let user = await User.findOne({
+    where: { email, company_id: company.id },
+    include: { model: Role, as: "role" },
   });
+  let roleName = user?.role?.name;
 
+  // Try Publisher if not found
+  if (!user) {
+    user = await Publisher.findOne({
+      where: { email, company_id: company.id },
+    });
+    roleName = "publisher";
+  }
+
+  // Try Advertiser if not found
+  if (!user) {
+    user = await Advertiser.findOne({
+      where: { email, company_id: company.id },
+    });
+    roleName = "advertiser";
+  }
+
+  // No match in any model
   if (!user || !(await user.validPassword(password))) {
-    const error = new Error("Invalid email or password");
-    error.statusCode = 401;
-    throw error;
+    throw newError("Invalid email or password", 401);
   }
 
   if (user.status !== "Active") {
-    const error = new Error("Your account is inactive. Contact admin.");
-    error.statusCode = 403;
-    throw error;
+    throw newError("Your account is inactive. Contact admin.", 403);
   }
 
+  // Subscription expiry check (skip for Afftrex or super-admin user)
   const isAfftrex = company.name.toLowerCase() === "afftrex";
-  const isSuperAdmin = user.role.name === "super-admin";
+  const isSuperAdmin = roleName === "super-admin";
 
   if (!isAfftrex && !isSuperAdmin) {
     const startDate = new Date(company.subscription_start_date);
-    const now = new Date();
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + company.subscription_days);
-
+    const now = new Date();
     const remainingDays = Math.ceil((endDate - now) / (1000 * 60 * 60 * 24));
 
     if (remainingDays <= 0) {
-      const error = new Error(
-        "Your subscription has expired. Please renew to continue."
+      throw newError(
+        "Your subscription has expired. Please renew to continue.",
+        403
       );
-      error.statusCode = 403;
-      throw error;
     }
   }
 
@@ -70,13 +74,19 @@ exports.login = async (req) => {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role.name,
+    role: roleName,
     company: company.name,
     company_id: company.id,
   };
 
   return generateToken(payload);
 };
+
+function newError(msg, code) {
+  const err = new Error(msg);
+  err.statusCode = code;
+  return err;
+}
 
 exports.forgotPassword = async (email) => {
   const user = await User.findOne({ where: { email } });
