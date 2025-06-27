@@ -1,6 +1,6 @@
 const crypto = require("crypto");
 
-const { User, Role, Company } = require("@models/index");
+const { User, Role, Company, Publisher, Advertiser } = require("@models/index");
 const { generateToken } = require("@root/utils/token");
 const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
