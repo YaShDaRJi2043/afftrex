@@ -8,37 +8,75 @@ const { serverInfo } = require("@config/config");
 
 exports.createPublisher = async (req) => {
   const {
-    full_name,
+    name,
+    username,
     email,
     password,
     notify = false,
     phone = null,
     status = "Active",
+    country,
+    city,
+    state,
+    zip_code,
+    entity_type,
+    im_type,
+    im_username,
+    promotion_method,
+    reference_id,
+    tax_id,
+    referred_by,
+    Managers,
+    currency,
+    tags,
+    companyName,
+    companyAddress,
   } = req.body;
 
   const companyId = req.user.company_id;
 
-  // Generate and hash password
-  const plainPassword = password || generatePassword();
-  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+  const signup_ip =
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.connection?.remoteAddress ||
+    req.socket?.remoteAddress ||
+    null;
 
-  // Create publisher
+  const Password = password || generatePassword();
+
   const publisher = await Publisher.create({
-    full_name,
+    name,
+    username,
     email,
+    password: Password,
+    notify,
     phone,
     status,
-    password: hashedPassword,
+    country,
+    city,
+    state,
+    zip_code,
+    entity_type,
+    im_type,
+    im_username,
+    promotion_method,
+    reference_id,
+    tax_id,
+    referred_by,
+    Managers,
+    signup_ip,
+    currency,
+    tags,
+    companyName,
+    companyAddress,
     company_id: companyId,
   });
 
-  // Send welcome email if notify is true
   if (notify) {
     const company = await Company.findByPk(companyId);
     if (!company) throw new Error("Company not found");
 
     const adminName = req.user.name;
-    const adminRole = req.user.role.name;
+    const adminRole = req.user.role?.name || "Admin";
 
     const emailSubject = {
       company_name: company.name,
@@ -49,13 +87,13 @@ exports.createPublisher = async (req) => {
       app_name: "Afftrex",
       company_name: company.name,
       company_initial: company.name?.[0]?.toUpperCase() || "A",
-      employee_name: full_name,
+      employee_name: name,
       employee_email: email,
-      employee_password: plainPassword,
+      employee_password: Password,
       employee_role: "Publisher",
       login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
       admin_name: adminName,
-      admin_role: adminRole || "Admin",
+      admin_role: adminRole,
     };
 
     await mailer.sendMail(email, "employee-welcome", emailSubject, emailData);
@@ -69,23 +107,27 @@ exports.getAllPublishers = async (req) => {
   const companyId = req.user.company.id;
 
   const stringFields = [
-    "full_name",
+    "name",
+    "username",
     "email",
     "country",
     "city",
     "state",
-    "zip_code",
-    "phone",
     "entity_type",
     "im_type",
     "im_username",
     "promotion_method",
     "reference_id",
-    "signup_company_name",
-    "signup_company_address",
+    "tax_id",
+    "referred_by",
+    "signup_ip",
+    "currency",
+    "companyName",
+    "companyAddress",
+    "tags",
   ];
 
-  const exactFields = ["status", "notify_by_email"];
+  const exactFields = ["status", "zip_code", "phone"];
 
   const whereFilter = {
     company_id: companyId,

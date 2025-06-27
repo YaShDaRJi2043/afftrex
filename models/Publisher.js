@@ -23,13 +23,14 @@ module.exports = (sequelize, DataTypes) => {
         primaryKey: true,
         autoIncrement: true,
       },
-      full_name: {
+      name: {
         type: DataTypes.STRING,
         allowNull: false,
         validate: {
           notEmpty: { msg: "Full Name is required" },
         },
       },
+      username: DataTypes.STRING,
       email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -78,12 +79,25 @@ module.exports = (sequelize, DataTypes) => {
       im_username: DataTypes.STRING,
       promotion_method: DataTypes.STRING,
       reference_id: DataTypes.STRING,
-      notify_by_email: {
+      tax_id: DataTypes.STRING,
+      referred_by: DataTypes.STRING,
+      Managers: DataTypes.STRING,
+      signup_ip: DataTypes.STRING,
+      currency: DataTypes.STRING,
+      tags: {
+        type: DataTypes.ARRAY(DataTypes.STRING),
+        allowNull: true,
+      },
+      last_login: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      notify: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
       },
-      signup_company_name: DataTypes.STRING,
-      signup_company_address: DataTypes.STRING,
+      companyName: DataTypes.STRING,
+      companyAddress: DataTypes.STRING,
       company_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

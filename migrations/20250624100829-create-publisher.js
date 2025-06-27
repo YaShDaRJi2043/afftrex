@@ -9,9 +9,13 @@ module.exports = {
         autoIncrement: true,
         allowNull: false,
       },
-      full_name: {
+      name: {
         type: Sequelize.STRING,
         allowNull: false,
+      },
+      username: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       email: {
         type: Sequelize.STRING,
@@ -80,15 +84,43 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      notify_by_email: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      signup_company_name: {
+      tax_id: {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      signup_company_address: {
+      referred_by: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      Managers: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      signup_ip: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      currency: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      tags: {
+        type: Sequelize.ARRAY(Sequelize.STRING),
+        allowNull: true,
+      },
+      last_login: {
+        type: Sequelize.DATE,
+        allowNull: true,
+      },
+      notify: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
+      companyName: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      companyAddress: {
         type: Sequelize.STRING,
         allowNull: true,
       },
