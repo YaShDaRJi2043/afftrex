@@ -87,10 +87,7 @@ const baseCampaignFields = {
 
 const createCampaignValidator = Joi.object(baseCampaignFields);
 
-const updateCampaignValidator = Joi.object({
-  id: Joi.number().integer().positive().required(),
-  ...baseCampaignFields,
-});
+const updateCampaignValidator = Joi.object(baseCampaignFields);
 
 const getCampaignValidator = Joi.object({
   id: Joi.number().integer().positive().required(),

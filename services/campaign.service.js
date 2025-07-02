@@ -245,7 +245,7 @@ exports.getCampaignById = async (id) => {
       {
         model: Company,
         as: "company",
-        attributes: ["id", "name", "email"],
+        attributes: ["id", "name", "admin_email"],
       },
     ],
   });
@@ -305,7 +305,7 @@ exports.updateCampaign = async (id, updates) => {
       {
         model: Company,
         as: "company",
-        attributes: ["id", "name", "email"],
+        attributes: ["id", "name", "admin_email"],
       },
     ],
   });
