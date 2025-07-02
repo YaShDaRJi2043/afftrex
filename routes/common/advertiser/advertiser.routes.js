@@ -46,7 +46,6 @@ router.delete(
 router.patch(
   "/:id/status",
   checkFeature("manage_advertisers"),
-  validate(advertiserValidator.statusChangeSchema),
   advertiserController.changeAdvertiserStatus
 );
 
