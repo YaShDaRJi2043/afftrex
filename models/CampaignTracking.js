@@ -18,52 +18,32 @@ module.exports = (sequelize, DataTypes) => {
   CampaignTracking.init(
     {
       id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
         primaryKey: true,
       },
       campaignId: {
-        type: DataTypes.UUID,
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
       assignmentId: {
-        type: DataTypes.UUID,
+        type: DataTypes.INTEGER,
         allowNull: true,
       },
       clickId: {
         type: DataTypes.STRING,
         unique: true,
       },
-      ipAddress: {
-        type: DataTypes.STRING,
-      },
-      userAgent: {
-        type: DataTypes.TEXT,
-      },
-      referer: {
-        type: DataTypes.TEXT,
-      },
-      country: {
-        type: DataTypes.STRING,
-      },
-      region: {
-        type: DataTypes.STRING,
-      },
-      city: {
-        type: DataTypes.STRING,
-      },
-      device: {
-        type: DataTypes.STRING,
-      },
-      os: {
-        type: DataTypes.STRING,
-      },
-      browser: {
-        type: DataTypes.STRING,
-      },
-      carrier: {
-        type: DataTypes.STRING,
-      },
+      ipAddress: DataTypes.STRING,
+      userAgent: DataTypes.TEXT,
+      referer: DataTypes.TEXT,
+      country: DataTypes.STRING,
+      region: DataTypes.STRING,
+      city: DataTypes.STRING,
+      device: DataTypes.STRING,
+      os: DataTypes.STRING,
+      browser: DataTypes.STRING,
+      carrier: DataTypes.STRING,
       eventType: {
         type: DataTypes.ENUM("click", "impression", "conversion"),
         allowNull: false,

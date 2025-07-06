@@ -11,7 +11,7 @@ exports.assignCampaignToPublishers = async ({ campaignId, publisherIds }) => {
     const publisher = await Publisher.findByPk(publisherId);
     if (!publisher) throw new Error(`Publisher ${publisherId} not found`);
 
-    const publisherLink = `${serverInfo.front_url}c/${campaignId}?pub=${publisherId}`;
+    const publisherLink = `${serverInfo.api_url}/public/c/${campaignId}?pub=${publisherId}`;
 
     const assignment = await CampaignAssignment.create({
       campaignId,
