@@ -26,9 +26,7 @@ module.exports = (sequelize, DataTypes) => {
       name: {
         type: DataTypes.STRING,
         allowNull: false,
-        validate: {
-          notEmpty: { msg: "Full Name is required" },
-        },
+        validate: { notEmpty: { msg: "Full Name is required" } },
       },
       username: DataTypes.STRING,
       email: {
@@ -51,14 +49,8 @@ module.exports = (sequelize, DataTypes) => {
           },
         },
       },
-      password_reset_token: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      password_reset_expiry: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+      password_reset_token: DataTypes.STRING,
+      password_reset_expiry: DataTypes.DATE,
       status: {
         type: DataTypes.ENUM(
           "Active",
@@ -88,10 +80,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,
       },
-      last_login: {
-        type: DataTypes.DATE,
-        allowNull: true,
-      },
+      last_login: DataTypes.DATE,
       notify: {
         type: DataTypes.BOOLEAN,
         defaultValue: false,
@@ -101,10 +90,7 @@ module.exports = (sequelize, DataTypes) => {
       company_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: "companies",
-          key: "id",
-        },
+        references: { model: "companies", key: "id" },
       },
       created_at: {
         type: DataTypes.DATE,

@@ -5,11 +5,13 @@ const roleRouter = require("@routes/admin/role/role.routes");
 const companyRouter = require("@root/routes/admin/company/company.routes");
 const userRouter = require("@root/routes/admin/user/user.routes");
 const campaignRouter = require("@root/routes/admin/campaign/campaign.routes");
+const campaignAssignmentRouter = require("@root/routes/admin/campaignAssignment/campaignAssignment.routes");
 
 router.use("/permission", permissionRouter);
 router.use("/role", roleRouter);
 router.use("/company", companyRouter);
 router.use("/user", userRouter);
 router.use("/campaign", campaignRouter);
+router.use("/campaign-assignment", campaignAssignmentRouter);
 
 module.exports = router;

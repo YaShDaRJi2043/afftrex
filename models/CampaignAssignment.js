@@ -8,31 +8,45 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "campaignId",
         as: "campaign",
       });
+      CampaignAssignment.belongsTo(models.Publisher, {
+        foreignKey: "publisherId",
+        as: "publisher",
+      });
     }
   }
 
   CampaignAssignment.init(
     {
       id: {
-        type: DataTypes.UUID,
-        defaultValue: DataTypes.UUIDV4,
+        type: DataTypes.INTEGER,
         primaryKey: true,
+        autoIncrement: true,
       },
       campaignId: {
-        type: DataTypes.UUID,
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
       publisherId: {
-        type: DataTypes.UUID,
+        type: DataTypes.INTEGER,
         allowNull: false,
       },
-      trackingLink: {
-        type: DataTypes.TEXT,
+      publisherLink: {
+        type: DataTypes.STRING,
         allowNull: false,
       },
       status: {
         type: DataTypes.ENUM("active", "inactive", "pending"),
         defaultValue: "active",
+      },
+      created_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updated_at: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
       },
     },
     {
@@ -41,6 +55,8 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "campaign_assignments",
       timestamps: true,
       underscored: true,
+      createdAt: "created_at",
+      updatedAt: "updated_at",
     }
   );
 
