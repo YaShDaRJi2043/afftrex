@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken");
-const { User, Role } = require("@models"); // or adjust path
+const { User, Publisher, Advertiser, Company, Role } = require("@models");
 const { secret } = require("@config/config");
 
 const authMiddleware = async (req, res, next) => {
@@ -13,10 +13,23 @@ const authMiddleware = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, secret.JWT_TOKEN_SECRET);
+    const { id, role } = decoded;
 
-    const user = await User.findByPk(decoded.id, {
-      include: ["role", "company"],
-    });
+    let user;
+
+    if (role === "publisher") {
+      user = await Publisher.findByPk(id, {
+        include: [{ model: Company, as: "company" }],
+      });
+    } else if (role === "advertiser") {
+      user = await Advertiser.findByPk(id, {
+        include: [{ model: Company, as: "company" }],
+      });
+    } else {
+      user = await User.findByPk(id, {
+        include: ["role", "company"],
+      });
+    }
 
     if (!user) {
       return res
@@ -24,7 +37,11 @@ const authMiddleware = async (req, res, next) => {
         .json({ message: "Invalid token: user not found." });
     }
 
-    req.user = user;
+    req.user = {
+      ...user.toJSON(),
+      role,
+    };
+
     next();
   } catch (err) {
     console.error("JWT auth error:", err);
