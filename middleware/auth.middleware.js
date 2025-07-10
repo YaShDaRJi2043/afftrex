@@ -34,7 +34,7 @@ const authMiddleware = async (req, res, next) => {
     if (!user) {
       return res
         .status(401)
-        .json({ message: "Invalid token: user not found." });
+        .json({ message: "Invalid token: user not found" });
     }
 
     req.user = {
