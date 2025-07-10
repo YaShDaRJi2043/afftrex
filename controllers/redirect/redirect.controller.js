@@ -11,3 +11,17 @@ exports.handleRedirect = async (req, res) => {
     return responseHelper.errorResponse(req, res, err.message, status);
   }
 };
+
+exports.trackingData = async (req, res) => {
+  try {
+    const result = await redirectService.getTrackingData(req, res);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Tracking Data fetched successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
