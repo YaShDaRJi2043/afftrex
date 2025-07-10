@@ -1,5 +1,5 @@
 // services/campaignService.js
-const { Campaign, Company } = require("@models/index");
+const { Campaign, Company, CampaignAssignment } = require("@models/index");
 const { Op } = require("sequelize");
 const slugify = require("slugify");
 const CampaignHelpers = require("@helper/campaignHelpers");
@@ -172,7 +172,8 @@ exports.createCampaign = async (req) => {
 
 exports.getCampaigns = async (req) => {
   const filters = req.body;
-  const companyName = req.user?.company?.name;
+  const role = req.user.role.name;
+  const { id: userId, company } = req.user;
 
   const stringFields = [
     "title",
@@ -212,7 +213,6 @@ exports.getCampaigns = async (req) => {
   const whereFilter = {};
   for (const key in filters) {
     const value = filters[key];
-
     if (value !== undefined && value !== null && value !== "") {
       if (stringFields.includes(key)) {
         whereFilter[key] = { [Op.iLike]: `%${value}%` };
@@ -222,13 +222,43 @@ exports.getCampaigns = async (req) => {
     }
   }
 
+  // Role-based filtering
+  if (role === "publisher") {
+    const publicOrAskFilter = {
+      company_id: company.id,
+      visibility: { [Op.in]: ["public", "ask_permission"] },
+    };
+
+    console.log("publicOrAskFilter", publicOrAskFilter);
+
+    // Find campaigns assigned to this publisher
+    const assignedCampaigns = await CampaignAssignment.findAll({
+      where: { publisher_id: userId },
+      attributes: ["campaignId"],
+    });
+
+    const assignedCampaignIds = assignedCampaigns.map((a) => a.campaignId);
+    console.log("publicOrAskFilter", assignedCampaignIds);
+
+    whereFilter[Op.or] = [
+      publicOrAskFilter,
+      {
+        id: { [Op.in]: assignedCampaignIds },
+        visibility: "private",
+        company_id: company.id,
+      },
+    ];
+  } else {
+    // Admin or internal user: filter by company
+    whereFilter.company_id = company.id;
+  }
+
   const campaigns = await Campaign.findAll({
     where: whereFilter,
     include: [
       {
         model: Company,
         as: "company",
-        where: { name: companyName },
         attributes: ["id", "name", "admin_email"],
         required: true,
       },
@@ -239,7 +269,10 @@ exports.getCampaigns = async (req) => {
   return campaigns.map(CampaignHelpers.formatCampaignResponse);
 };
 
-exports.getCampaignById = async (id) => {
+exports.getCampaignById = async (req, id) => {
+  const role = req.user.role.name;
+  const { id: userId, company } = req.user;
+
   const campaign = await Campaign.findByPk(id, {
     include: [
       {
@@ -249,7 +282,32 @@ exports.getCampaignById = async (id) => {
       },
     ],
   });
-  return campaign ? CampaignHelpers.formatCampaignResponse(campaign) : null;
+
+  if (!campaign) return null;
+
+  if (role === "publisher") {
+    const isSameCompany = campaign.company_id === company.id;
+
+    if (!isSameCompany) return null;
+
+    if (campaign.visibility === "private") {
+      // Only allow if assigned
+      const isAssigned = await CampaignAssignment.findOne({
+        where: { campaignId: campaign.id, publisherId: userId },
+      });
+
+      if (!isAssigned) return null;
+    }
+
+    if (
+      campaign.visibility === "public" ||
+      campaign.visibility === "ask_permission"
+    ) {
+      // ✅ Allowed — continue
+    }
+  }
+
+  return CampaignHelpers.formatCampaignResponse(campaign);
 };
 
 exports.updateCampaign = async (id, updates) => {

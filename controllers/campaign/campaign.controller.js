@@ -36,7 +36,7 @@ exports.getCampaigns = async (req, res) => {
 exports.getCampaignById = async (req, res) => {
   try {
     const { id } = req.params;
-    const campaign = await CampaignService.getCampaignById(id);
+    const campaign = await CampaignService.getCampaignById(req, id);
     if (!campaign) {
       return responseHelper.errorResponse(req, res, "Campaign not found", 404);
     }
