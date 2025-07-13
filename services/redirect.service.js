@@ -87,43 +87,56 @@ exports.trackClick = async (req, res) => {
         hour < campaign.startHour ||
         hour > campaign.endHour
       ) {
-        console.log("Time targeting mismatch");
-        return res.redirect(302, campaign.defaultCampaignUrl);
+        return res.status(400).json({
+          success: false,
+          message: "Click not allowed due to time targeting restriction.",
+        });
       }
     }
 
-    // 🌍 Geo targeting
-    if (campaign.geoCoverage && campaign.geoCoverage.length > 0) {
-      if (!geo || !campaign.geoCoverage.includes(geo.country)) {
-        console.log("Geo targeting mismatch");
-        return res.redirect(302, campaign.defaultCampaignUrl);
-      }
-    }
+    // // Geo targeting
+    // if (campaign.geoCoverage && campaign.geoCoverage.length > 0) {
+    //   if (!geo || !campaign.geoCoverage.includes(geo.country)) {
+    //     return res.status(400).json({
+    //       success: false,
+    //       message: "Click not allowed from your country (geo mismatch).",
+    //     });
+    //   }
+    // }
 
-    // 📱 Device targeting
+    // Device targeting
     if (campaign.devices && campaign.devices.length > 0) {
       const deviceType = ua.device.type || "desktop";
       if (!campaign.devices.includes(deviceType)) {
-        console.log("Device targeting mismatch");
-        return res.redirect(302, campaign.defaultCampaignUrl);
+        return res.status(400).json({
+          success: false,
+          message: `Device type '${deviceType}' not allowed.`,
+        });
       }
     }
 
+    // OS targeting
     if (campaign.operatingSystem && campaign.operatingSystem.length > 0) {
       if (!ua.os.name || !campaign.operatingSystem.includes(ua.os.name)) {
-        console.log("OS targeting mismatch");
-        return res.redirect(302, campaign.defaultCampaignUrl);
+        return res.status(400).json({
+          success: false,
+          message: `Operating system '${ua.os.name}' not allowed.`,
+        });
       }
     }
 
+    // Carrier targeting
     if (campaign.carrierTargeting && campaign.carrierTargeting.length > 0) {
-      const carrier = null;
+      const carrier = null; // Placeholder for future carrier detection
       if (carrier && !campaign.carrierTargeting.includes(carrier)) {
-        console.log("Carrier targeting mismatch");
-        return res.redirect(302, campaign.defaultCampaignUrl);
+        return res.status(400).json({
+          success: false,
+          message: "Carrier not allowed.",
+        });
       }
     }
 
+    // Prevent duplicate clicks
     const existingClick = await CampaignTracking.findOne({
       where: {
         campaignId,
@@ -135,10 +148,13 @@ exports.trackClick = async (req, res) => {
     });
 
     if (existingClick) {
-      console.log("Duplicate click ignored.");
-      return res.redirect(302, campaign.defaultCampaignUrl);
+      return res.status(400).json({
+        success: false,
+        message: "Duplicate click — already tracked.",
+      });
     }
 
+    // Create click tracking
     await CampaignTracking.create({
       campaignId,
       assignmentId: assignment.id,
