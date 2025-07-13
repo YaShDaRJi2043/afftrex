@@ -174,7 +174,7 @@ exports.trackClick = async (req, res) => {
 
     return res.redirect(302, campaign.defaultCampaignUrl);
   } catch (err) {
-    console.error("Tracking error:", err);
+    console.error("🔥 Tracking error:", err);
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
