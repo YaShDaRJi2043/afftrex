@@ -50,7 +50,24 @@ exports.trackClick = async (req, res) => {
 
     const now = new Date();
 
-    // ⏰ Time targeting
+    // Campaign start/end date validation
+    if (campaign.enableCampaignSchedule) {
+      const start = campaign.campaignStartDate
+        ? new Date(campaign.campaignStartDate)
+        : null;
+      const end = campaign.campaignEndDate
+        ? new Date(campaign.campaignEndDate)
+        : null;
+
+      if ((start && now < start) || (end && now > end)) {
+        return res.status(400).json({
+          success: false,
+          message: "Campaign not active at this time.",
+        });
+      }
+    }
+
+    // Time targeting
     if (campaign.enableTimeTargeting) {
       const dayName = now.toLocaleString("en-US", {
         weekday: "long",
