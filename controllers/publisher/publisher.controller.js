@@ -84,3 +84,17 @@ exports.changePublisherStatus = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.getCampaignsByPublisherId = async (req, res) => {
+  try {
+    const result = await publisherService.campaignsByPublisherId(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Campaigns fetched successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

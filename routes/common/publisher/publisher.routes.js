@@ -50,4 +50,10 @@ router.patch(
   publisherController.changePublisherStatus
 );
 
+router.get(
+  "/:id/campaigns",
+  checkFeature("manage_publishers"),
+  publisherController.getCampaignsByPublisherId
+);
+
 module.exports = router;

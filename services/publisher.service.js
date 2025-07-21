@@ -1,7 +1,6 @@
 const { Op } = require("sequelize");
-const bcrypt = require("bcryptjs");
 
-const { Publisher, Company } = require("@models");
+const { Publisher, Company, CampaignAssignment, Campaign } = require("@models");
 const { generatePassword } = require("@utils/password");
 const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
@@ -233,4 +232,37 @@ exports.changePublisherStatus = async (req) => {
   await publisher.save();
 
   return `Publisher status updated to ${status}`;
+};
+
+exports.campaignsByPublisherId = async (req) => {
+  const { id } = req.params;
+
+  const publisher = await Publisher.findOne({
+    where: {
+      id,
+      company_id: req.user.company_id,
+    },
+  });
+
+  if (!publisher) throw new Error("Publisher not found");
+
+  const campaigns = await CampaignAssignment.findAll({
+    where: {
+      publisher_id: id,
+    },
+    include: [
+      {
+        model: Campaign,
+        as: "campaign",
+        attributes: ["id", "title"],
+      },
+    ],
+    order: [["created_at", "DESC"]],
+  });
+
+  return campaigns.map((campaign) => ({
+    id: campaign.id,
+    title: campaign.campaign.title,
+    publisherLink: campaign.publisherLink,
+  }));
 };
