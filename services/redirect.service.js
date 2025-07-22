@@ -94,15 +94,15 @@ exports.trackClick = async (req, res) => {
       }
     }
 
-    // // Geo targeting
-    // if (campaign.geoCoverage && campaign.geoCoverage.length > 0) {
-    //   if (!geo || !campaign.geoCoverage.includes(geo.country)) {
-    //     return res.status(400).json({
-    //       success: false,
-    //       message: "Click not allowed from your country (geo mismatch).",
-    //     });
-    //   }
-    // }
+    // Geo targeting
+    if (campaign.geoCoverage && campaign.geoCoverage.length > 0) {
+      if (!geo || !campaign.geoCoverage.includes(geo.country)) {
+        return res.status(400).json({
+          success: false,
+          message: "Click not allowed from your country (geo mismatch).",
+        });
+      }
+    }
 
     // Device targeting
     if (campaign.devices && campaign.devices.length > 0) {
