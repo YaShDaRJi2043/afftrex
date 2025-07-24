@@ -3,7 +3,7 @@ const responseHelper = require("@helper/response");
 
 exports.assignCampaign = async (req, res) => {
   try {
-    const { campaignId, publisherIds } = req.body;
+    const { campaignId, publisherIds, p1, p2, p3, p4 } = req.body;
 
     if (
       !campaignId ||
@@ -22,6 +22,10 @@ exports.assignCampaign = async (req, res) => {
       await CampaignAssignmentService.assignCampaignToPublishers({
         campaignId,
         publisherIds,
+        p1,
+        p2,
+        p3,
+        p4,
       });
 
     return responseHelper.successResponse(

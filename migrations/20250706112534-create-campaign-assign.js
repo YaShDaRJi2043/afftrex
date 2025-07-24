@@ -29,6 +29,22 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      p1: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      p2: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      p3: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      p4: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       publisher_link: {
         type: Sequelize.STRING,
         allowNull: false,

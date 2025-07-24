@@ -30,6 +30,22 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      p1: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      p2: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      p3: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      p4: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       publisherLink: {
         type: DataTypes.STRING,
         allowNull: false,

@@ -22,6 +22,22 @@ const assignCampaignValidator = Joi.object({
       "array.min": "At least one publisher ID is required",
       "any.required": "Publisher IDs are required",
     }),
+
+  p1: Joi.string().optional().messages({
+    "string.base": "p1 must be a string",
+  }),
+
+  p2: Joi.string().optional().messages({
+    "string.base": "p2 must be a string",
+  }),
+
+  p3: Joi.string().optional().messages({
+    "string.base": "p3 must be a string",
+  }),
+
+  p4: Joi.string().optional().messages({
+    "string.base": "p4 must be a string",
+  }),
 });
 
 module.exports = {
