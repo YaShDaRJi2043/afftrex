@@ -56,4 +56,16 @@ router.get(
   publisherController.getCampaignsByPublisherId
 );
 
+router.post(
+  "/approve",
+  checkFeature("manage_publishers"),
+  publisherController.approvePublisherForCampaign
+);
+
+router.get(
+  "/:campaignId/approved-publishers",
+  checkFeature("manage_publishers"),
+  publisherController.getApprovedPublishersForCampaign
+);
+
 module.exports = router;

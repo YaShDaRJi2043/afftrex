@@ -1,6 +1,12 @@
 const { Op } = require("sequelize");
 
-const { Publisher, Company, CampaignAssignment, Campaign } = require("@models");
+const {
+  Publisher,
+  Company,
+  CampaignAssignment,
+  Campaign,
+  ApprovedCampaignPublisher,
+} = require("@models");
 const { generatePassword } = require("@utils/password");
 const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
@@ -105,6 +111,8 @@ exports.getAllPublishers = async (req) => {
   const filters = req.body;
   const companyId = req.user.company.id;
 
+  console.log(filters?.excludeApprovedForCampaign, filters?.campaign_id);
+
   const stringFields = [
     "name",
     "username",
@@ -144,6 +152,18 @@ exports.getAllPublishers = async (req) => {
         whereFilter[key] = value;
       }
     }
+  }
+
+  if (filters?.excludeApprovedForCampaign && filters?.campaign_id) {
+    const approved = await ApprovedCampaignPublisher.findAll({
+      where: {
+        campaign_id: filters.campaign_id,
+      },
+      attributes: ["publisher_id"],
+    });
+
+    const approvedPublisherIds = approved.map((a) => a.publisher_id);
+    whereFilter.id = { [Op.notIn]: approvedPublisherIds };
   }
 
   const publishers = await Publisher.findAll({
@@ -265,4 +285,32 @@ exports.campaignsByPublisherId = async (req) => {
     title: campaign.campaign.title,
     publisherLink: campaign.publisherLink,
   }));
+};
+
+exports.approvePublisherForCampaign = async (req) => {
+  const { campaignId, publisherId } = req.body;
+
+  const approvedPublisher = await ApprovedCampaignPublisher.create({
+    campaign_id: campaignId,
+    publisher_id: publisherId,
+  });
+
+  return approvedPublisher;
+};
+
+exports.getApprovedPublishersForCampaign = async (req) => {
+  const { campaignId } = req.params;
+
+  const approvedPublishers = await ApprovedCampaignPublisher.findAll({
+    where: { campaign_id: campaignId },
+    include: [
+      {
+        model: Publisher,
+        as: "publisher",
+        attributes: ["id", "name", "email"],
+      },
+    ],
+  });
+
+  return approvedPublishers.map((entry) => entry.publisher);
 };

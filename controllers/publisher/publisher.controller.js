@@ -98,3 +98,33 @@ exports.getCampaignsByPublisherId = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.approvePublisherForCampaign = async (req, res) => {
+  try {
+    const result = await publisherService.approvePublisherForCampaign(req);
+
+    responseHelper.successResponse(
+      req,
+      res,
+      "Publisher approved for campaign successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
+
+exports.getApprovedPublishersForCampaign = async (req, res) => {
+  try {
+    const result = await publisherService.getApprovedPublishersForCampaign(req);
+
+    responseHelper.successResponse(
+      req,
+      res,
+      "Approved publishers fetched successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
