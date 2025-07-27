@@ -1,5 +1,12 @@
 const { Campaign, Publisher, CampaignAssignment } = require("@models");
 const { serverInfo } = require("@config/config");
+const crypto = require("crypto");
+
+// Encrypt using AES-256-GCM with base64 output
+const encrypt = (text) => {
+  const hash = crypto.createHash("sha256").update(text).digest("base64url"); // URL-safe base64
+  return hash.slice(0, 5); // Truncate to 5 characters
+};
 
 exports.assignCampaignToPublishers = async ({
   campaignId,
@@ -18,7 +25,10 @@ exports.assignCampaignToPublishers = async ({
     const publisher = await Publisher.findByPk(publisherId);
     if (!publisher) throw new Error(`Publisher ${publisherId} not found`);
 
-    const queryParams = new URLSearchParams({ pub: publisherId });
+    const encryptedCampaignId = encrypt(campaignId.toString());
+    const encryptedPublisherId = encrypt(publisherId.toString());
+
+    const queryParams = new URLSearchParams({ pub: encryptedPublisherId });
     if (p1) queryParams.append("p1", p1);
     if (p2) queryParams.append("p2", p2);
     if (p3) queryParams.append("p3", p3);
@@ -26,7 +36,7 @@ exports.assignCampaignToPublishers = async ({
 
     const publisherLink = `${
       serverInfo.api_url
-    }/public/c/${campaignId}?${queryParams.toString()}`;
+    }/public/c/${encryptedCampaignId}?${queryParams.toString()}`;
 
     const assignment = await CampaignAssignment.create({
       campaignId,

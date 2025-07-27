@@ -1,56 +1,58 @@
-const {
-  Campaign,
-  CampaignAssignment,
-  CampaignTracking,
-  Publisher,
-} = require("@models");
+const { Campaign, CampaignAssignment, CampaignTracking } = require("@models");
 const geoip = require("geoip-lite");
+const { Op } = require("sequelize");
 const UAParser = require("ua-parser-js");
-const { Op, Sequelize } = require("sequelize");
 
 exports.trackClick = async (req, res) => {
   try {
-    const campaignId = req.params.campaignId;
-    const publisherId = req.query.pub;
+    const shortCampaignId = req.params.campaignId; // hashed
+    const shortPublisherId = req.query.pub; // hashed
 
-    if (!campaignId || !publisherId) {
+    if (!shortCampaignId || !shortPublisherId) {
       return res.status(400).json({
         success: false,
-        message: "Invalid request: missing campaignId or publisherId",
+        message: "Missing campaign or publisher ID.",
       });
     }
 
-    const campaign = await Campaign.findByPk(campaignId);
-    if (!campaign || campaign.campaignStatus !== "active") {
-      return res.status(404).json({
-        success: false,
-        message: "Campaign not found or inactive",
-      });
-    }
-
+    // Find matching assignment by hashed ID
     const assignment = await CampaignAssignment.findOne({
-      where: { campaignId, publisherId },
+      where: {
+        publisherLink: {
+          [Op.like]: `%/c/${shortCampaignId}?pub=${shortPublisherId}%`,
+        },
+      },
+      include: [{ model: Campaign, as: "campaign" }],
     });
-    if (!assignment || assignment.status !== "active") {
+
+    if (!assignment || !assignment.campaign) {
       return res.status(404).json({
         success: false,
-        message: "Campaign not assigned to this publisher",
+        message: "Campaign or publisher not found.",
       });
     }
 
-    // Get IP, geo and UA info
+    const campaign = assignment.campaign;
+
+    if (campaign.campaignStatus !== "active") {
+      return res.status(404).json({
+        success: false,
+        message: "Campaign not active.",
+      });
+    }
+
+    // IP & UA info
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.connection.remoteAddress;
     const userAgent = req.headers["user-agent"] || "";
     const referer = req.headers["referer"] || null;
     const geo = geoip.lookup(ip);
-    const parser = new UAParser();
-    const ua = parser.setUA(userAgent).getResult();
+    const ua = new UAParser(userAgent).getResult();
 
     const now = new Date();
 
-    // Campaign start/end date validation
+    // Time restrictions
     const start = campaign.campaignStartDate
       ? new Date(campaign.campaignStartDate)
       : null;
@@ -92,69 +94,60 @@ exports.trackClick = async (req, res) => {
       }
     }
 
-    // Geo targeting
-    if (campaign.geoCoverage && campaign.geoCoverage.length > 0) {
-      if (!geo || !campaign.geoCoverage.includes(geo.country)) {
-        return res.status(400).json({
-          success: false,
-          message: "Click not allowed from your country (geo mismatch).",
-        });
-      }
+    // Geo
+    if (
+      campaign.geoCoverage &&
+      campaign.geoCoverage.length > 0 &&
+      (!geo || !campaign.geoCoverage.includes(geo.country))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Click not allowed from your country.",
+      });
     }
 
-    // Device targeting
-    if (campaign.devices && campaign.devices.length > 0) {
-      const deviceType = ua.device.type || "desktop";
-      if (!campaign.devices.includes(deviceType)) {
-        return res.status(400).json({
-          success: false,
-          message: `Device type '${deviceType}' not allowed.`,
-        });
-      }
+    // Device
+    const deviceType = ua.device.type || "desktop";
+    if (
+      campaign.devices &&
+      campaign.devices.length > 0 &&
+      !campaign.devices.includes(deviceType)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Device type '${deviceType}' not allowed.`,
+      });
     }
 
-    // OS targeting
-    if (campaign.operatingSystem && campaign.operatingSystem.length > 0) {
-      if (!ua.os.name || !campaign.operatingSystem.includes(ua.os.name)) {
-        return res.status(400).json({
-          success: false,
-          message: `Operating system '${ua.os.name}' not allowed.`,
-        });
-      }
+    // OS
+    if (
+      campaign.operatingSystem &&
+      campaign.operatingSystem.length > 0 &&
+      (!ua.os.name || !campaign.operatingSystem.includes(ua.os.name))
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: `Operating system '${ua.os.name}' not allowed.`,
+      });
     }
 
-    // Carrier targeting
-    if (campaign.carrierTargeting && campaign.carrierTargeting.length > 0) {
-      const carrier = null; // Placeholder for future carrier detection
-      if (carrier && !campaign.carrierTargeting.includes(carrier)) {
-        return res.status(400).json({
-          success: false,
-          message: "Carrier not allowed.",
-        });
-      }
+    // Carrier (placeholder)
+    const carrier = null;
+    if (
+      campaign.carrierTargeting &&
+      campaign.carrierTargeting.length > 0 &&
+      carrier &&
+      !campaign.carrierTargeting.includes(carrier)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Carrier not allowed.",
+      });
     }
 
-    // Prevent duplicate clicks
-    // const existingClick = await CampaignTracking.findOne({
-    //   where: {
-    //     campaignId,
-    //     assignmentId: assignment.id,
-    //     ipAddress: ip,
-    //     userAgent,
-    //     eventType: "click",
-    //   },
-    // });
-
-    // if (existingClick) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Duplicate click — already tracked.",
-    //   });
-    // }
-
-    // Create click tracking
+    // Track the click
     await CampaignTracking.create({
-      campaignId,
+      campaignId: campaign.id,
       assignmentId: assignment.id,
       ipAddress: ip,
       userAgent,
@@ -162,7 +155,7 @@ exports.trackClick = async (req, res) => {
       country: geo?.country || null,
       region: geo?.region || null,
       city: geo?.city || null,
-      device: ua.device.type || "desktop",
+      device: deviceType,
       os: ua.os.name || null,
       browser: ua.browser.name || null,
       carrier: null,
@@ -176,70 +169,6 @@ exports.trackClick = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: "Internal Server Error",
-    });
-  }
-};
-
-exports.getTrackingData = async (req, res) => {
-  try {
-    const {
-      campaignId,
-      publisherId,
-      eventType,
-      page = 1,
-      limit = 20,
-    } = req.query;
-
-    const offset = (page - 1) * limit;
-
-    const where = {};
-
-    if (campaignId) where.campaignId = campaignId;
-    if (publisherId)
-      where.assignmentId = {
-        [Op.in]: Sequelize.literal(`(
-        SELECT id FROM campaign_assignments WHERE publisher_id = ${publisherId}
-      )`),
-      };
-    if (eventType) where.eventType = eventType;
-
-    const trackingData = await CampaignTracking.findAndCountAll({
-      where,
-      limit: +limit,
-      offset: +offset,
-      order: [["created_at", "DESC"]],
-      include: [
-        {
-          model: Campaign,
-          as: "campaign",
-          attributes: ["id", "title", "defaultCampaignUrl"],
-        },
-        {
-          model: CampaignAssignment,
-          as: "assignment",
-          attributes: ["id", "publisherId"],
-          include: [
-            {
-              model: Publisher,
-              as: "publisher",
-              attributes: ["id", "name", "email"],
-            },
-          ],
-        },
-      ],
-    });
-
-    return res.status(200).json({
-      success: true,
-      message: "Tracking data fetched successfully",
-      total: trackingData.count,
-      data: trackingData.rows,
-    });
-  } catch (error) {
-    console.error("Error fetching tracking data:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
     });
   }
 };
