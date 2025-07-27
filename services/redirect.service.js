@@ -51,20 +51,18 @@ exports.trackClick = async (req, res) => {
     const now = new Date();
 
     // Campaign start/end date validation
-    if (campaign.enableCampaignSchedule) {
-      const start = campaign.campaignStartDate
-        ? new Date(campaign.campaignStartDate)
-        : null;
-      const end = campaign.campaignEndDate
-        ? new Date(campaign.campaignEndDate)
-        : null;
+    const start = campaign.campaignStartDate
+      ? new Date(campaign.campaignStartDate)
+      : null;
+    const end = campaign.campaignEndDate
+      ? new Date(campaign.campaignEndDate)
+      : null;
 
-      if ((start && now < start) || (end && now > end)) {
-        return res.status(400).json({
-          success: false,
-          message: "Campaign not active at this time.",
-        });
-      }
+    if ((start && now < start) || (end && now > end)) {
+      return res.status(400).json({
+        success: false,
+        message: "Campaign not active at this time.",
+      });
     }
 
     // Time targeting
@@ -137,22 +135,22 @@ exports.trackClick = async (req, res) => {
     }
 
     // Prevent duplicate clicks
-    const existingClick = await CampaignTracking.findOne({
-      where: {
-        campaignId,
-        assignmentId: assignment.id,
-        ipAddress: ip,
-        userAgent,
-        eventType: "click",
-      },
-    });
+    // const existingClick = await CampaignTracking.findOne({
+    //   where: {
+    //     campaignId,
+    //     assignmentId: assignment.id,
+    //     ipAddress: ip,
+    //     userAgent,
+    //     eventType: "click",
+    //   },
+    // });
 
-    if (existingClick) {
-      return res.status(400).json({
-        success: false,
-        message: "Duplicate click — already tracked.",
-      });
-    }
+    // if (existingClick) {
+    //   return res.status(400).json({
+    //     success: false,
+    //     message: "Duplicate click — already tracked.",
+    //   });
+    // }
 
     // Create click tracking
     await CampaignTracking.create({

@@ -9,8 +9,6 @@ exports.assignCampaignToPublishers = async ({
   p3,
   p4,
 }) => {
-  console.log(p1);
-  
   const campaign = await Campaign.findByPk(campaignId);
   if (!campaign) throw new Error("Campaign not found");
 
