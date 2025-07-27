@@ -290,6 +290,17 @@ exports.campaignsByPublisherId = async (req) => {
 exports.approvePublisherForCampaign = async (req) => {
   const { campaignId, publisherId } = req.body;
 
+  const existingApproval = await ApprovedCampaignPublisher.findOne({
+    where: {
+      campaign_id: campaignId,
+      publisher_id: publisherId,
+    },
+  });
+
+  if (existingApproval) {
+    throw new Error("Publisher is already approved for this campaign");
+  }
+
   const approvedPublisher = await ApprovedCampaignPublisher.create({
     campaign_id: campaignId,
     publisher_id: publisherId,
@@ -313,4 +324,21 @@ exports.getApprovedPublishersForCampaign = async (req) => {
   });
 
   return approvedPublishers.map((entry) => entry.publisher);
+};
+
+exports.removePublisherFromApprovedList = async (req) => {
+  const { campaignId, publisherId } = req.params;
+
+  const result = await ApprovedCampaignPublisher.destroy({
+    where: {
+      campaign_id: campaignId,
+      publisher_id: publisherId,
+    },
+  });
+
+  if (result === 0) {
+    throw new Error("Publisher not found in approved list");
+  }
+
+  return;
 };

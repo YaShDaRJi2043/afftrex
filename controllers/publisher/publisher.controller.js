@@ -128,3 +128,18 @@ exports.getApprovedPublishersForCampaign = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.removePublisherFromApprovedList = async (req, res) => {
+  try {
+    const result = await publisherService.removePublisherFromApprovedList(req);
+
+    responseHelper.successResponse(
+      req,
+      res,
+      "Publisher removed from approved list successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

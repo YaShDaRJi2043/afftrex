@@ -68,4 +68,10 @@ router.get(
   publisherController.getApprovedPublishersForCampaign
 );
 
+router.delete(
+  "/remove-approved/:campaignId/:publisherId",
+  checkFeature("manage_publishers"),
+  publisherController.removePublisherFromApprovedList
+);
+
 module.exports = router;
