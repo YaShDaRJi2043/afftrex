@@ -59,7 +59,7 @@ router.get(
 router.post(
   "/approve",
   checkFeature("manage_publishers"),
-  publisherController.approvePublisherForCampaign
+  publisherController.approvePublishersForCampaign
 );
 
 router.get(
@@ -68,8 +68,8 @@ router.get(
   publisherController.getApprovedPublishersForCampaign
 );
 
-router.delete(
-  "/remove-approved/:campaignId/:publisherId",
+router.post(
+  "/remove-approved",
   checkFeature("manage_publishers"),
   publisherController.removePublisherFromApprovedList
 );

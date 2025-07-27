@@ -20,14 +20,8 @@ module.exports = {
         onDelete: "CASCADE",
       },
       publisher_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.ARRAY(Sequelize.INTEGER),
         allowNull: false,
-        references: {
-          model: "publishers",
-          key: "id",
-        },
-        onUpdate: "CASCADE",
-        onDelete: "CASCADE",
       },
       approved_at: {
         type: Sequelize.DATE,

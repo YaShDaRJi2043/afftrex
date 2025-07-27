@@ -155,14 +155,14 @@ exports.getAllPublishers = async (req) => {
   }
 
   if (filters?.excludeApprovedForCampaign && filters?.campaign_id) {
-    const approved = await ApprovedCampaignPublisher.findAll({
+    const approvedEntry = await ApprovedCampaignPublisher.findOne({
       where: {
         campaign_id: filters.campaign_id,
       },
       attributes: ["publisher_id"],
     });
 
-    const approvedPublisherIds = approved.map((a) => a.publisher_id);
+    const approvedPublisherIds = approvedEntry?.publisher_id || [];
     whereFilter.id = { [Op.notIn]: approvedPublisherIds };
   }
 
@@ -287,57 +287,65 @@ exports.campaignsByPublisherId = async (req) => {
   }));
 };
 
-exports.approvePublisherForCampaign = async (req) => {
-  const { campaignId, publisherId } = req.body;
+exports.approvePublishersForCampaign = async (req) => {
+  const { campaignId, publisherIds } = req.body;
 
-  const existingApproval = await ApprovedCampaignPublisher.findOne({
-    where: {
+  const approvedEntry = await ApprovedCampaignPublisher.findOne({
+    where: { campaign_id: campaignId },
+  });
+
+  if (approvedEntry) {
+    const updatedPublisherIds = Array.from(
+      new Set([...approvedEntry.publisher_id, ...publisherIds])
+    );
+    await approvedEntry.update({ publisher_id: updatedPublisherIds });
+    return approvedEntry;
+  } else {
+    const newEntry = await ApprovedCampaignPublisher.create({
       campaign_id: campaignId,
-      publisher_id: publisherId,
-    },
-  });
-
-  if (existingApproval) {
-    throw new Error("Publisher is already approved for this campaign");
+      publisher_id: publisherIds,
+    });
+    return newEntry;
   }
-
-  const approvedPublisher = await ApprovedCampaignPublisher.create({
-    campaign_id: campaignId,
-    publisher_id: publisherId,
-  });
-
-  return approvedPublisher;
 };
 
 exports.getApprovedPublishersForCampaign = async (req) => {
   const { campaignId } = req.params;
 
-  const approvedPublishers = await ApprovedCampaignPublisher.findAll({
+  const approvedEntry = await ApprovedCampaignPublisher.findOne({
     where: { campaign_id: campaignId },
-    include: [
-      {
-        model: Publisher,
-        as: "publisher",
-        attributes: ["id", "name", "email"],
-      },
-    ],
+    attributes: ["publisher_id"],
   });
 
-  return approvedPublishers.map((entry) => entry.publisher);
+  if (!approvedEntry || approvedEntry.publisher_id.length === 0) {
+    return [];
+  }
+
+  const publishers = await Publisher.findAll({
+    where: { id: { [Op.in]: approvedEntry.publisher_id } },
+    attributes: ["id", "name", "email"],
+  });
+
+  return publishers;
 };
 
 exports.removePublisherFromApprovedList = async (req) => {
-  const { campaignId, publisherId } = req.params;
+  const { campaignId, publisherIds } = req.body;
 
-  const result = await ApprovedCampaignPublisher.destroy({
-    where: {
-      campaign_id: campaignId,
-      publisher_id: publisherId,
-    },
+  const approvedEntry = await ApprovedCampaignPublisher.findOne({
+    where: { campaign_id: campaignId },
   });
 
-  if (result === 0) {
-    throw new Error("Publisher not found in approved list");
+  const currentPublisherIds = approvedEntry.publisher_id || [];
+
+  const updatedPublisherIds = currentPublisherIds.filter(
+    (id) => !publisherIds.includes(id)
+  );
+
+  if (updatedPublisherIds.length === 0) {
+    await approvedEntry.destroy();
+  } else {
+    await approvedEntry.update({ publisher_id: updatedPublisherIds });
   }
 
   return;

@@ -99,14 +99,14 @@ exports.getCampaignsByPublisherId = async (req, res) => {
   }
 };
 
-exports.approvePublisherForCampaign = async (req, res) => {
+exports.approvePublishersForCampaign = async (req, res) => {
   try {
-    const result = await publisherService.approvePublisherForCampaign(req);
+    const result = await publisherService.approvePublishersForCampaign(req);
 
     responseHelper.successResponse(
       req,
       res,
-      "Publisher approved for campaign successfully",
+      "Publishers approved for campaign successfully",
       result
     );
   } catch (err) {

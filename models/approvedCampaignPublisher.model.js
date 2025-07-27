@@ -23,9 +23,8 @@ module.exports = (sequelize, DataTypes) => {
         references: { model: "campaigns", key: "id" },
       },
       publisher_id: {
-        type: DataTypes.INTEGER,
+        type: DataTypes.ARRAY(DataTypes.INTEGER),
         allowNull: false,
-        references: { model: "publishers", key: "id" },
       },
       approved_at: {
         type: DataTypes.DATE,
