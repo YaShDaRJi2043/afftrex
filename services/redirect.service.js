@@ -2,6 +2,7 @@ const { Campaign, CampaignAssignment, CampaignTracking } = require("@models");
 const geoip = require("geoip-lite");
 const { Op } = require("sequelize");
 const UAParser = require("ua-parser-js");
+const { v4: uuidv4 } = require("uuid");
 
 exports.trackClick = async (req, res) => {
   try {
@@ -25,7 +26,7 @@ exports.trackClick = async (req, res) => {
       include: [{ model: Campaign, as: "campaign" }],
     });
 
-    if (!assignment || !assignment.campaign) {
+    if (!assignment?.campaign) {
       return res.status(404).json({
         success: false,
         message: "Campaign or publisher not found.",
@@ -145,6 +146,9 @@ exports.trackClick = async (req, res) => {
       });
     }
 
+    // Generate unique clickId
+    const clickId = uuidv4();
+
     // Track the click
     await CampaignTracking.create({
       campaignId: campaign.id,
@@ -161,9 +165,14 @@ exports.trackClick = async (req, res) => {
       carrier: null,
       eventType: "click",
       customParams: req.query || {},
+      clickId, // Include clickId
     });
 
-    return res.redirect(302, campaign.defaultCampaignUrl);
+    // Append clickId to the redirect URL
+    const redirectUrl = new URL(campaign.defaultCampaignUrl);
+    redirectUrl.searchParams.append("clickId", clickId);
+
+    return res.redirect(302, redirectUrl.toString());
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     return res.status(500).json({
