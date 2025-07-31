@@ -8,22 +8,16 @@ const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
 
 exports.LoginInfo = async (req, res) => {
-  try {
-    const company = await Company.findOne({
-      where: { subdomain: req.query.subdomain },
-      attributes: ["name", "logo"],
-    });
+  const company = await Company.findOne({
+    where: { subdomain: req.query.subdomain },
+    attributes: ["name", "logo"],
+  });
 
-    console.log(company);
-
-    if (!company) {
-      return res.status(404).json({ message: "Company not found" });
-    }
-
-    return company;
-  } catch (err) {
-    return res.status(500).json({ message: "Server error" });
+  if (!company) {
+    return res.status(404).json({ message: "Company not found" });
   }
+
+  return company;
 };
 
 exports.register = async (req) => {
@@ -184,18 +178,10 @@ exports.list = async (req, res) => {
 
   const excludeIds = superAdminCompanies.map((c) => c.id);
 
-  // const result = await Company.paginate({
-  //   page: parseInt(page),
-  //   paginate: parseInt(limit),
-  //   where,
-  //   order: [[sort_by, order.toUpperCase()]],
-  // });
-
-  // Fetch all without pagination for testing
   const result = await Company.findAll({
     where: {
       ...where,
-      id: { [Op.notIn]: excludeIds }, // Exclude companies with super-admin users
+      id: { [Op.notIn]: excludeIds },
     },
     order: [[sort_by, order.toUpperCase()]],
   });

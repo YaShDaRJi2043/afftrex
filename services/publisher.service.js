@@ -347,6 +347,4 @@ exports.removePublisherFromApprovedList = async (req) => {
   } else {
     await approvedEntry.update({ publisher_id: updatedPublisherIds });
   }
-
-  return;
 };

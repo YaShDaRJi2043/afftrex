@@ -83,7 +83,7 @@ exports.listCompanyUsers = async (req) => {
     ],
   });
 
-  if (!currentUser || !currentUser.role) {
+  if (!currentUser?.role) {
     throw new Error("Unable to determine current user's role level.");
   }
 
