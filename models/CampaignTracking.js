@@ -32,6 +32,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       clickId: {
         type: DataTypes.STRING,
+        allowNull: true,
         unique: true,
       },
       ipAddress: DataTypes.STRING,
