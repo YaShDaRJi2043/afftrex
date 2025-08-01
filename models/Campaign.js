@@ -150,6 +150,10 @@ module.exports = (sequelize, DataTypes) => {
       },
       trackingDomain: DataTypes.STRING,
       trackingSlug: { type: DataTypes.STRING, unique: true },
+      trackingScript: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,

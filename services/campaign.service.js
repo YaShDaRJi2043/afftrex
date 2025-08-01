@@ -1,9 +1,11 @@
 // services/campaignService.js
-const { Campaign, Company, CampaignAssignment } = require("@models/index");
 const { Op } = require("sequelize");
 const slugify = require("slugify");
+
+const { Campaign, Company, CampaignAssignment } = require("@models/index");
 const CampaignHelpers = require("@helper/campaignHelpers");
 const { uploadToS3 } = require("@utils/s3");
+const { serverInfo } = require("@config/config");
 
 exports.generateUniqueSlug = async (baseSlug) => {
   let slug = baseSlug;
@@ -80,6 +82,12 @@ exports.createCampaign = async (req) => {
   const baseSlug = slugify(title, { lower: true, strict: true });
   const trackingSlug = await this.generateUniqueSlug(baseSlug);
 
+  // Generate tracking script
+  const trackingScript = await this.generateTrackingScript({
+    conversionTracking,
+    trackingSlug,
+  });
+
   // Validate dates
   if (enableCampaignSchedule && campaignStartDate && campaignEndDate) {
     if (new Date(campaignStartDate) >= new Date(campaignEndDate)) {
@@ -106,6 +114,7 @@ exports.createCampaign = async (req) => {
     company_id,
     title,
     trackingSlug,
+    trackingScript, // Store the generated script
     thumbnail: thumbnailKey,
     defaultLandingPageName: defaultLandingPageName || "Default",
     enableTimeTargeting: enableTimeTargeting || false,
@@ -397,4 +406,46 @@ exports.updateCampaignStatus = async (id, status) => {
 
   await campaign.update({ campaignStatus: status });
   return { id, status };
+};
+
+exports.generateTrackingScript = async (campaignId) => {
+  // Fetch the campaign details
+  const campaign = await Campaign.findByPk(campaignId);
+  if (!campaign) {
+    throw new Error("Campaign not found");
+  }
+
+  const { conversionTracking, trackingSlug } = campaign;
+
+  // Generate script based on conversionTracking type
+  switch (conversionTracking) {
+    case "server_postback":
+      return `
+        <script>
+          fetch('${serverInfo.api_url}/track/${trackingSlug}', {
+            method: 'POST',
+            body: JSON.stringify({ event: 'conversion', userId: 'USER_ID' }),
+            headers: { 'Content-Type': 'application/json' }
+          });
+        </script>
+      `;
+    case "web_sdk":
+      return `
+        <script src="${serverInfo.api_url}/sdk.js"></script>
+        <script>
+          const sdk = new YourSDK();
+          sdk.trackConversion({ campaignSlug: '${trackingSlug}', userId: 'USER_ID' });
+        </script>
+      `;
+    case "iframe_pixel":
+      return `
+        <iframe src="${serverInfo.api_url}/pixel/${trackingSlug}" width="1" height="1" style="display:none;"></iframe>
+      `;
+    case "image_pixel":
+      return `
+        <img src="${serverInfo.api_url}/pixel/${trackingSlug}" width="1" height="1" style="display:none;" />
+      `;
+    default:
+      throw new Error("Invalid conversion tracking type");
+  }
 };
