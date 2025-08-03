@@ -200,6 +200,10 @@ module.exports = {
         type: Sequelize.STRING,
         unique: true,
       },
+      trackingScript: {
+        type: Sequelize.TEXT,
+        allowNull: true,
+      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,

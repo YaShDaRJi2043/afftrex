@@ -63,58 +63,44 @@ exports.createCampaign = async (req) => {
   } = req.body;
 
   const company_id = req.user.company_id;
-
   const file = req.file;
 
   // Check company
-  const company = await Company.findOne({
-    where: {
-      id: company_id,
-    },
-  });
-  if (!company) {
-    const error = new Error("Company not found");
-    error.statusCode = 404;
-    throw error;
-  }
+  const company = await Company.findOne({ where: { id: company_id } });
+  if (!company) throw new Error("Company not found");
 
-  // Generate unique slug
+  // Generate slug
   const baseSlug = slugify(title, { lower: true, strict: true });
   const trackingSlug = await this.generateUniqueSlug(baseSlug);
 
   // Generate tracking script
   const trackingScript = await this.generateTrackingScript({
-    conversionTracking,
+    conversionTracking: conversionTracking || "iframe_pixel",
     trackingSlug,
   });
 
-  // Validate dates
+  // Validate
   if (enableCampaignSchedule && campaignStartDate && campaignEndDate) {
     if (new Date(campaignStartDate) >= new Date(campaignEndDate)) {
-      const error = new Error("Campaign end date must be after start date");
-      error.statusCode = 400;
-      throw error;
+      throw new Error("Campaign end date must be after start date");
     }
   }
 
   if (enableTimeTargeting && startHour >= endHour) {
-    const error = new Error("End hour must be after start hour");
-    error.statusCode = 400;
-    throw error;
+    throw new Error("End hour must be after start hour");
   }
 
-  // Upload thumbnail if exists
   const thumbnailKey = file
     ? await uploadToS3(file.buffer, file.originalname, "thumbnails")
     : null;
 
-  // Create campaign
+  // Build data
   const newCampaignData = {
     ...restOfData,
     company_id,
     title,
     trackingSlug,
-    trackingScript, // Store the generated script
+    trackingScript,
     thumbnail: thumbnailKey,
     defaultLandingPageName: defaultLandingPageName || "Default",
     enableTimeTargeting: enableTimeTargeting || false,
@@ -149,7 +135,7 @@ exports.createCampaign = async (req) => {
     carrierTargeting: carrierTargeting || [],
     allowedTrafficChannels: allowedTrafficChannels || [],
     requireTermsAcceptance: requireTermsAcceptance || false,
-    conversionTracking: conversionTracking || "server_postback",
+    conversionTracking: conversionTracking || "iframe_pixel",
     status: status || "active",
     redirectType: redirectType || "302",
     visibility: visibility || "public",
@@ -157,7 +143,6 @@ exports.createCampaign = async (req) => {
 
   const campaign = await Campaign.create(newCampaignData);
 
-  // Include company details in response
   const createdCampaign = await Campaign.findByPk(campaign.id, {
     include: [
       {
@@ -176,7 +161,7 @@ exports.createCampaign = async (req) => {
     );
   }
 
-  return CampaignHelpers.formatCampaignResponse(createdCampaign);
+  return createdCampaign;
 };
 
 exports.getCampaigns = async (req) => {
@@ -262,7 +247,7 @@ exports.getCampaigns = async (req) => {
     whereFilter.company_id = company.id;
   }
 
-  const campaigns = await Campaign.findAll({
+  return await Campaign.findAll({
     where: whereFilter,
     include: [
       {
@@ -274,8 +259,6 @@ exports.getCampaigns = async (req) => {
     ],
     order: [["created_at", "DESC"]],
   });
-
-  return campaigns.map(CampaignHelpers.formatCampaignResponse);
 };
 
 exports.getCampaignById = async (req, id) => {
@@ -316,7 +299,7 @@ exports.getCampaignById = async (req, id) => {
     }
   }
 
-  return CampaignHelpers.formatCampaignResponse(campaign);
+  return campaign;
 };
 
 exports.updateCampaign = async (id, updates) => {
@@ -367,7 +350,7 @@ exports.updateCampaign = async (id, updates) => {
 
   await campaign.update(updates);
 
-  const updatedCampaign = await Campaign.findByPk(id, {
+  return await Campaign.findByPk(id, {
     include: [
       {
         model: Company,
@@ -376,8 +359,6 @@ exports.updateCampaign = async (id, updates) => {
       },
     ],
   });
-
-  return CampaignHelpers.formatCampaignResponse(updatedCampaign);
 };
 
 exports.deleteCampaign = async (id) => {
@@ -408,44 +389,58 @@ exports.updateCampaignStatus = async (id, status) => {
   return { id, status };
 };
 
-exports.generateTrackingScript = async (campaignId) => {
-  // Fetch the campaign details
-  const campaign = await Campaign.findByPk(campaignId);
-  if (!campaign) {
-    throw new Error("Campaign not found");
+exports.generateTrackingScript = async ({
+  conversionTracking,
+  trackingSlug,
+}) => {
+  if (!conversionTracking || !trackingSlug) {
+    throw new Error("Missing required parameters for script generation.");
   }
 
-  const { conversionTracking, trackingSlug } = campaign;
+  let script = "";
 
-  // Generate script based on conversionTracking type
   switch (conversionTracking) {
     case "server_postback":
-      return `
-        <script>
-          fetch('${serverInfo.api_url}/track/${trackingSlug}', {
-            method: 'POST',
-            body: JSON.stringify({ event: 'conversion', userId: 'USER_ID' }),
-            headers: { 'Content-Type': 'application/json' }
-          });
-        </script>
-      `;
+      script = `
+<script>
+  fetch('${serverInfo.api_url}/track/${trackingSlug}', {
+    method: 'POST',
+    body: JSON.stringify({ event: 'conversion', userId: 'USER_ID' }),
+    headers: { 'Content-Type': 'application/json' }
+  });
+</script>
+      `.trim();
+      break;
+
     case "web_sdk":
-      return `
-        <script src="${serverInfo.api_url}/sdk.js"></script>
-        <script>
-          const sdk = new YourSDK();
-          sdk.trackConversion({ campaignSlug: '${trackingSlug}', userId: 'USER_ID' });
-        </script>
-      `;
+      script = `
+<script src="${serverInfo.api_url}/sdk.js"></script>
+<script>
+  const sdk = new YourSDK(); // Replace with actual SDK logic
+  sdk.trackConversion({
+    campaignSlug: '${trackingSlug}',
+    userId: 'USER_ID'
+  });
+</script>
+      `.trim();
+      break;
+
     case "iframe_pixel":
-      return `
-        <iframe src="${serverInfo.api_url}/pixel/${trackingSlug}" width="1" height="1" style="display:none;"></iframe>
-      `;
     case "image_pixel":
-      return `
-        <img src="${serverInfo.api_url}/pixel/${trackingSlug}" width="1" height="1" style="display:none;" />
-      `;
+      script = `
+<iframe 
+  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=REPLACE_CAMPAIGN_ID&transaction_id=REPLACE_TRANSACTION_ID" 
+  width="1" 
+  height="1" 
+  frameborder="0" 
+  scrolling="no">
+</iframe>
+      `.trim();
+      break;
+
     default:
-      throw new Error("Invalid conversion tracking type");
+      throw new Error("Invalid conversion tracking type.");
   }
+
+  return script;
 };
