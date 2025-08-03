@@ -34,22 +34,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      p1: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      p2: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      p3: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      p4: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
+      p1: DataTypes.STRING,
+      p2: DataTypes.STRING,
+      p3: DataTypes.STRING,
+      p4: DataTypes.STRING,
+
       clickTime: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -60,12 +49,34 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0,
       },
-      sessionId: {
+      sessionId: DataTypes.STRING,
+      pageUrl: DataTypes.TEXT,
+
+      // 🔽 Additional fields
+      ipAddress: {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      pageUrl: {
+      userAgent: {
         type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      referrer: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      pixelType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "e.g., iframe, image, sdk",
+      },
+      eventType: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "e.g., conversion, lead, signup",
+      },
+      conversionTime: {
+        type: DataTypes.DATE,
         allowNull: true,
       },
     },
