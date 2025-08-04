@@ -1,11 +1,17 @@
 // services/campaignService.js
 const { Op } = require("sequelize");
 const slugify = require("slugify");
+const crypto = require("crypto");
 
 const { Campaign, Company, CampaignAssignment } = require("@models/index");
 const CampaignHelpers = require("@helper/campaignHelpers");
 const { uploadToS3 } = require("@utils/s3");
 const { serverInfo } = require("@config/config");
+
+const encrypt = (text) => {
+  const hash = crypto.createHash("sha256").update(text).digest("base64url");
+  return hash.slice(0, 5);
+};
 
 exports.generateUniqueSlug = async (baseSlug) => {
   let slug = baseSlug;
@@ -65,42 +71,22 @@ exports.createCampaign = async (req) => {
   const company_id = req.user.company_id;
   const file = req.file;
 
-  // Check company
   const company = await Company.findOne({ where: { id: company_id } });
   if (!company) throw new Error("Company not found");
 
-  // Generate slug
   const baseSlug = slugify(title, { lower: true, strict: true });
   const trackingSlug = await this.generateUniqueSlug(baseSlug);
-
-  // Generate tracking script
-  const trackingScript = await this.generateTrackingScript({
-    conversionTracking: conversionTracking || "iframe_pixel",
-    trackingSlug,
-  });
-
-  // Validate
-  if (enableCampaignSchedule && campaignStartDate && campaignEndDate) {
-    if (new Date(campaignStartDate) >= new Date(campaignEndDate)) {
-      throw new Error("Campaign end date must be after start date");
-    }
-  }
-
-  if (enableTimeTargeting && startHour >= endHour) {
-    throw new Error("End hour must be after start hour");
-  }
 
   const thumbnailKey = file
     ? await uploadToS3(file.buffer, file.originalname, "thumbnails")
     : null;
 
-  // Build data
   const newCampaignData = {
     ...restOfData,
     company_id,
     title,
     trackingSlug,
-    trackingScript,
+    trackingScript: "", // placeholder
     thumbnail: thumbnailKey,
     defaultLandingPageName: defaultLandingPageName || "Default",
     enableTimeTargeting: enableTimeTargeting || false,
@@ -142,6 +128,15 @@ exports.createCampaign = async (req) => {
   };
 
   const campaign = await Campaign.create(newCampaignData);
+
+  // ✅ Generate and update tracking script with encrypted ID
+  const trackingScript = await exports.generateTrackingScript({
+    conversionTracking: conversionTracking || "iframe_pixel",
+    trackingSlug,
+    campaignId: campaign.id,
+  });
+
+  await campaign.update({ trackingScript });
 
   const createdCampaign = await Campaign.findByPk(campaign.id, {
     include: [
@@ -392,6 +387,7 @@ exports.updateCampaignStatus = async (id, status) => {
 exports.generateTrackingScript = async ({
   conversionTracking,
   trackingSlug,
+  campaignId,
 }) => {
   if (!conversionTracking || !trackingSlug) {
     throw new Error("Missing required parameters for script generation.");
@@ -427,9 +423,10 @@ exports.generateTrackingScript = async ({
 
     case "iframe_pixel":
     case "image_pixel":
+      const encryptedCampaignId = encrypt(campaignId.toString());
       script = `
 <iframe 
-  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=REPLACE_CAMPAIGN_ID&transaction_id=REPLACE_TRANSACTION_ID" 
+  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=${encryptedCampaignId}&transaction_id=REPLACE_TRANSACTION_ID" 
   width="1" 
   height="1" 
   frameborder="0" 
@@ -443,4 +440,80 @@ exports.generateTrackingScript = async ({
   }
 
   return script;
+};
+
+exports.updateTrackingScriptParams = async (campaignId, params) => {
+  console.log(
+    "Updating tracking script params for campaign:",
+    campaignId,
+    params
+  );
+
+  const campaign = await Campaign.findByPk(campaignId);
+  if (!campaign) throw new Error("Campaign not found");
+
+  const script = campaign.trackingScript;
+  if (!script?.includes("<iframe"))
+    throw new Error("No valid iframe script to update");
+
+  let updatedScript = script;
+
+  // Extract iframe src URL
+  const srcMatch = updatedScript.match(/src="([^"]+)"/);
+  if (!srcMatch) throw new Error("Invalid iframe src");
+
+  let iframeSrc = srcMatch[1];
+
+  // Convert query string to object
+  const [baseUrl, queryStr] = iframeSrc.split("?");
+  const queryParams = new URLSearchParams(queryStr || "");
+
+  // Update/add query parameters
+  const queryParamFields = [
+    "transaction_id",
+    "coupon",
+    "order_id",
+    "product_sku",
+    "change_currency",
+    "js_tag",
+    "event_type",
+    "amount",
+  ];
+
+  queryParamFields.forEach((key) => {
+    if (params[key]) {
+      queryParams.set(key, params[key]);
+    }
+  });
+
+  // Rebuild iframe src
+  iframeSrc = `${baseUrl}?${queryParams.toString()}`;
+  updatedScript = updatedScript.replace(/src="[^"]+"/, `src="${iframeSrc}"`);
+
+  // Update iframe attributes
+  const updateAttr = (attr, value) => {
+    if (!value) return;
+
+    if (updatedScript.includes(`${attr}="`)) {
+      updatedScript = updatedScript.replace(
+        new RegExp(`${attr}="[^"]*"`, "g"),
+        `${attr}="${value}"`
+      );
+    } else {
+      updatedScript = updatedScript.replace(
+        "<iframe",
+        `<iframe ${attr}="${value}"`
+      );
+    }
+  };
+
+  updateAttr("width", params.width);
+  updateAttr("height", params.height);
+  updateAttr("frameborder", params.frameborder);
+  updateAttr("scrolling", params.scrolling);
+
+  campaign.trackingScript = updatedScript;
+  await campaign.save();
+
+  return campaign.trackingScript;
 };

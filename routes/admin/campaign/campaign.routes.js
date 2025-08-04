@@ -48,4 +48,9 @@ router.delete(
   campaignController.deleteCampaign
 );
 
+router.put(
+  "/update-tracking-script/:id",
+  campaignController.updateTrackingScriptParams
+);
+
 module.exports = router;

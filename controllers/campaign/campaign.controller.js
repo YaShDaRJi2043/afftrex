@@ -96,3 +96,20 @@ exports.updateCampaignStatus = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.updateTrackingScriptParams = async (req, res) => {
+  try {
+    const updatedCampaign = await CampaignService.updateTrackingScriptParams(
+      req.params.id,
+      req.body
+    );
+    return responseHelper.successResponse(
+      req,
+      res,
+      "Tracking script updated",
+      updatedCampaign
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
