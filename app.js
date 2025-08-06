@@ -6,6 +6,7 @@ const multer = require("multer");
 const router = require("@routes/routes");
 const { serverInfo } = require("@config/config");
 const redirectRoutes = require("@routes/redirect.route");
+const pixelRoutes = require("@routes/pixelTracking.routes");
 const app = express();
 
 app.set("trust proxy", true);
@@ -16,6 +17,7 @@ app.use(helmet());
 
 app.use(serverInfo.host_url_prefix, router);
 app.use("/public", redirectRoutes);
+app.use("/pixel", pixelRoutes);
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
