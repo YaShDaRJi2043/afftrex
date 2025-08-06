@@ -38,7 +38,6 @@ module.exports = (sequelize, DataTypes) => {
       p2: DataTypes.STRING,
       p3: DataTypes.STRING,
       p4: DataTypes.STRING,
-
       clickTime: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -51,20 +50,6 @@ module.exports = (sequelize, DataTypes) => {
       },
       sessionId: DataTypes.STRING,
       pageUrl: DataTypes.TEXT,
-
-      // 🔽 Additional fields
-      ipAddress: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
-      userAgent: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
-      referrer: {
-        type: DataTypes.TEXT,
-        allowNull: true,
-      },
       pixelType: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -78,6 +63,20 @@ module.exports = (sequelize, DataTypes) => {
       conversionTime: {
         type: DataTypes.DATE,
         allowNull: true,
+      },
+      conversionValue: {
+        type: DataTypes.DECIMAL(10, 2),
+        defaultValue: 0,
+      },
+      conversionStatus: {
+        type: DataTypes.ENUM("pending", "approved", "rejected"),
+        defaultValue: "pending",
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
       },
     },
     {

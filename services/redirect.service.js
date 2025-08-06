@@ -6,8 +6,8 @@ const { v4: uuidv4 } = require("uuid");
 
 exports.trackClick = async (req, res) => {
   try {
-    const shortCampaignId = req.params.campaignId; // hashed
-    const shortPublisherId = req.query.pub; // hashed
+    const shortCampaignId = req.params.campaignId;
+    const shortPublisherId = req.query.pub;
 
     if (!shortCampaignId || !shortPublisherId) {
       return res.status(400).json({
@@ -16,7 +16,7 @@ exports.trackClick = async (req, res) => {
       });
     }
 
-    // Find matching assignment by hashed ID
+    // 🔍 Find CampaignAssignment + Campaign
     const assignment = await CampaignAssignment.findOne({
       where: {
         publisherLink: {
@@ -36,13 +36,13 @@ exports.trackClick = async (req, res) => {
     const campaign = assignment.campaign;
 
     if (campaign.campaignStatus !== "active") {
-      return res.status(404).json({
+      return res.status(403).json({
         success: false,
         message: "Campaign not active.",
       });
     }
 
-    // IP & UA info
+    // 🧠 Metadata: IP, UA, Geo, Time
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.connection.remoteAddress;
@@ -50,10 +50,9 @@ exports.trackClick = async (req, res) => {
     const referer = req.headers["referer"] || null;
     const geo = geoip.lookup(ip);
     const ua = new UAParser(userAgent).getResult();
-
     const now = new Date();
 
-    // Time restrictions
+    // 🕒 Date range validation
     const start = campaign.campaignStartDate
       ? new Date(campaign.campaignStartDate)
       : null;
@@ -62,13 +61,13 @@ exports.trackClick = async (req, res) => {
       : null;
 
     if ((start && now < start) || (end && now > end)) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
         message: "Campaign not active at this time.",
       });
     }
 
-    // Time targeting
+    // 🎯 Time targeting
     if (campaign.enableTimeTargeting) {
       const dayName = now.toLocaleString("en-US", {
         weekday: "long",
@@ -88,71 +87,64 @@ exports.trackClick = async (req, res) => {
         hour < campaign.startHour ||
         hour > campaign.endHour
       ) {
-        return res.status(400).json({
+        return res.status(403).json({
           success: false,
-          message: "Click not allowed due to time targeting restriction.",
+          message: "Click not allowed due to time targeting.",
         });
       }
     }
 
-    // Geo
+    // 🌍 Geo targeting
     if (
-      campaign.geoCoverage &&
-      campaign.geoCoverage.length > 0 &&
+      campaign.geoCoverage?.length &&
       (!geo || !campaign.geoCoverage.includes(geo.country))
     ) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
         message: "Click not allowed from your country.",
       });
     }
 
-    // Device
+    // 💻 Device targeting
     const deviceType = ua.device.type || "desktop";
-    if (
-      campaign.devices &&
-      campaign.devices.length > 0 &&
-      !campaign.devices.includes(deviceType)
-    ) {
-      return res.status(400).json({
+    if (campaign.devices?.length && !campaign.devices.includes(deviceType)) {
+      return res.status(403).json({
         success: false,
         message: `Device type '${deviceType}' not allowed.`,
       });
     }
 
-    // OS
+    // 🖥️ OS targeting
     if (
-      campaign.operatingSystem &&
-      campaign.operatingSystem.length > 0 &&
+      campaign.operatingSystem?.length &&
       (!ua.os.name || !campaign.operatingSystem.includes(ua.os.name))
     ) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
-        message: `Operating system '${ua.os.name}' not allowed.`,
+        message: `OS '${ua.os.name}' not allowed.`,
       });
     }
 
-    // Carrier (placeholder)
+    // 📶 Carrier targeting (placeholder logic)
     const carrier = null;
     if (
-      campaign.carrierTargeting &&
-      campaign.carrierTargeting.length > 0 &&
+      campaign.carrierTargeting?.length &&
       carrier &&
       !campaign.carrierTargeting.includes(carrier)
     ) {
-      return res.status(400).json({
+      return res.status(403).json({
         success: false,
         message: "Carrier not allowed.",
       });
     }
 
-    // Generate unique clickId
+    // ✅ Generate clickId & track event
     const clickId = uuidv4();
 
-    // Track the click
     await CampaignTracking.create({
       campaignId: campaign.id,
       assignmentId: assignment.id,
+      clickId,
       ipAddress: ip,
       userAgent,
       referer,
@@ -164,11 +156,9 @@ exports.trackClick = async (req, res) => {
       browser: ua.browser.name || null,
       carrier: null,
       eventType: "click",
-      customParams: req.query || {},
-      clickId, // Include clickId
+      timestamp: now, // ✅ explicitly set
     });
 
-    // Append clickId to the redirect URL
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
     redirectUrl.searchParams.append("clickId", clickId);
 

@@ -11,7 +11,17 @@ exports.trackPixel = async (slug, data, req) => {
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const { transactionId, saleAmount, currency, p1, p2, p3, p4 } = data;
+  const {
+    transactionId,
+    saleAmount,
+    currency,
+    p1,
+    p2,
+    p3,
+    p4,
+    conversionValue,
+    conversionStatus,
+  } = data;
 
   // Extract sessionId (or generate one)
   let sessionId =
@@ -19,15 +29,6 @@ exports.trackPixel = async (slug, data, req) => {
     req.headers["x-session-id"] ||
     req.query?.sessionId ||
     uuidv4(); // fallback
-
-  // Extract IP address (from header or req.ip)
-  const ipAddress =
-    req.headers["x-forwarded-for"]?.split(",").shift() ||
-    req.socket?.remoteAddress ||
-    req.ip;
-
-  const userAgent = req.headers["user-agent"] || null;
-  const pageUrl = req.headers.referer || null;
 
   await PixelTracking.create({
     trackingId: tracking.id,
@@ -40,11 +41,13 @@ exports.trackPixel = async (slug, data, req) => {
     p4,
     sessionId,
     pageUrl,
+    pixelType: "iframe",
     clickTime: new Date(),
     clickCount: 1,
-    ipAddress,
-    userAgent,
+    conversionValue,
+    conversionStatus,
+    conversionTime: new Date(),
   });
 
-  return sessionId; // for setting cookie if needed
+  return sessionId;
 };

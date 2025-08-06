@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "assignmentId",
         as: "assignment",
       });
+      CampaignTracking.hasMany(models.PixelTracking, {
+        foreignKey: "trackingId",
+        as: "pixelTrackings",
+      });
     }
   }
 
@@ -49,21 +53,15 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.ENUM("click", "impression", "conversion"),
         allowNull: false,
       },
-      conversionValue: {
-        type: DataTypes.DECIMAL(10, 2),
-        defaultValue: 0,
-      },
-      conversionStatus: {
-        type: DataTypes.ENUM("pending", "approved", "rejected"),
-        defaultValue: "pending",
-      },
-      customParams: {
-        type: DataTypes.JSON,
-        defaultValue: {},
-      },
       timestamp: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
       },
     },
     {

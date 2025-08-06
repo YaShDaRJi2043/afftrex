@@ -69,20 +69,46 @@ module.exports = {
       session_id: {
         type: Sequelize.STRING,
         allowNull: true,
-        comment:
-          "Session ID to group clicks belonging to the same user session",
+        comment: "Session ID to group clicks belonging to the same session",
       },
       page_url: {
         type: Sequelize.TEXT,
         allowNull: true,
         comment: "URL of the page where the click occurred",
       },
-      createdAt: {
+      pixel_type: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        comment: "e.g., iframe, image, sdk",
+      },
+      event_type: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        comment: "e.g., conversion, lead, signup",
+      },
+      conversion_time: {
+        type: Sequelize.DATE,
+        allowNull: true,
+        comment: "Timestamp of the conversion event",
+      },
+      conversion_value: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: false,
+        defaultValue: 0,
+        comment: "Value associated with the conversion",
+      },
+      conversion_status: {
+        type: Sequelize.ENUM("pending", "approved", "rejected"),
+        allowNull: false,
+        defaultValue: "pending",
+        comment: "Status of the conversion",
+      },
+      created_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
-      updatedAt: {
+      updated_at: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,

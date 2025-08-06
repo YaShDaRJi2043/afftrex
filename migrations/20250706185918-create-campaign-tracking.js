@@ -78,21 +78,6 @@ module.exports = {
         type: Sequelize.ENUM("click", "impression", "conversion"),
         allowNull: false,
       },
-      conversion_value: {
-        type: Sequelize.DECIMAL(10, 2),
-        allowNull: true,
-        defaultValue: 0,
-      },
-      conversion_status: {
-        type: Sequelize.ENUM("pending", "approved", "rejected"),
-        allowNull: true,
-        defaultValue: "pending",
-      },
-      custom_params: {
-        type: Sequelize.JSON,
-        allowNull: true,
-        defaultValue: {},
-      },
       timestamp: {
         type: Sequelize.DATE,
         allowNull: true,
