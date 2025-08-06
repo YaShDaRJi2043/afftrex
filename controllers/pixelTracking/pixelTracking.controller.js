@@ -1,5 +1,5 @@
 const pixelTrackingService = require("@services/pixelTracking.service");
-const responseHelper = require("@helpers/responseHelper");
+const responseHelper = require("@helper/response");
 
 exports.handlePixelGet = async (req, res) => {
   try {
