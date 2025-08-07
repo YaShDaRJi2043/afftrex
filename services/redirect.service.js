@@ -111,7 +111,12 @@ exports.trackClick = async (req, res) => {
 
     // 💻 Device targeting
     const deviceType = ua.device.type || "desktop";
-    if (campaign.devices?.length && !campaign.devices.includes(deviceType)) {
+    const allowedDevices = campaign.devices?.map((d) => d.toLowerCase()) || [];
+    if (
+      allowedDevices.length &&
+      !allowedDevices.includes("all") &&
+      !allowedDevices.includes(deviceType.toLowerCase())
+    ) {
       return res.status(403).json({
         success: false,
         message: `Device type '${deviceType}' not allowed.`,
@@ -119,13 +124,17 @@ exports.trackClick = async (req, res) => {
     }
 
     // 🖥️ OS targeting
+    const osName = ua.os.name || "";
+    const allowedOS =
+      campaign.operatingSystem?.map((os) => os.toLowerCase()) || [];
     if (
-      campaign.operatingSystem?.length &&
-      (!ua.os.name || !campaign.operatingSystem.includes(ua.os.name))
+      allowedOS.length &&
+      !allowedOS.includes("all") &&
+      (!osName || !allowedOS.includes(osName.toLowerCase()))
     ) {
       return res.status(403).json({
         success: false,
-        message: `OS '${ua.os.name}' not allowed.`,
+        message: `OS '${osName}' not allowed.`,
       });
     }
 
