@@ -394,6 +394,7 @@ exports.generateTrackingScript = async ({
   }
 
   let script = "";
+  let encryptedCampaignId;
 
   switch (conversionTracking) {
     case "server_postback":
@@ -423,16 +424,16 @@ exports.generateTrackingScript = async ({
 
     case "iframe_pixel":
     case "image_pixel":
-      const encryptedCampaignId = encrypt(campaignId.toString());
+      encryptedCampaignId = encrypt(campaignId.toString());
       script = `
 <iframe 
-  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=${encryptedCampaignId}&transaction_id=REPLACE_TRANSACTION_ID" 
+  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=${encryptedCampaignId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR" 
   width="1" 
   height="1" 
   frameborder="0" 
   scrolling="no">
 </iframe>
-      `.trim();
+  `.trim();
       break;
 
     default:

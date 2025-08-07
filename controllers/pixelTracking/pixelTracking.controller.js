@@ -14,7 +14,8 @@ exports.handlePixelGet = async (req, res) => {
       res.cookie("sessionId", sessionId, {
         httpOnly: true,
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        sameSite: "Lax",
+        sameSite: "None", // required for cross-site cookies
+        secure: true, // required when SameSite=None
       });
     }
 

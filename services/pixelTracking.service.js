@@ -19,7 +19,6 @@ exports.trackPixel = async (slug, data, req) => {
     p2,
     p3,
     p4,
-    conversionValue,
     conversionStatus,
   } = data;
 
@@ -44,7 +43,7 @@ exports.trackPixel = async (slug, data, req) => {
     pixelType: "iframe",
     clickTime: new Date(),
     clickCount: 1,
-    conversionValue,
+    conversionValue: saleAmount,
     conversionStatus,
     conversionTime: new Date(),
   });
