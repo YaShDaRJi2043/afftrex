@@ -9,7 +9,6 @@ exports.getPixelTrackingReport = async (query) => {
 
   if (trackingId) where.trackingId = trackingId;
   if (conversionStatus) where.conversionStatus = conversionStatus;
-  console.log("Fetching pixel tracking report with filters:", where);
 
   const result = await PixelTracking.findAndCountAll({
     where,
@@ -17,11 +16,13 @@ exports.getPixelTrackingReport = async (query) => {
       {
         model: CampaignTracking,
         as: "campaignTracking",
+        required: false,
         include: [
           {
             model: Campaign,
             as: "campaign",
-            attributes: ["id", "name"],
+            attributes: ["id", "title"],
+            required: false,
           },
         ],
       },
