@@ -8,9 +8,9 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "campaignId",
         as: "campaign",
       });
-      CampaignTracking.belongsTo(models.CampaignAssignment, {
-        foreignKey: "assignmentId",
-        as: "assignment",
+      CampaignTracking.belongsTo(models.Publisher, {
+        foreignKey: "publisherId",
+        as: "publisher",
       });
       CampaignTracking.hasMany(models.PixelTracking, {
         foreignKey: "trackingId",
@@ -30,7 +30,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      assignmentId: {
+      publisherId: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
@@ -56,6 +56,22 @@ module.exports = (sequelize, DataTypes) => {
       timestamp: {
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
+      },
+      p1: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      p2: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      p3: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      p4: {
+        type: DataTypes.STRING,
+        allowNull: true,
       },
       createdAt: {
         type: DataTypes.DATE,

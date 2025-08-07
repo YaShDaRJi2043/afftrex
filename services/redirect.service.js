@@ -101,6 +101,7 @@ exports.trackClick = async (req, res) => {
     // 🌍 Geo targeting
     if (
       campaign.geoCoverage?.length &&
+      !campaign.geoCoverage.includes("all") &&
       (!geo || !campaign.geoCoverage.includes(geo.country))
     ) {
       return res.status(403).json({
@@ -156,7 +157,7 @@ exports.trackClick = async (req, res) => {
 
     await CampaignTracking.create({
       campaignId: campaign.id,
-      assignmentId: assignment.id,
+      publisherId: assignment.publisherId,
       clickId,
       ipAddress: ip,
       userAgent,
@@ -170,6 +171,10 @@ exports.trackClick = async (req, res) => {
       carrier: null,
       eventType: "click",
       timestamp: now, // ✅ explicitly set
+      p1: req.query.p1 || null,
+      p2: req.query.p2 || null,
+      p3: req.query.p3 || null,
+      p4: req.query.p4 || null,
     });
 
     const redirectUrl = new URL(campaign.defaultCampaignUrl);

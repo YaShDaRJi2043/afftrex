@@ -19,11 +19,11 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
-      assignment_id: {
+      publisher_id: {
         type: Sequelize.INTEGER,
         allowNull: true,
         references: {
-          model: "campaign_assignments",
+          model: "publishers",
           key: "id",
         },
         onUpdate: "CASCADE",
@@ -82,6 +82,22 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: true,
         defaultValue: Sequelize.literal("CURRENT_TIMESTAMP"),
+      },
+      p1: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      p2: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      p3: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      p4: {
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       created_at: {
         allowNull: false,
