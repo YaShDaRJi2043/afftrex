@@ -82,8 +82,12 @@ exports.trackClick = async (req, res) => {
       );
 
       const activeDays = campaign.activeDays || [];
+
+      // ✅ Allow all days if activeDays is empty
+      const isActiveDay =
+        activeDays.length === 0 || activeDays.includes(dayName);
       if (
-        !activeDays.includes(dayName) ||
+        !isActiveDay ||
         hour < campaign.startHour ||
         hour > campaign.endHour
       ) {
