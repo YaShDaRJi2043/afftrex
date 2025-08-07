@@ -11,16 +11,7 @@ exports.trackPixel = async (slug, data, req) => {
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const {
-    transactionId,
-    saleAmount,
-    currency,
-    p1,
-    p2,
-    p3,
-    p4,
-    conversionStatus,
-  } = data;
+  const { transactionId, saleAmount, currency, conversionStatus } = data;
 
   // Extract sessionId (or generate one)
   let sessionId =
@@ -34,10 +25,6 @@ exports.trackPixel = async (slug, data, req) => {
     transactionId,
     saleAmount,
     currency,
-    p1,
-    p2,
-    p3,
-    p4,
     sessionId,
     pageUrl,
     pixelType: "iframe",

@@ -34,26 +34,6 @@ module.exports = {
         allowNull: true,
         comment: "Currency of the sale",
       },
-      p1: {
-        type: Sequelize.STRING,
-        allowNull: true,
-        comment: "Custom parameter 1",
-      },
-      p2: {
-        type: Sequelize.STRING,
-        allowNull: true,
-        comment: "Custom parameter 2",
-      },
-      p3: {
-        type: Sequelize.STRING,
-        allowNull: true,
-        comment: "Custom parameter 3",
-      },
-      p4: {
-        type: Sequelize.STRING,
-        allowNull: true,
-        comment: "Custom parameter 4",
-      },
       click_time: {
         type: Sequelize.DATE,
         allowNull: false,

@@ -34,10 +34,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      p1: DataTypes.STRING,
-      p2: DataTypes.STRING,
-      p3: DataTypes.STRING,
-      p4: DataTypes.STRING,
       clickTime: {
         type: DataTypes.DATE,
         allowNull: false,
