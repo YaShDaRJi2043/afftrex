@@ -1,21 +1,30 @@
-const reportService = require("@services/report.service");
-const responseHelper = require("@helper/response"); // Match naming with example
+const TrackingService = require("@services/report.service");
+const responseHelper = require("@helper/response");
 
-exports.getPixelTrackingReport = async (req, res) => {
+exports.getCampaignTrackingByCampaignId = async (req, res) => {
   try {
-    const result = await reportService.getPixelTrackingReport(req.query);
+    const result = await TrackingService.getCampaignTrackingByCampaignId(req);
     responseHelper.successResponse(
       req,
       res,
-      "Pixel Tracking Report fetched successfully",
+      "Campaign tracking records fetched successfully",
       result
     );
   } catch (err) {
-    responseHelper.errorResponse(
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
+
+exports.getPixelTrackingByTrackingId = async (req, res) => {
+  try {
+    const result = await TrackingService.getPixelTrackingByTrackingId(req);
+    responseHelper.successResponse(
       req,
       res,
-      err.message || "Failed to get pixel tracking report",
-      err.statusCode || 500
+      "Conversion tracking records fetched successfully",
+      result
     );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };

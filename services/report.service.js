@@ -1,41 +1,28 @@
-const { PixelTracking, CampaignTracking, Campaign } = require("@models");
+const { CampaignTracking, PixelTracking, Publisher } = require("@models");
 
-exports.getPixelTrackingReport = async (query) => {
-  const { page = 1, limit = 10, trackingId, conversionStatus } = query;
+exports.getCampaignTrackingByCampaignId = async (req) => {
+  const { campaignId } = req.params;
 
-  const offset = (page - 1) * limit;
-
-  const where = {};
-
-  if (trackingId) where.trackingId = trackingId;
-  if (conversionStatus) where.conversionStatus = conversionStatus;
-
-  const result = await PixelTracking.findAndCountAll({
-    where,
+  const trackings = await CampaignTracking.findAll({
+    where: { campaignId },
     include: [
       {
-        model: CampaignTracking,
-        as: "campaignTracking",
-        required: false,
-        include: [
-          {
-            model: Campaign,
-            as: "campaign",
-            attributes: ["id", "title"],
-            required: false,
-          },
-        ],
+        model: Publisher,
+        as: "publisher",
+        attributes: ["id", "name"],
       },
     ],
-    order: [["createdAt", "DESC"]],
-    offset,
-    limit: parseInt(limit),
   });
 
-  return {
-    total: result.count,
-    page: parseInt(page),
-    limit: parseInt(limit),
-    data: result.rows,
-  };
+  return trackings;
+};
+
+exports.getPixelTrackingByTrackingId = async (req) => {
+  const { trackingId } = req.params;
+
+  const pixelTrackings = await PixelTracking.findAll({
+    where: { trackingId },
+  });
+
+  return pixelTrackings;
 };
