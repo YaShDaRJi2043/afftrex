@@ -3,21 +3,7 @@ const responseHelper = require("@helper/response");
 
 exports.handlePixelGet = async (req, res) => {
   try {
-    const sessionId = await pixelTrackingService.trackPixel(
-      req.params.slug,
-      req.query,
-      req
-    );
-
-    // Set sessionId cookie if not present
-    if (!req.cookies?.sessionId) {
-      res.cookie("sessionId", sessionId, {
-        httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-        sameSite: "None", // required for cross-site cookies
-        secure: true, // required when SameSite=None
-      });
-    }
+    await pixelTrackingService.trackPixel(req.params.slug, req.query, req);
 
     // Return 1x1 gif
     const pixelBuffer = Buffer.from(

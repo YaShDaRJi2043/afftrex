@@ -177,6 +177,15 @@ exports.trackClick = async (req, res) => {
       p4: req.query.p4 || null,
     });
 
+    // 📝 Set clickId in a cookie for the entire domain dynamically
+    res.cookie("clickId", clickId, {
+      httpOnly: true, // Prevent client-side access
+      secure: process.env.NODE_ENV === "production", // Use secure cookies in production
+      maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie expiration (30 days)
+      path: "/", // Make cookie accessible across the entire website
+      sameSite: "Lax", // Allow cross-page usage
+    });
+
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
     redirectUrl.searchParams.append("clickId", clickId);
 

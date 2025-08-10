@@ -13,19 +13,16 @@ exports.trackPixel = async (slug, data, req) => {
 
   const { transactionId, saleAmount, currency, conversionStatus } = data;
 
-  // Extract sessionId (or generate one)
-  let sessionId =
-    req.cookies?.sessionId ||
-    req.headers["x-session-id"] ||
-    req.query?.sessionId ||
-    uuidv4(); // fallback
+  // Extract clickId from the cookie
+  const clickId = req.cookies?.clickId;
+  if (!clickId) throw new Error("Missing clickId in cookies");
 
   await PixelTracking.create({
     trackingId: tracking.id,
     transactionId,
     saleAmount,
     currency,
-    sessionId,
+    clickId, // Use clickId instead of sessionId
     pageUrl,
     pixelType: "iframe",
     clickTime: new Date(),
@@ -35,5 +32,5 @@ exports.trackPixel = async (slug, data, req) => {
     conversionTime: new Date(),
   });
 
-  return sessionId;
+  return clickId;
 };

@@ -44,7 +44,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0,
       },
-      sessionId: DataTypes.STRING,
+      clickId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        comment: "Click ID to group clicks belonging to the same session",
+      },
       pageUrl: DataTypes.TEXT,
       pixelType: {
         type: DataTypes.STRING,

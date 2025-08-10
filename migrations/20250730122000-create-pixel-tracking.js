@@ -46,10 +46,10 @@ module.exports = {
         defaultValue: 0,
         comment: "Count of clicks by the user on the website",
       },
-      session_id: {
+      click_id: {
         type: Sequelize.STRING,
         allowNull: true,
-        comment: "Session ID to group clicks belonging to the same session",
+        comment: "Click ID to group clicks belonging to the same session",
       },
       page_url: {
         type: Sequelize.TEXT,
