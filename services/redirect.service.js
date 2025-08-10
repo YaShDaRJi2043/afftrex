@@ -179,7 +179,7 @@ exports.trackClick = async (req, res) => {
 
     // 📝 Set clickId in a cookie for the entire domain dynamically
     res.cookie("clickId", clickId, {
-      httpOnly: true, // Prevent client-side access
+      httpOnly: false, // Prevent client-side access
       secure: process.env.NODE_ENV === "production", // Use secure cookies in production
       maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie expiration (30 days)
       path: "/", // Make cookie accessible across the entire website
