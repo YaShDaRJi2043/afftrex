@@ -177,44 +177,119 @@ exports.trackClick = async (req, res) => {
       p4: req.query.p4 || null,
     });
 
-    // 🍪 Set click_id cookie with proper attributes
+    // 🍪 COMPREHENSIVE COOKIE SOLUTION
     const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
+    const host = req.get("host");
     const isLocalhost =
-      req.hostname === "localhost" || req.hostname === "127.0.0.1";
+      host.includes("localhost") || host.includes("127.0.0.1");
 
-    // Cookie options for different scenarios
-    const cookieOptions = {
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
-      httpOnly: false, // Allow JavaScript access for debugging
-      path: "/",
-    };
-
-    // For production (HTTPS)
-    if (isHttps && !isLocalhost) {
-      cookieOptions.secure = true;
-      cookieOptions.sameSite = "None";
-      cookieOptions.domain = ".afftrex.org";
+    // Method 1: Standard cookie (works for same-origin)
+    if (isHttps) {
+      res.cookie("click_id", clickId, {
+        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+        secure: true,
+        sameSite: "None",
+        httpOnly: false,
+        path: "/",
+      });
+    } else {
+      res.cookie("click_id", clickId, {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        secure: false,
+        sameSite: "Lax",
+        httpOnly: false,
+        path: "/",
+      });
     }
-    // For localhost development
-    else if (isLocalhost) {
-      // Don't set domain for localhost
-      cookieOptions.secure = false;
-      cookieOptions.sameSite = "Lax";
+
+    // Method 2: Try domain-specific cookie for afftrex.org
+    if (!isLocalhost) {
+      try {
+        res.cookie("click_id_domain", clickId, {
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+          domain: ".afftrex.org",
+          secure: isHttps,
+          sameSite: isHttps ? "None" : "Lax",
+          httpOnly: false,
+          path: "/",
+        });
+      } catch (e) {
+        console.log("Domain cookie failed:", e.message);
+      }
     }
-    // For HTTP in development
-    // No additional changes needed for other cases as default cookieOptions apply
 
-    // Set the main cookie
-    res.cookie("click_id", clickId, cookieOptions);
+    // Method 3: Partitioned cookie for third-party contexts (Chrome 118+)
+    if (isHttps) {
+      res.setHeader("Set-Cookie", [
+        ...(res.getHeaders()["set-cookie"] || []),
+        `click_id_partitioned=${clickId}; Max-Age=${
+          30 * 24 * 60 * 60
+        }; Path=/; Secure; SameSite=None; Partitioned`,
+      ]);
+    }
 
-    // Also set a backup cookie without domain for debugging
-    res.cookie("click_id_backup", clickId, {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      httpOnly: false,
-      path: "/",
-      secure: false,
-      sameSite: "Lax",
-    });
+    // Method 4: Return HTML with JavaScript cookie setting (for iframe contexts)
+    const isIframeContext =
+      req.query.iframe === "1" || req.headers["sec-fetch-dest"] === "iframe";
+
+    if (isIframeContext) {
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Setting Cookie...</title>
+            <script>
+                // Try multiple cookie setting methods
+                const clickId = '${clickId}';
+                const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toUTCString();
+                
+                // Method 1: Standard JavaScript
+                document.cookie = 'click_id=' + clickId + '; expires=' + expires + '; path=/; SameSite=Lax';
+                
+                // Method 2: Try with domain (if not localhost)
+                if (!location.hostname.includes('localhost')) {
+                    document.cookie = 'click_id_js=' + clickId + '; expires=' + expires + '; path=/; domain=.afftrex.org; SameSite=None; Secure';
+                }
+                
+                // Method 3: localStorage as backup
+                try {
+                    localStorage.setItem('click_id', clickId);
+                    localStorage.setItem('click_id_timestamp', Date.now().toString());
+                } catch (e) {
+                    console.log('localStorage not available');
+                }
+                
+                // Method 4: sessionStorage as backup
+                try {
+                    sessionStorage.setItem('click_id', clickId);
+                } catch (e) {
+                    console.log('sessionStorage not available');
+                }
+                
+                // Redirect after setting cookies
+                setTimeout(() => {
+                    window.location.href = '${campaign.defaultCampaignUrl}?clickId=${clickId}';
+                }, 100);
+            </script>
+        </head>
+        <body>
+            <p>Setting tracking cookie and redirecting...</p>
+        </body>
+        </html>
+      `;
+
+      res.set({
+        "Content-Type": "text/html",
+        "Cache-Control": "no-store, no-cache, must-revalidate",
+        Pragma: "no-cache",
+      });
+
+      return res.send(htmlContent);
+    }
+
+    // Standard redirect for non-iframe contexts
+    const redirectUrl = new URL(campaign.defaultCampaignUrl);
+    redirectUrl.searchParams.append("clickId", clickId);
 
     // Set cache control headers
     res.set({
@@ -223,8 +298,8 @@ exports.trackClick = async (req, res) => {
       Expires: "0",
     });
 
-    const redirectUrl = new URL(campaign.defaultCampaignUrl);
-    redirectUrl.searchParams.append("clickId", clickId);
+    console.log(`🍪 Cookie methods attempted for clickId: ${clickId}`);
+    console.log(`🔄 Redirecting to: ${redirectUrl.toString()}`);
 
     // Return URL for controller to handle redirect
     return { redirectUrl: redirectUrl.toString(), clickId };
