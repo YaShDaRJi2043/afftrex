@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 const path = require("path");
 
 // Get the current environment (if not set, default to 'local')
-const environment = "production";
+const environment = process.env.NODE_ENV || "production";
 
 // Define the path to the .env file based on the environment (e.g., .env.development, .env.production)
 const envFilePath = path.resolve(process.cwd(), `.env.${environment}`);
