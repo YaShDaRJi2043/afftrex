@@ -177,13 +177,16 @@ exports.trackClick = async (req, res) => {
       p4: req.query.p4 || null,
     });
 
-    // 📝 Set clickId in a cookie for the entire domain dynamically
+    // 📝 Set clickId in a cookie for the entire domain
+    const isSecure =
+      req.secure ||
+      (req.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
+
     res.cookie("clickId", clickId, {
       httpOnly: true,
-      secure: req.secure || req.headers["x-forwarded-proto"] === "https",
-      maxAge: 0,
+      secure: isSecure, // secure => true only on HTTPS
       path: "/",
-      domain: ".afftrex.org",
+      domain: ".afftrex.org", // must match your apex domain
       sameSite: "Lax",
     });
 
