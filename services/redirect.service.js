@@ -177,21 +177,33 @@ exports.trackClick = async (req, res) => {
       p4: req.query.p4 || null,
     });
 
-    // 📝 Set clickId in a cookie for the entire domain
-    const isSecure =
-      req.secure ||
-      (req.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
-
-    res.cookie("clickId", clickId, {
-      httpOnly: true,
-      secure: isSecure, // secure => true only on HTTPS
-      path: "/",
-      domain: ".afftrex.org", // cookie for all subdomains of afftrex.org
-      sameSite: "Lax",
-    });
+    // 📝 Set clickId in a cookie for the entire domain (cross-site safe)
+    // Always use Secure when SameSite=None
+    const cookieValue = encodeURIComponent(clickId);
+    const cookieAttrs = [
+      "Path=/",
+      "Domain=.afftrex.org",
+      "HttpOnly",
+      "Secure",
+      "SameSite=None",
+    ];
+    // Standard cookie for cross-site top-level navigations
+    res.append(
+      "Set-Cookie",
+      `clickId=${cookieValue}; ${cookieAttrs.join("; ")}`
+    );
+    // Partitioned cookie for third-party/iframe contexts (Chrome)
+    // Browsers that don't support Partitioned will ignore this attribute.
+    res.append(
+      "Set-Cookie",
+      `clickId=${cookieValue}; ${cookieAttrs.join("; ")}; Partitioned`
+    );
 
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
     redirectUrl.searchParams.append("clickId", clickId);
+
+    // Prevent any caching of the redirect response
+    res.set("Cache-Control", "no-store");
 
     // return URL; let controller perform the redirect (avoid double-redirect)
     return { redirectUrl: redirectUrl.toString() };
