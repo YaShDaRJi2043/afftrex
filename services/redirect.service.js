@@ -214,7 +214,9 @@ exports.trackClick = async (req, res) => {
     });
 
     // 📝 IMPORTANT CHANGE: Redirect the user to your own domain to set the cookie.
-    const redirectUrl = new URL(`https://www.afftrex.org/redirect-with-cookie`);
+    const redirectUrl = new URL(
+      `https://www.afftrex.org/public/redirect-with-cookie`
+    );
     redirectUrl.searchParams.append("clickId", clickId);
     redirectUrl.searchParams.append("finalUrl", campaign.defaultCampaignUrl);
 
