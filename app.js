@@ -20,9 +20,7 @@ app.use("/public", redirectRoutes);
 app.use("/pixel", pixelRoutes);
 
 app.use((err, req, res, next) => {
-  if (err instanceof multer.MulterError) {
-    return res.status(400).json({ error: err.message });
-  } else if (err) {
+  if (err) {
     return res.status(400).json({ error: err.message });
   }
   next();
