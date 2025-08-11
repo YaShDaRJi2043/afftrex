@@ -186,14 +186,15 @@ exports.trackClick = async (req, res) => {
       httpOnly: true,
       secure: isSecure, // secure => true only on HTTPS
       path: "/",
-      domain: ".afftrex.org", // must match your apex domain
+      domain: ".afftrex.org", // cookie for all subdomains of afftrex.org
       sameSite: "Lax",
     });
 
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
     redirectUrl.searchParams.append("clickId", clickId);
 
-    return res.redirect(302, redirectUrl.toString());
+    // return URL; let controller perform the redirect (avoid double-redirect)
+    return { redirectUrl: redirectUrl.toString() };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     return res.status(500).json({
