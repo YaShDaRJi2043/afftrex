@@ -179,11 +179,12 @@ exports.trackClick = async (req, res) => {
 
     // 📝 Set clickId in a cookie for the entire domain dynamically
     res.cookie("clickId", clickId, {
-      httpOnly: false, // Allow client-side access for debugging
-      secure: false, // Disable secure for local testing (use true in production with HTTPS)
-      maxAge: 30 * 24 * 60 * 60 * 1000, // Cookie expiration (30 days)
-      path: "/", // Make cookie accessible across the entire website
-      sameSite: "Lax", // Allow cross-page usage
+      httpOnly: true,
+      secure: req.secure || req.headers["x-forwarded-proto"] === "https",
+      maxAge: 0,
+      path: "/",
+      domain: ".afftrex.org",
+      sameSite: "Lax",
     });
 
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
