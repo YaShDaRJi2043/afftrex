@@ -170,43 +170,64 @@ exports.trackClick = async (req, res) => {
       browser: ua.browser.name || null,
       carrier: null,
       eventType: "click",
-      timestamp: now, // ✅ explicitly set
+      timestamp: now,
       p1: req.query.p1 || null,
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
     });
 
-    // 📝 Set clickId in a cookie for the entire domain (cross-site safe)
-    // Always use Secure when SameSite=None
-    const cookieValue = encodeURIComponent(clickId);
-    const cookieAttrs = [
-      "Path=/",
-      "Domain=.afftrex.org",
-      "HttpOnly",
-      "Secure",
-      "SameSite=None",
-    ];
-    // Standard cookie for cross-site top-level navigations
-    res.append(
-      "Set-Cookie",
-      `clickId=${cookieValue}; ${cookieAttrs.join("; ")}`
-    );
-    // Partitioned cookie for third-party/iframe contexts (Chrome)
-    // Browsers that don't support Partitioned will ignore this attribute.
-    res.append(
-      "Set-Cookie",
-      `clickId=${cookieValue}; ${cookieAttrs.join("; ")}; Partitioned`
-    );
+    // 🍪 Set click_id cookie with proper attributes
+    const isHttps = req.secure || req.headers["x-forwarded-proto"] === "https";
+    const isLocalhost =
+      req.hostname === "localhost" || req.hostname === "127.0.0.1";
+
+    // Cookie options for different scenarios
+    const cookieOptions = {
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days in milliseconds
+      httpOnly: false, // Allow JavaScript access for debugging
+      path: "/",
+    };
+
+    // For production (HTTPS)
+    if (isHttps && !isLocalhost) {
+      cookieOptions.secure = true;
+      cookieOptions.sameSite = "None";
+      cookieOptions.domain = ".afftrex.org";
+    }
+    // For localhost development
+    else if (isLocalhost) {
+      // Don't set domain for localhost
+      cookieOptions.secure = false;
+      cookieOptions.sameSite = "Lax";
+    }
+    // For HTTP in development
+    // No additional changes needed for other cases as default cookieOptions apply
+
+    // Set the main cookie
+    res.cookie("click_id", clickId, cookieOptions);
+
+    // Also set a backup cookie without domain for debugging
+    res.cookie("click_id_backup", clickId, {
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      httpOnly: false,
+      path: "/",
+      secure: false,
+      sameSite: "Lax",
+    });
+
+    // Set cache control headers
+    res.set({
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    });
 
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
     redirectUrl.searchParams.append("clickId", clickId);
 
-    // Prevent any caching of the redirect response
-    res.set("Cache-Control", "no-store");
-
-    // return URL; let controller perform the redirect (avoid double-redirect)
-    return { redirectUrl: redirectUrl.toString() };
+    // Return URL for controller to handle redirect
+    return { redirectUrl: redirectUrl.toString(), clickId };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     return res.status(500).json({
