@@ -4,6 +4,43 @@ const { Op } = require("sequelize");
 const UAParser = require("ua-parser-js");
 const { v4: uuidv4 } = require("uuid");
 
+// A new controller function to handle the final redirect and cookie setting
+exports.redirectWithCookie = async (req, res) => {
+  try {
+    const { clickId, finalUrl } = req.query;
+
+    if (!clickId || !finalUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing clickId or finalUrl.",
+      });
+    }
+
+    // Set a first-party cookie. This will succeed because the user is on your domain.
+    const isSecure =
+      req.secure ||
+      (req.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
+    res.cookie("clickId", clickId, {
+      httpOnly: true,
+      secure: isSecure,
+      path: "/",
+      domain: ".afftrex.org", // Use your domain for the cookie
+      sameSite: "Lax", // Or 'Strict', as this is now a first-party cookie
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+
+    // Redirect the user to the final destination URL
+    res.redirect(finalUrl);
+  } catch (err) {
+    console.error("🔥 Redirect with cookie error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
+  }
+};
+
+// The original trackClick controller, modified to use the new redirect strategy
 exports.trackClick = async (req, res) => {
   try {
     const shortCampaignId = req.params.campaignId;
@@ -83,7 +120,6 @@ exports.trackClick = async (req, res) => {
 
       const activeDays = campaign.activeDays || [];
 
-      // ✅ Allow all days if activeDays is empty
       const isActiveDay =
         activeDays.length === 0 || activeDays.includes(dayName);
       if (
@@ -170,40 +206,20 @@ exports.trackClick = async (req, res) => {
       browser: ua.browser.name || null,
       carrier: null,
       eventType: "click",
-      timestamp: now, // ✅ explicitly set
+      timestamp: now,
       p1: req.query.p1 || null,
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
     });
 
-    // 📝 Set clickId in a cookie for the entire domain
-    const isSecure =
-      req.secure ||
-      (req.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
-
-    // Standard cookie for cross-site top-level navigations
-    res.cookie("clickId", clickId, {
-      httpOnly: true,
-      secure: isSecure, // secure => true only on HTTPS
-      path: "/",
-      domain: ".afftrex.org", // cookie for all subdomains of afftrex.org
-      sameSite: "None", // Required for cross-site cookies
-    });
-
-    // Partitioned cookie for iframe/third-party contexts
-    res.setHeader(
-      "Set-Cookie",
-      `click_id_partitioned=${clickId}; Max-Age=${
-        30 * 24 * 60 * 60
-      }; Secure; SameSite=None; Partitioned; Path=/`
-    );
-
-    const redirectUrl = new URL(campaign.defaultCampaignUrl);
+    // 📝 IMPORTANT CHANGE: Redirect the user to your own domain to set the cookie.
+    const redirectUrl = new URL(`https://www.afftrex.org/redirect-with-cookie`);
     redirectUrl.searchParams.append("clickId", clickId);
+    redirectUrl.searchParams.append("finalUrl", campaign.defaultCampaignUrl);
 
-    // return URL; let controller perform the redirect (avoid double-redirect)
-    return { redirectUrl: redirectUrl.toString() };
+    // This is the new URL the controller will redirect to.
+    return res.redirect(redirectUrl.toString());
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     return res.status(500).json({
