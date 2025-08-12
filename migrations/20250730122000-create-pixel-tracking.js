@@ -91,6 +91,14 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.NOW,
       },
+      campaign_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "campaigns",
+          key: "id",
+        },
+      },
     });
   },
 

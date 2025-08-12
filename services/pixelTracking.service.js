@@ -8,8 +8,7 @@ exports.trackPixel = async (slug, data, req) => {
 
   // Extract clickId from the cookie
   const clickId = req.cookies?.click_id;
-  console.log(clickId);
-  // if (!clickId) throw new Error("Missing clickId in cookies");
+  if (!clickId) throw new Error("Missing clickId in cookies");
 
   // Find tracking using clickId
   const tracking = await CampaignTracking.findOne({
@@ -26,6 +25,7 @@ exports.trackPixel = async (slug, data, req) => {
 
   try {
     await PixelTracking.create({
+      campaignId: campaign.id, // Add campaignId
       trackingId: tracking.id,
       transactionId: transaction_id,
       saleAmount,
