@@ -8,6 +8,7 @@ const router = require("@routes/routes");
 const { serverInfo } = require("@config/config");
 const redirectRoutes = require("@routes/redirect.route");
 const pixelRoutes = require("@routes/pixelTracking.routes");
+const cookieHandler = require("@middleware/cookieHandler");
 
 const app = express();
 
@@ -22,6 +23,9 @@ app.use(
 );
 app.use(helmet());
 app.use(cookieParser());
+
+// Apply cookie handler middleware globally
+app.use(cookieHandler);
 
 // Main API routes
 app.use(serverInfo.host_url_prefix, router);

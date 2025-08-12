@@ -166,6 +166,14 @@ exports.trackClick = async (req, res, providedClickId) => {
       });
     }
 
+    // Ensure the campaign URL is valid
+    if (!campaign.defaultCampaignUrl) {
+      return res.status(400).json({
+        success: false,
+        message: "Campaign URL is missing.",
+      });
+    }
+
     // Save the click in DB
     await CampaignTracking.create({
       campaignId: campaign.id,
@@ -187,9 +195,10 @@ exports.trackClick = async (req, res, providedClickId) => {
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
+      redirectUrl: campaign.defaultCampaignUrl,
     });
 
-    // return values for controller
+    // Return values for controller
     return {
       clickId,
       redirectUrl: campaign.defaultCampaignUrl,
