@@ -14,7 +14,7 @@ router.get(
 );
 
 router.get(
-  "/conversion-trackings/:trackingId",
+  "/conversion-trackings/:campaignId",
   checkFeature("view_conversion_tracking"),
   trackingController.getPixelTrackingByTrackingId
 );
