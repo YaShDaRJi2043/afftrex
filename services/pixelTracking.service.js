@@ -2,8 +2,6 @@ const { Campaign, CampaignTracking, PixelTracking } = require("@models");
 
 exports.trackPixel = async (slug, data, req) => {
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
-  console.log(campaign);
-
   if (!campaign) throw new Error("Invalid tracking slug");
 
   // Extract clickId from the cookie
@@ -25,7 +23,7 @@ exports.trackPixel = async (slug, data, req) => {
 
   try {
     await PixelTracking.create({
-      campaignId: campaign.id, // Add campaignId
+      campaignId: campaign.id,
       trackingId: tracking.id,
       transactionId: transaction_id,
       saleAmount,
