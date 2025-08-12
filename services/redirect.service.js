@@ -4,56 +4,20 @@ const { Op } = require("sequelize");
 const UAParser = require("ua-parser-js");
 const { v4: uuidv4 } = require("uuid");
 
-// A new controller function to handle the final redirect and cookie setting
-exports.redirectWithCookie = async (req, res) => {
-  try {
-    const { clickId, finalUrl } = req.query;
-
-    if (!clickId || !finalUrl) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing clickId or finalUrl.",
-      });
-    }
-
-    // Set a first-party cookie. This will succeed because the user is on your domain.
-    const isSecure =
-      req.secure ||
-      (req.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
-    res.cookie("clickId", clickId, {
-      httpOnly: true,
-      secure: isSecure,
-      path: "/",
-      domain: ".afftrex.org", // Use your domain for the cookie
-      sameSite: "Lax", // Or 'Strict', as this is now a first-party cookie
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
-
-    // Redirect the user to the final destination URL
-    res.redirect(finalUrl);
-  } catch (err) {
-    console.error("🔥 Redirect with cookie error:", err);
-    res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
-  }
-};
-
-// The original trackClick controller, modified to use the new redirect strategy
-exports.trackClick = async (req, res) => {
+exports.trackClick = async (req, res, providedClickId) => {
   try {
     const shortCampaignId = req.params.campaignId;
     const shortPublisherId = req.query.pub;
 
     if (!shortCampaignId || !shortPublisherId) {
+      // Keep using res here so controller can bail out by checking res.headersSent
       return res.status(400).json({
         success: false,
         message: "Missing campaign or publisher ID.",
       });
     }
 
-    // 🔍 Find CampaignAssignment + Campaign
+    // Find assignment + campaign
     const assignment = await CampaignAssignment.findOne({
       where: {
         publisherLink: {
@@ -79,7 +43,7 @@ exports.trackClick = async (req, res) => {
       });
     }
 
-    // 🧠 Metadata: IP, UA, Geo, Time
+    // metadata
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.connection.remoteAddress;
@@ -89,14 +53,13 @@ exports.trackClick = async (req, res) => {
     const ua = new UAParser(userAgent).getResult();
     const now = new Date();
 
-    // 🕒 Date range validation
+    // date range checks
     const start = campaign.campaignStartDate
       ? new Date(campaign.campaignStartDate)
       : null;
     const end = campaign.campaignEndDate
       ? new Date(campaign.campaignEndDate)
       : null;
-
     if ((start && now < start) || (end && now > end)) {
       return res.status(403).json({
         success: false,
@@ -104,7 +67,7 @@ exports.trackClick = async (req, res) => {
       });
     }
 
-    // 🎯 Time targeting
+    // time targeting
     if (campaign.enableTimeTargeting) {
       const dayName = now.toLocaleString("en-US", {
         weekday: "long",
@@ -117,9 +80,7 @@ exports.trackClick = async (req, res) => {
           timeZone: campaign.timezone,
         })
       );
-
       const activeDays = campaign.activeDays || [];
-
       const isActiveDay =
         activeDays.length === 0 || activeDays.includes(dayName);
       if (
@@ -134,7 +95,7 @@ exports.trackClick = async (req, res) => {
       }
     }
 
-    // 🌍 Geo targeting
+    // geo targeting
     if (
       campaign.geoCoverage?.length &&
       !campaign.geoCoverage.includes("all") &&
@@ -146,7 +107,7 @@ exports.trackClick = async (req, res) => {
       });
     }
 
-    // 💻 Device targeting
+    // device/os/carrier targeting (same as your code)
     const deviceType = ua.device.type || "desktop";
     const allowedDevices = campaign.devices?.map((d) => d.toLowerCase()) || [];
     if (
@@ -160,7 +121,6 @@ exports.trackClick = async (req, res) => {
       });
     }
 
-    // 🖥️ OS targeting
     const osName = ua.os.name || "";
     const allowedOS =
       campaign.operatingSystem?.map((os) => os.toLowerCase()) || [];
@@ -175,7 +135,6 @@ exports.trackClick = async (req, res) => {
       });
     }
 
-    // 📶 Carrier targeting (placeholder logic)
     const carrier = null;
     if (
       campaign.carrierTargeting?.length &&
@@ -188,9 +147,26 @@ exports.trackClick = async (req, res) => {
       });
     }
 
-    // ✅ Generate clickId & track event
-    const clickId = uuidv4();
+    // determine clickId (prefer provided from middleware)
+    const clickId = providedClickId || req.cookies?.clickId || uuidv4();
 
+    // Ensure cookie exists (in case middleware wasn't used)
+    if (!req.cookies?.clickId) {
+      const isSecure =
+        req.secure ||
+        (req.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
+
+      res.cookie("clickId", clickId, {
+        domain: ".afftrex.org",
+        httpOnly: false,
+        secure: isSecure,
+        sameSite: "None",
+        path: "/",
+        maxAge: 90 * 24 * 60 * 60 * 1000,
+      });
+    }
+
+    // Save the click in DB
     await CampaignTracking.create({
       campaignId: campaign.id,
       publisherId: assignment.publisherId,
@@ -213,20 +189,14 @@ exports.trackClick = async (req, res) => {
       p4: req.query.p4 || null,
     });
 
-    // 📝 IMPORTANT CHANGE: Redirect the user to your own domain to set the cookie.
-    const redirectUrl = new URL(
-      `https://www.afftrex.org/public/redirect-with-cookie`
-    );
-    redirectUrl.searchParams.append("clickId", clickId);
-    redirectUrl.searchParams.append("finalUrl", campaign.defaultCampaignUrl);
-
-    // This is the new URL the controller will redirect to.
-    return res.redirect(redirectUrl.toString());
+    // return values for controller
+    return {
+      clickId,
+      redirectUrl: campaign.defaultCampaignUrl,
+    };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    // Unexpected error -> bubble up so controller handles and responds
+    throw err;
   }
 };
