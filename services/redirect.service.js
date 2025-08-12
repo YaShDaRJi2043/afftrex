@@ -195,7 +195,6 @@ exports.trackClick = async (req, res, providedClickId) => {
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
-      redirectUrl: campaign.defaultCampaignUrl,
     });
 
     // Return values for controller
