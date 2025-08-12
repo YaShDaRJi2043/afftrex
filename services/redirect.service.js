@@ -184,7 +184,7 @@ exports.trackClick = async (req, res) => {
     // Example: The target website should extract `clickId` from the query string
     // and set a cookie for `https://api.afftrex.org` using server-side logic.
 
-    return { redirectUrl: redirectUrl.toString() };
+    return { redirectUrl: redirectUrl.toString(), clickId };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     return res.status(500).json({

@@ -13,6 +13,7 @@ exports.handleRedirect = async (req, res) => {
         path: "/",
         httpOnly: true,
         secure: true,
+        sameSite: "Lax",
       });
 
       // Redirect to the target URL
