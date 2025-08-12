@@ -18,7 +18,7 @@ exports.trackPixel = async (slug, data, req) => {
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const { transactionId, saleAmount, currency, conversionStatus } = data;
+  const { transaction_id, saleAmount, currency, conversionStatus } = data;
 
   // Extract pageUrl from the request or data
   const pageUrl =
@@ -27,7 +27,7 @@ exports.trackPixel = async (slug, data, req) => {
   try {
     await PixelTracking.create({
       trackingId: tracking.id,
-      transactionId,
+      transactionId: transaction_id,
       saleAmount,
       currency,
       clickId, // Use clickId instead of sessionId
