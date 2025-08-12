@@ -18,10 +18,10 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
 };
 
 exports.getPixelTrackingByTrackingId = async (req) => {
-  const { trackingId } = req.params;
+  const { campaignId } = req.params;
 
   const pixelTrackings = await PixelTracking.findAll({
-    where: { trackingId },
+    where: { campaignId },
   });
 
   return pixelTrackings;
