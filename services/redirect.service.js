@@ -4,20 +4,19 @@ const { Op } = require("sequelize");
 const UAParser = require("ua-parser-js");
 const { v4: uuidv4 } = require("uuid");
 
-exports.trackClick = async (req, res, providedClickId) => {
+exports.trackClick = async (req, res) => {
   try {
     const shortCampaignId = req.params.campaignId;
     const shortPublisherId = req.query.pub;
 
     if (!shortCampaignId || !shortPublisherId) {
-      // Keep using res here so controller can bail out by checking res.headersSent
       return res.status(400).json({
         success: false,
         message: "Missing campaign or publisher ID.",
       });
     }
 
-    // Find assignment + campaign
+    // 🔍 Find CampaignAssignment + Campaign
     const assignment = await CampaignAssignment.findOne({
       where: {
         publisherLink: {
@@ -43,7 +42,7 @@ exports.trackClick = async (req, res, providedClickId) => {
       });
     }
 
-    // metadata
+    // 🧠 Metadata: IP, UA, Geo, Time
     const ip =
       req.headers["x-forwarded-for"]?.split(",")[0] ||
       req.connection.remoteAddress;
@@ -53,13 +52,14 @@ exports.trackClick = async (req, res, providedClickId) => {
     const ua = new UAParser(userAgent).getResult();
     const now = new Date();
 
-    // date range checks
+    // 🕒 Date range validation
     const start = campaign.campaignStartDate
       ? new Date(campaign.campaignStartDate)
       : null;
     const end = campaign.campaignEndDate
       ? new Date(campaign.campaignEndDate)
       : null;
+
     if ((start && now < start) || (end && now > end)) {
       return res.status(403).json({
         success: false,
@@ -67,7 +67,7 @@ exports.trackClick = async (req, res, providedClickId) => {
       });
     }
 
-    // time targeting
+    // 🎯 Time targeting
     if (campaign.enableTimeTargeting) {
       const dayName = now.toLocaleString("en-US", {
         weekday: "long",
@@ -80,7 +80,10 @@ exports.trackClick = async (req, res, providedClickId) => {
           timeZone: campaign.timezone,
         })
       );
+
       const activeDays = campaign.activeDays || [];
+
+      // ✅ Allow all days if activeDays is empty
       const isActiveDay =
         activeDays.length === 0 || activeDays.includes(dayName);
       if (
@@ -95,7 +98,7 @@ exports.trackClick = async (req, res, providedClickId) => {
       }
     }
 
-    // geo targeting
+    // 🌍 Geo targeting
     if (
       campaign.geoCoverage?.length &&
       !campaign.geoCoverage.includes("all") &&
@@ -107,7 +110,7 @@ exports.trackClick = async (req, res, providedClickId) => {
       });
     }
 
-    // device/os/carrier targeting (same as your code)
+    // 💻 Device targeting
     const deviceType = ua.device.type || "desktop";
     const allowedDevices = campaign.devices?.map((d) => d.toLowerCase()) || [];
     if (
@@ -121,6 +124,7 @@ exports.trackClick = async (req, res, providedClickId) => {
       });
     }
 
+    // 🖥️ OS targeting
     const osName = ua.os.name || "";
     const allowedOS =
       campaign.operatingSystem?.map((os) => os.toLowerCase()) || [];
@@ -135,6 +139,7 @@ exports.trackClick = async (req, res, providedClickId) => {
       });
     }
 
+    // 📶 Carrier targeting (placeholder logic)
     const carrier = null;
     if (
       campaign.carrierTargeting?.length &&
@@ -147,34 +152,9 @@ exports.trackClick = async (req, res, providedClickId) => {
       });
     }
 
-    // determine clickId (prefer provided from middleware)
-    const clickId = providedClickId || req.cookies?.clickId || uuidv4();
+    // ✅ Generate clickId & track event
+    const clickId = uuidv4();
 
-    // Ensure cookie exists (in case middleware wasn't used)
-    if (!req.cookies?.clickId) {
-      const isSecure =
-        req.secure ||
-        (req.get("x-forwarded-proto") || "").split(",")[0].trim() === "https";
-
-      res.cookie("clickId", clickId, {
-        domain: ".afftrex.org",
-        httpOnly: false,
-        secure: isSecure,
-        sameSite: "None",
-        path: "/",
-        maxAge: 90 * 24 * 60 * 60 * 1000,
-      });
-    }
-
-    // Ensure the campaign URL is valid
-    if (!campaign.defaultCampaignUrl) {
-      return res.status(400).json({
-        success: false,
-        message: "Campaign URL is missing.",
-      });
-    }
-
-    // Save the click in DB
     await CampaignTracking.create({
       campaignId: campaign.id,
       publisherId: assignment.publisherId,
@@ -190,21 +170,23 @@ exports.trackClick = async (req, res, providedClickId) => {
       browser: ua.browser.name || null,
       carrier: null,
       eventType: "click",
-      timestamp: now,
+      timestamp: now, // ✅ explicitly set
       p1: req.query.p1 || null,
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
     });
 
-    // Return values for controller
-    return {
-      clickId,
-      redirectUrl: campaign.defaultCampaignUrl,
-    };
+    const redirectUrl = new URL(campaign.defaultCampaignUrl);
+    redirectUrl.searchParams.append("clickId", clickId);
+
+    // return URL; let controller perform the redirect (avoid double-redirect)
+    return { redirectUrl: redirectUrl.toString() };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
-    // Unexpected error -> bubble up so controller handles and responds
-    throw err;
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+    });
   }
 };
