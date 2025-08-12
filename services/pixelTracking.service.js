@@ -7,7 +7,7 @@ exports.trackPixel = async (slug, data, req) => {
   if (!campaign) throw new Error("Invalid tracking slug");
 
   // Extract clickId from the cookie
-  const clickId = req.cookies?.clickId;
+  const clickId = req.cookies?.click_id;
   console.log(clickId);
   // if (!clickId) throw new Error("Missing clickId in cookies");
 
