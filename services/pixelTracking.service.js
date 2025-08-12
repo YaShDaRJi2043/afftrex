@@ -5,6 +5,7 @@ exports.trackPixel = async (slug, data, req) => {
 
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
   if (!campaign) throw new Error("Invalid tracking slug");
+  console.log(campaign);
 
   // Extract clickId from the cookie
   const clickId = req.cookies?.clickId;
