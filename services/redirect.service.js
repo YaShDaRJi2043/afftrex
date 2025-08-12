@@ -180,7 +180,10 @@ exports.trackClick = async (req, res) => {
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
     redirectUrl.searchParams.append("clickId", clickId);
 
-    // return URL; let controller perform the redirect (avoid double-redirect)
+    // Add a note for the target website to handle the clickId and set the cookie
+    // Example: The target website should extract `clickId` from the query string
+    // and set a cookie for `https://api.afftrex.org` using server-side logic.
+
     return { redirectUrl: redirectUrl.toString() };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
