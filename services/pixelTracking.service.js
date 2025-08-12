@@ -11,6 +11,8 @@ exports.trackPixel = async (slug, data, req) => {
   const clickId = req.cookies?.clickId;
   if (!clickId) throw new Error("Missing clickId in cookies");
 
+  console.log(clickId);
+
   // Find tracking using clickId
   const tracking = await CampaignTracking.findOne({
     where: { clickId },
