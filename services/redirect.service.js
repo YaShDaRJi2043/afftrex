@@ -99,16 +99,16 @@ exports.trackClick = async (req, res) => {
     }
 
     // 🌍 Geo targeting
-    if (
-      campaign.geoCoverage?.length &&
-      !campaign.geoCoverage.includes("all") &&
-      (!geo || !campaign.geoCoverage.includes(geo.country))
-    ) {
-      return res.status(403).json({
-        success: false,
-        message: "Click not allowed from your country.",
-      });
-    }
+    // if (
+    //   campaign.geoCoverage?.length &&
+    //   !campaign.geoCoverage.includes("all") &&
+    //   (!geo || !campaign.geoCoverage.includes(geo.country))
+    // ) {
+    //   return res.status(403).json({
+    //     success: false,
+    //     message: "Click not allowed from your country.",
+    //   });
+    // }
 
     // 💻 Device targeting
     const deviceType = ua.device.type || "desktop";
