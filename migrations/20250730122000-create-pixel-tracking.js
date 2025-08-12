@@ -78,10 +78,8 @@ module.exports = {
         comment: "Value associated with the conversion",
       },
       conversion_status: {
-        type: Sequelize.ENUM("pending", "success", "rejected"),
-        allowNull: false,
-        defaultValue: "pending",
-        comment: "Status of the conversion",
+        type: Sequelize.STRING,
+        allowNull: true,
       },
       created_at: {
         type: Sequelize.DATE,
