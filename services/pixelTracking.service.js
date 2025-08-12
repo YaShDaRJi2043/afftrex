@@ -20,20 +20,30 @@ exports.trackPixel = async (slug, data, req) => {
 
   const { transactionId, saleAmount, currency, conversionStatus } = data;
 
-  await PixelTracking.create({
-    trackingId: tracking.id,
-    transactionId,
-    saleAmount,
-    currency,
-    clickId, // Use clickId instead of sessionId
-    pageUrl,
-    pixelType: "iframe",
-    clickTime: new Date(),
-    clickCount: 1,
-    conversionValue: saleAmount,
-    conversionStatus,
-    conversionTime: new Date(),
-  });
+  // Extract pageUrl from the request or data
+  const pageUrl =
+    req.query.pageUrl || data.pageUrl || req.headers.referer || "unknown";
+
+  try {
+    await PixelTracking.create({
+      trackingId: tracking.id,
+      transactionId,
+      saleAmount,
+      currency,
+      clickId, // Use clickId instead of sessionId
+      pageUrl, // Ensure pageUrl is provided
+      pixelType: "iframe",
+      clickTime: new Date(),
+      clickCount: 1,
+      conversionValue: saleAmount,
+      conversionStatus,
+      conversionTime: new Date(),
+    });
+    console.log("Pixel tracking data inserted successfully");
+  } catch (error) {
+    console.error("Error inserting pixel tracking data:", error);
+    throw new Error("Failed to insert pixel tracking data");
+  }
 
   return clickId;
 };
