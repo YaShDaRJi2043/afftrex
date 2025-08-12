@@ -9,8 +9,7 @@ exports.trackPixel = async (slug, data, req) => {
 
   // Extract clickId from the cookie
   const clickId = req.cookies?.clickId;
-  if (!clickId) throw new Error("Missing clickId in cookies");
-
+  // if (!clickId) throw new Error("Missing clickId in cookies");
   console.log(clickId);
 
   // Find tracking using clickId
