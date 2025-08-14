@@ -15,10 +15,10 @@ app.set("trust proxy", true);
 app.use(express.json());
 app.use(cors());
 app.use(helmet());
-app.use(cookieParser()); // Added cookie-parser middleware
+app.use(cookieParser());
 
 app.use(serverInfo.host_url_prefix, router);
-app.use("/public", redirectRoutes); // Ensure this line is present to use redirect routes
+app.use("/public", redirectRoutes);
 app.use("/pixel", pixelRoutes);
 
 app.use((err, req, res, next) => {

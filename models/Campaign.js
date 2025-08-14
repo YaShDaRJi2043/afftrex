@@ -154,6 +154,12 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      unique_id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: true,
+        unique: true,
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,

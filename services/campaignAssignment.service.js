@@ -25,7 +25,6 @@ exports.assignCampaignToPublishers = async ({
     const publisher = await Publisher.findByPk(publisherId);
     if (!publisher) throw new Error(`Publisher ${publisherId} not found`);
 
-    const encryptedCampaignId = encrypt(campaignId.toString());
     const encryptedPublisherId = encrypt(publisherId.toString());
 
     const queryParams = new URLSearchParams({ pub: encryptedPublisherId });
@@ -34,9 +33,9 @@ exports.assignCampaignToPublishers = async ({
     if (p3) queryParams.append("p3", p3);
     if (p4) queryParams.append("p4", p4);
 
-    const publisherLink = `${
-      serverInfo.api_url
-    }/public/c/${encryptedCampaignId}?${queryParams.toString()}`;
+    const publisherLink = `${serverInfo.api_url}/public/c/${
+      campaign.unique_id
+    }?${queryParams.toString()}`; // Use unique_id directly
 
     const assignment = await CampaignAssignment.create({
       campaignId,

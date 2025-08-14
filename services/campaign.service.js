@@ -1,17 +1,12 @@
 // services/campaignService.js
 const { Op } = require("sequelize");
 const slugify = require("slugify");
-const crypto = require("crypto");
+const { v4: uuidv4 } = require("uuid");
 
 const { Campaign, Company, CampaignAssignment } = require("@models/index");
 const CampaignHelpers = require("@helper/campaignHelpers");
 const { uploadToS3 } = require("@utils/s3");
 const { serverInfo } = require("@config/config");
-
-const encrypt = (text) => {
-  const hash = crypto.createHash("sha256").update(text).digest("base64url");
-  return hash.slice(0, 5);
-};
 
 exports.generateUniqueSlug = async (baseSlug) => {
   let slug = baseSlug;
@@ -83,6 +78,7 @@ exports.createCampaign = async (req) => {
 
   const newCampaignData = {
     ...restOfData,
+    unique_id: uuidv4(), // Generate unique_id
     company_id,
     title,
     trackingSlug,
@@ -129,11 +125,11 @@ exports.createCampaign = async (req) => {
 
   const campaign = await Campaign.create(newCampaignData);
 
-  // ✅ Generate and update tracking script with encrypted ID
+  // ✅ Generate and update tracking script with encrypted unique_id
   const trackingScript = await exports.generateTrackingScript({
     conversionTracking: conversionTracking || "iframe_pixel",
     trackingSlug,
-    campaignId: campaign.id,
+    uniqueId: campaign.unique_id, // Use unique_id instead of id
   });
 
   await campaign.update({ trackingScript });
@@ -387,14 +383,13 @@ exports.updateCampaignStatus = async (id, status) => {
 exports.generateTrackingScript = async ({
   conversionTracking,
   trackingSlug,
-  campaignId,
+  uniqueId,
 }) => {
-  if (!conversionTracking || !trackingSlug) {
+  if (!conversionTracking || !trackingSlug || !uniqueId) {
     throw new Error("Missing required parameters for script generation.");
   }
 
   let script = "";
-  let encryptedCampaignId;
 
   switch (conversionTracking) {
     case "server_postback":
@@ -424,10 +419,9 @@ exports.generateTrackingScript = async ({
 
     case "iframe_pixel":
     case "image_pixel":
-      encryptedCampaignId = encrypt(campaignId.toString());
       script = `
 <iframe 
-  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=${encryptedCampaignId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR" 
+  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR" 
   width="1" 
   height="1" 
   frameborder="0" 

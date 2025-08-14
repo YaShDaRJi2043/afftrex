@@ -204,6 +204,12 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: true,
       },
+      unique_id: {
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.UUIDV4,
+        allowNull: true,
+        unique: true,
+      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,

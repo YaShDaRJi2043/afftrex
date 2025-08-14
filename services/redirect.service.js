@@ -6,10 +6,10 @@ const { v4: uuidv4 } = require("uuid");
 
 exports.trackClick = async (req, res) => {
   try {
-    const shortCampaignId = req.params.campaignId;
+    const CampaignUniqueId = req.params.campaignId;
     const shortPublisherId = req.query.pub;
 
-    if (!shortCampaignId || !shortPublisherId) {
+    if (!CampaignUniqueId || !shortPublisherId) {
       return res.status(400).json({
         success: false,
         message: "Missing campaign or publisher ID.",
@@ -20,13 +20,16 @@ exports.trackClick = async (req, res) => {
     const assignment = await CampaignAssignment.findOne({
       where: {
         publisherLink: {
-          [Op.like]: `%/c/${shortCampaignId}?pub=${shortPublisherId}%`,
+          [Op.like]: `%/c/${CampaignUniqueId}?pub=${shortPublisherId}%`,
         },
       },
       include: [{ model: Campaign, as: "campaign" }],
     });
 
-    if (!assignment?.campaign) {
+    if (
+      !assignment?.campaign ||
+      assignment.campaign.unique_id !== CampaignUniqueId
+    ) {
       return res.status(404).json({
         success: false,
         message: "Campaign or publisher not found.",
