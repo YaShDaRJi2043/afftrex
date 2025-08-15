@@ -9,13 +9,13 @@ router.use(authMiddleware);
 
 router.get(
   "/campaign-trackings/:campaignId",
-  checkFeature("view_campaign_tracking"),
+  checkFeature("report_view_campaign_tracking"),
   trackingController.getCampaignTrackingByCampaignId
 );
 
 router.get(
   "/conversion-trackings/:campaignId",
-  checkFeature("view_conversion_tracking"),
+  checkFeature("report_view_conversion_tracking"),
   trackingController.getPixelTrackingByTrackingId
 );
 

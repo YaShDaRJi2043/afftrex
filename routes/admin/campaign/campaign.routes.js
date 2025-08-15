@@ -14,7 +14,7 @@ router.use(authMiddleware);
 router.post(
   "/",
   upload.single("thumbnail"),
-  checkFeature("manage_campaigns"),
+  checkFeature("campaign_create"),
   validate(campaignValidator.createCampaignValidator),
   campaignController.createCampaign
 );
@@ -29,27 +29,28 @@ router.get(
 
 router.put(
   "/:id",
-  checkFeature("review_campaigns"),
+  checkFeature("campaign_edit"),
   validate(campaignValidator.updateCampaignValidator),
   campaignController.updateCampaign
 );
 
 router.patch(
   "/:id/status",
-  checkFeature("review_campaigns"),
+  checkFeature("campaign_status_update"),
   validate(campaignValidator.updateStatusValidator),
   campaignController.updateCampaignStatus
 );
 
 router.delete(
   "/:id",
-  checkFeature("review_campaigns"),
+  checkFeature("campaign_delete"),
   validate(campaignValidator.getCampaignValidator),
   campaignController.deleteCampaign
 );
 
 router.put(
   "/update-tracking-script/:id",
+  checkFeature("campaign_update_tracking_script"),
   campaignController.updateTrackingScriptParams
 );
 

@@ -13,39 +13,39 @@ router.use(authMiddleware);
 // Routes
 router.post(
   "/list",
-  checkFeature("manage_advertisers"),
+  checkFeature("advertiser_view_all"),
   advertiserController.getAllAdvertisers
 );
 
 router.get(
   "/:id",
-  checkFeature("manage_advertisers"),
+  checkFeature("advertiser_view"),
   advertiserController.getAdvertiserById
 );
 
 router.post(
   "/",
-  checkFeature("manage_advertisers"),
+  checkFeature("advertiser_create"),
   validate(advertiserValidator.createAdvertiserSchema),
   advertiserController.createAdvertiser
 );
 
 router.put(
   "/:id",
-  checkFeature("manage_advertisers"),
+  checkFeature("advertiser_edit"),
   validate(advertiserValidator.updateAdvertiserSchema),
   advertiserController.updateAdvertiser
 );
 
 router.delete(
   "/:id",
-  checkFeature("manage_advertisers"),
+  checkFeature("advertiser_delete"),
   advertiserController.deleteAdvertiser
 );
 
 router.patch(
   "/:id/status",
-  checkFeature("manage_advertisers"),
+  checkFeature("advertiser_status_change"),
   advertiserController.changeAdvertiserStatus
 );
 

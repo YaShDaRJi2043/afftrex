@@ -9,37 +9,37 @@ router.use(authMiddleware);
 
 router.post(
   "/createEmployee",
-  checkFeature("manage_users"),
+  checkFeature("user_create_employee"),
   userController.createUser
 );
 
 router.get(
   "/company-users",
-  checkFeature("manage_users"),
+  checkFeature("user_view_all"),
   userController.listCompanyUsers
 );
 
 router.get(
   "/:id",
-  checkFeature("manage_users"),
+  checkFeature("user_view"),
   userController.listCompanyUsersById
 );
 
 router.put(
   "/:id",
-  checkFeature("manage_users"),
+  checkFeature("user_edit"),
   userController.updateCompanyUsers
 );
 
 router.delete(
   "/:id",
-  checkFeature("manage_users"),
+  checkFeature("user_delete"),
   userController.deleteCompanyUsers
 );
 
 router.put(
   "/:id/status",
-  checkFeature("manage_users"),
+  checkFeature("user_status_change"),
   userController.statusChangeCompanyUsers
 );
 

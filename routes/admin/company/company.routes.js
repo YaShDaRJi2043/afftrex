@@ -9,31 +9,31 @@ router.use(authMiddleware);
 
 router.put(
   "/approve/:id",
-  checkFeature("manage_company"),
+  checkFeature("company_approve"),
   companyController.approveCompany
 );
 
 router.put(
   "/reject/:id",
-  checkFeature("manage_company"),
+  checkFeature("company_reject"),
   companyController.rejectCompany
 );
 
 router.get(
   "/list",
-  checkFeature("manage_company"),
+  checkFeature("company_list"),
   companyController.listCompany
 );
 
 router.put(
   "/:id/extend-subscription",
-  checkFeature("manage_company"),
+  checkFeature("company_extend_subscription"),
   companyController.extendSubscriptionCompany
 );
 
 router.put(
   "/:id/send-subscription-reminder",
-  checkFeature("manage_company"),
+  checkFeature("company_send_subscription_reminder"),
   companyController.sendSubscriptionReminderCompany
 );
 

@@ -13,64 +13,64 @@ router.use(authMiddleware);
 // Routes
 router.post(
   "/list",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_view_all"),
   publisherController.getAllPublishers
 );
 
 router.get(
   "/:id",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_view"),
   publisherController.getPublisherById
 );
 
 router.post(
   "/",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_create"),
   validate(publisherValidator.createPublisherSchema),
   publisherController.createPublisher
 );
 
 router.put(
   "/:id",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_edit"),
   validate(publisherValidator.updatePublisherSchema),
   publisherController.updatePublisher
 );
 
 router.delete(
   "/:id",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_delete"),
   publisherController.deletePublisher
 );
 
 router.patch(
   "/:id/status",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_status_change"),
   validate(publisherValidator.statusChangeSchema),
   publisherController.changePublisherStatus
 );
 
 router.get(
   "/:id/campaigns",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_view_campaigns"),
   publisherController.getCampaignsByPublisherId
 );
 
 router.post(
   "/approve",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_approve_for_campaign"),
   publisherController.approvePublishersForCampaign
 );
 
 router.get(
   "/:campaignId/approved-publishers",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_view_approved"),
   publisherController.getApprovedPublishersForCampaign
 );
 
 router.post(
   "/remove-approved",
-  checkFeature("manage_publishers"),
+  checkFeature("publisher_remove_approved"),
   publisherController.removePublisherFromApprovedList
 );
 

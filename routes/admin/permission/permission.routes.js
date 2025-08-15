@@ -12,33 +12,33 @@ router.use(authMiddleware);
 // Routes
 router.get(
   "/",
-  checkFeature("manage_permissions"),
+  checkFeature("permission_view_all"),
   permissionController.getAllPermissions
 );
 
 router.get(
   "/:id",
-  checkFeature("manage_permissions"),
+  checkFeature("permission_view"),
   permissionController.getPermissionById
 );
 
 router.post(
   "/",
-  checkFeature("manage_permissions"),
+  checkFeature("permission_create"),
   validate(permissionValidator.createSchema),
   permissionController.createPermission
 );
 
 router.put(
   "/:id",
-  checkFeature("manage_permissions"),
+  checkFeature("permission_edit"),
   validate(permissionValidator.updateSchema),
   permissionController.updatePermission
 );
 
 router.delete(
   "/:id",
-  checkFeature("manage_permissions"),
+  checkFeature("permission_delete"),
   permissionController.deletePermission
 );
 
