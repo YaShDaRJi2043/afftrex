@@ -3,7 +3,12 @@ const { Op } = require("sequelize");
 const slugify = require("slugify");
 const { v4: uuidv4 } = require("uuid");
 
-const { Campaign, Company, CampaignAssignment } = require("@models/index");
+const {
+  Campaign,
+  Company,
+  CampaignAssignment,
+  Advertiser,
+} = require("@models/index");
 const CampaignHelpers = require("@helper/campaignHelpers");
 const { uploadToS3 } = require("@utils/s3");
 const { serverInfo } = require("@config/config");
@@ -22,6 +27,7 @@ exports.generateUniqueSlug = async (baseSlug) => {
 exports.createCampaign = async (req) => {
   const {
     title,
+    advertiser_id, // Add advertiser_id from the request body
     enableCampaignSchedule,
     campaignStartDate,
     campaignEndDate,
@@ -69,6 +75,9 @@ exports.createCampaign = async (req) => {
   const company = await Company.findOne({ where: { id: company_id } });
   if (!company) throw new Error("Company not found");
 
+  // Validate advertiser_id
+  if (!advertiser_id) throw new Error("Advertiser ID is required");
+
   const baseSlug = slugify(title, { lower: true, strict: true });
   const trackingSlug = await this.generateUniqueSlug(baseSlug);
 
@@ -80,6 +89,7 @@ exports.createCampaign = async (req) => {
     ...restOfData,
     unique_id: uuidv4(), // Generate unique_id
     company_id,
+    advertiser_id, // Include advertiser_id in the new campaign data
     title,
     trackingSlug,
     trackingScript: "", // placeholder
@@ -247,6 +257,11 @@ exports.getCampaigns = async (req) => {
         attributes: ["id", "name", "admin_email"],
         required: true,
       },
+      {
+        model: Advertiser,
+        as: "advertiser",
+        attributes: ["id", "name"],
+      },
     ],
     order: [["created_at", "DESC"]],
   });
@@ -262,6 +277,11 @@ exports.getCampaignById = async (req, id) => {
         model: Company,
         as: "company",
         attributes: ["id", "name", "admin_email"],
+      },
+      {
+        model: Advertiser,
+        as: "advertiser",
+        attributes: ["id", "name"],
       },
     ],
   });

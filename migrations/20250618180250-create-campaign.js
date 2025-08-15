@@ -19,6 +19,16 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
+      advertiser_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "advertisers",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "CASCADE",
+      },
       objective: {
         type: Sequelize.ENUM(
           "conversions",
@@ -224,6 +234,7 @@ module.exports = {
 
     await queryInterface.addIndex("campaigns", ["company_id"]);
     await queryInterface.addIndex("campaigns", ["status"]);
+    await queryInterface.addIndex("campaigns", ["advertiser_id"]);
   },
 
   down: async (queryInterface, Sequelize) => {

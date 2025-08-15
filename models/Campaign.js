@@ -17,6 +17,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "campaignId",
         as: "trackings",
       });
+      Campaign.belongsTo(models.Advertiser, {
+        foreignKey: "advertiser_id",
+        as: "advertiser",
+      });
     }
   }
 
@@ -28,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
         autoIncrement: true,
       },
       company_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      advertiser_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
@@ -182,6 +190,7 @@ module.exports = (sequelize, DataTypes) => {
         { fields: ["company_id"] },
         { fields: ["status"] },
         { unique: true, fields: ["trackingSlug"] },
+        { fields: ["advertiser_id"] },
       ],
     }
   );

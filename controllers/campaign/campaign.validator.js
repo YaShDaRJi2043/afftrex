@@ -2,6 +2,7 @@ const Joi = require("joi");
 
 const baseCampaignFields = {
   company_id: Joi.number().integer().positive().optional(),
+  advertiser_id: Joi.number().integer().positive().required(), // Mandatory
   objective: Joi.string()
     .valid(
       "conversions",
@@ -11,11 +12,11 @@ const baseCampaignFields = {
       "impressions",
       "clicks"
     )
-    .optional(),
-  title: Joi.string().trim().max(255).optional(),
+    .required(), // Mandatory
+  title: Joi.string().trim().max(255).required(), // Mandatory
   description: Joi.string().max(5000).optional(),
   preview_url: Joi.string().uri().optional(),
-  defaultCampaignUrl: Joi.string().uri().optional(),
+  defaultCampaignUrl: Joi.string().uri().required(), // Mandatory
   defaultLandingPageName: Joi.string().optional(),
   enableTimeTargeting: Joi.boolean().optional(),
   timezone: Joi.string().optional(),
@@ -52,10 +53,10 @@ const baseCampaignFields = {
     .valid("approved", "rejected", "pending")
     .optional(),
   revenueModel: Joi.string().valid("fixed", "revshare", "hybrid").optional(),
-  currency: Joi.string().length(3).optional(),
+  currency: Joi.string().length(3).required(), // Mandatory
   defaultGoalName: Joi.string().optional(),
-  revenue: Joi.number().precision(2).optional(),
-  payout: Joi.number().precision(2).optional(),
+  revenue: Joi.number().precision(2).required(), // Mandatory
+  payout: Joi.number().precision(2).required(), // Mandatory
   geoCoverage: Joi.alternatives().try(Joi.array(), Joi.string()).optional(),
   category: Joi.alternatives().try(Joi.array(), Joi.string()).optional(),
   devices: Joi.alternatives().try(Joi.array(), Joi.string()).optional(),
@@ -71,10 +72,10 @@ const baseCampaignFields = {
   requireTermsAcceptance: Joi.boolean().optional(),
   conversionTracking: Joi.string()
     .valid("server_postback", "web_sdk", "iframe_pixel", "image_pixel")
-    .optional(),
+    .required(), // Mandatory
   primaryTrackingDomain: Joi.string().optional(),
-  status: Joi.string().valid("active", "pending", "paused").optional(),
-  redirectType: Joi.string().valid("301", "302").optional(),
+  status: Joi.string().valid("active", "pending", "paused").required(), // Mandatory
+  redirectType: Joi.string().valid("301", "302").required(), // Mandatory
   visibility: Joi.string()
     .valid("public", "private", "ask_permission")
     .optional(),
