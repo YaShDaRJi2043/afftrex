@@ -5,6 +5,13 @@ const create = Joi.object({
   admin_email: Joi.string().email().required(),
   subdomain: Joi.string().required(),
   logo: Joi.any(),
+  subscription_type: Joi.string().valid("free", "paid").default("free"),
+  subscription_days: Joi.number().integer().min(1).default(30),
+  subscription_start_date: Joi.date().optional(),
+  amount: Joi.number().min(0).default(0),
+  status: Joi.string()
+    .valid("pending", "approved", "rejected")
+    .default("pending"),
 });
 
 const extendSubscriptionSchema = Joi.object({
