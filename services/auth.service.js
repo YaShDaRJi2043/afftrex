@@ -89,7 +89,18 @@ function newError(msg, code) {
 }
 
 exports.forgotPassword = async (email) => {
-  const user = await User.findOne({ where: { email } });
+  let user = await User.findOne({ where: { email } });
+
+  // Try Publisher if not found
+  if (!user) {
+    user = await Publisher.findOne({ where: { email } });
+  }
+
+  // Try Advertiser if not found
+  if (!user) {
+    user = await Advertiser.findOne({ where: { email } });
+  }
+
   if (!user) {
     throw new Error("No user found with that email");
   }
@@ -121,7 +132,18 @@ exports.forgotPassword = async (email) => {
 };
 
 exports.resetPassword = async (email, token, newPassword) => {
-  const user = await User.findOne({ where: { email } });
+  let user = await User.findOne({ where: { email } });
+
+  // Try Publisher if not found
+  if (!user) {
+    user = await Publisher.findOne({ where: { email } });
+  }
+
+  // Try Advertiser if not found
+  if (!user) {
+    user = await Advertiser.findOne({ where: { email } });
+  }
+
   if (!user) throw new Error("Invalid token or email");
 
   if (

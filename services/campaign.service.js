@@ -167,7 +167,7 @@ exports.createCampaign = async (req) => {
 
 exports.getCampaigns = async (req) => {
   const filters = req.body;
-  const role = req.user.role.name;
+  const role = req.user.role;
   const { id: userId, company } = req.user;
 
   const stringFields = [
@@ -243,6 +243,8 @@ exports.getCampaigns = async (req) => {
         company_id: company.id,
       },
     ];
+  } else if (role === "advertiser") {
+    whereFilter.advertiser_id = userId; // Filter campaigns by advertiser_id
   } else {
     // Admin or internal user: filter by company
     whereFilter.company_id = company.id;
@@ -269,6 +271,7 @@ exports.getCampaigns = async (req) => {
 
 exports.getCampaignById = async (req, id) => {
   const role = req.user.role.name;
+
   const { id: userId, company } = req.user;
 
   const campaign = await Campaign.findByPk(id, {
@@ -308,6 +311,8 @@ exports.getCampaignById = async (req, id) => {
     ) {
       // ✅ Allowed — continue
     }
+  } else if (role === "advertiser") {
+    if (campaign.advertiser_id !== userId) return null; // Restrict access to campaigns not owned by the advertiser
   }
 
   return campaign;
