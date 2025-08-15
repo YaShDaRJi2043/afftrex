@@ -57,6 +57,14 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      state: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
+      city: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       currency: {
         type: Sequelize.STRING,
         allowNull: true,
@@ -67,10 +75,6 @@ module.exports = {
       },
       tags: {
         type: Sequelize.ARRAY(Sequelize.STRING),
-        allowNull: true,
-      },
-      city: {
-        type: Sequelize.STRING,
         allowNull: true,
       },
       phone: {

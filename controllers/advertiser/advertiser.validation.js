@@ -30,11 +30,11 @@ const createAdvertiserSchema = Joi.object({
   country: Joi.string().optional().allow(null, ""),
   city: Joi.string().optional().allow(null, ""),
   phone: Joi.string()
-    .pattern(/^[0-9]{10,15}$/)
+    .pattern(/^\+?\d{10,15}$/)
     .optional()
     .allow(null, "")
     .messages({
-      "string.pattern.base": "Phone must be 10-15 digits",
+      "string.pattern.base": "Phone must be 10-15 digits and can start with +",
     }),
   currency: Joi.string().optional().allow(null, ""),
   entity_type: Joi.string().optional().allow(null, ""),
@@ -42,6 +42,7 @@ const createAdvertiserSchema = Joi.object({
   tags: Joi.array().items(Joi.string()).optional(),
   companyName: Joi.string().optional().allow(null, ""),
   notify: Joi.boolean().optional(),
+  state: Joi.string().optional().allow(null, ""),
 });
 
 const updateAdvertiserSchema = Joi.object({
@@ -71,17 +72,18 @@ const updateAdvertiserSchema = Joi.object({
   country: Joi.string().optional().allow(null, ""),
   city: Joi.string().optional().allow(null, ""),
   phone: Joi.string()
-    .pattern(/^[0-9]{10,15}$/)
+    .pattern(/^\+?\d{10,15}$/)
     .optional()
     .allow(null, "")
     .messages({
-      "string.pattern.base": "Phone must be 10-15 digits",
+      "string.pattern.base": "Phone must be 10-15 digits and can start with +",
     }),
   currency: Joi.string().optional().allow(null, ""),
   entity_type: Joi.string().optional().allow(null, ""),
   website_url: Joi.string().uri().optional().allow(null, ""),
   tags: Joi.array().items(Joi.string()).optional(),
   companyName: Joi.string().optional().allow(null, ""),
+  state: Joi.string().optional().allow(null, ""),
 });
 
 module.exports = {
