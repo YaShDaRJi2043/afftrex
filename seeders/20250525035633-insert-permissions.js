@@ -31,12 +31,6 @@ module.exports = {
         updated_at: now,
       },
       {
-        name: "campaign_update_tracking_script",
-        label: "Update Campaign Tracking Script",
-        created_at: now,
-        updated_at: now,
-      },
-      {
         name: "campaign_assign",
         label: "Assign Campaign",
         created_at: now,
