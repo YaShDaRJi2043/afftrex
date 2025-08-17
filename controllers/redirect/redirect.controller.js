@@ -7,9 +7,6 @@ exports.handleRedirect = async (req, res) => {
     if (res.headersSent) return;
 
     if (result?.redirectUrl) {
-      console.log("hello");
-      console.log(result.clickId);
-
       // Set the cookie before redirecting
       res.cookie("click_id", result.clickId, {
         domain: "api.afftrex.org",
