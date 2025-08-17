@@ -46,7 +46,7 @@ exports.trackPixel = async (slug, data, req) => {
   return clickId;
 };
 
-exports.trackPostback = async (slug, data, req) => {
+exports.trackPostback = async (slug, data) => {
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
   if (!campaign) throw new Error("Invalid tracking slug");
 
@@ -61,7 +61,7 @@ exports.trackPostback = async (slug, data, req) => {
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const { txn_id, amount, currency, status, token } = data;
+  const { transaction_id, amount, currency, status, token } = data;
 
   // Security check (optional, highly recommended)
   if (token !== process.env.POSTBACK_TOKEN) {
@@ -70,7 +70,7 @@ exports.trackPostback = async (slug, data, req) => {
 
   // Check duplicate transaction
   const existing = await PixelTracking.findOne({
-    where: { transactionId: txn_id },
+    where: { transactionId: transaction_id },
   });
   if (existing) throw new Error("Duplicate transaction");
 
@@ -78,7 +78,7 @@ exports.trackPostback = async (slug, data, req) => {
   await PixelTracking.create({
     campaignId: campaign.id,
     trackingId: tracking.id,
-    transactionId: txn_id,
+    transactionId: transaction_id,
     saleAmount: amount,
     currency,
     clickId,
