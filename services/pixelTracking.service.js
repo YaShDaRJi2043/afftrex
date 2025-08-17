@@ -61,7 +61,8 @@ exports.trackPostback = async (slug, data) => {
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const { transaction_id, amount, currency, conversionStatus, token } = data;
+  const { transaction_id, saleAmount, currency, conversionStatus, token } =
+    data;
 
   // Security check (optional, highly recommended)
   if (token !== process.env.POSTBACK_TOKEN) {
@@ -79,14 +80,14 @@ exports.trackPostback = async (slug, data) => {
     campaignId: campaign.id,
     trackingId: tracking.id,
     transactionId: transaction_id,
-    saleAmount: amount,
+    saleAmount,
     currency,
     clickId,
     pageUrl: campaign.defaultCampaignUrl,
     pixelType: "postback",
     eventType: "conversion",
     conversionStatus,
-    conversionValue: amount,
+    conversionValue: saleAmount,
     conversionTime: new Date(),
   });
 
