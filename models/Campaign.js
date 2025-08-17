@@ -168,6 +168,12 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: true,
         unique: true,
       },
+      security_token: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+        defaultValue: null,
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,

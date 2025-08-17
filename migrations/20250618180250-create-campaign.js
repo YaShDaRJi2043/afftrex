@@ -220,6 +220,11 @@ module.exports = {
         allowNull: true,
         unique: true,
       },
+      security_token: {
+        type: Sequelize.STRING,
+        allowNull: true,
+        unique: true,
+      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,

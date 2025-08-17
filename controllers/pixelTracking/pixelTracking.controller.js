@@ -17,11 +17,11 @@ exports.handlePixelGet = async (req, res) => {
   }
 };
 
-exports.handlePixelPost = async (req, res) => {
+exports.handlePostback = async (req, res) => {
   try {
-    await pixelTrackingService.trackPixel(req.params.slug, req.body, req);
-    return responseHelper.success(res, "Pixel tracked successfully");
+    await pixelTrackingService.trackPostback(req.params.slug, req.query, req);
+    return res.status(200).send("Postback tracked successfully");
   } catch (error) {
-    return responseHelper.error(res, error.message);
+    return res.status(400).send(error.message);
   }
 };

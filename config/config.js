@@ -60,6 +60,8 @@ module.exports = {
     JWT_TOKEN_EXPIRY: process.env.JWT_ACCESS_TOKEN_EXPIRY || "1h", // JWT access token expiry (default: '2h')
     URL_ENCRYPTION_KEY:
       process.env.URL_ENCRYPTION_KEY || "AFFTREX_ENCRYPTION_KEY_27072025",
+    SECURITY_TOKEN_SECRET:
+      process.env.SECURITY_TOKEN_SECRET || "default_secret_key", // Security token secret
   },
 
   //email service

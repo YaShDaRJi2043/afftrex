@@ -45,3 +45,50 @@ exports.trackPixel = async (slug, data, req) => {
 
   return clickId;
 };
+
+exports.trackPostback = async (slug, data, req) => {
+  const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
+  if (!campaign) throw new Error("Invalid tracking slug");
+
+  // Extract clickId from postback (sent by advertiser)
+  const clickId = data.click_id;
+  if (!clickId) throw new Error("Missing clickId in postback");
+
+  // Validate clickId
+  const tracking = await CampaignTracking.findOne({
+    where: { clickId },
+    order: [["createdAt", "DESC"]],
+  });
+  if (!tracking) throw new Error("No campaign tracking found");
+
+  const { txn_id, amount, currency, status, token } = data;
+
+  // Security check (optional, highly recommended)
+  if (token !== process.env.POSTBACK_TOKEN) {
+    throw new Error("Unauthorized postback");
+  }
+
+  // Check duplicate transaction
+  const existing = await PixelTracking.findOne({
+    where: { transactionId: txn_id },
+  });
+  if (existing) throw new Error("Duplicate transaction");
+
+  // Save conversion
+  await PixelTracking.create({
+    campaignId: campaign.id,
+    trackingId: tracking.id,
+    transactionId: txn_id,
+    saleAmount: amount,
+    currency,
+    clickId,
+    pageUrl: "postback", // static since no referer
+    pixelType: "postback",
+    eventType: "conversion",
+    conversionStatus: status || "completed",
+    conversionValue: amount,
+    conversionTime: new Date(),
+  });
+
+  return clickId;
+};

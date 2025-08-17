@@ -19,7 +19,7 @@ app.use(cookieParser());
 
 app.use(serverInfo.host_url_prefix, router);
 app.use("/public", redirectRoutes);
-app.use("/pixel", pixelRoutes);
+app.use("/", pixelRoutes);
 
 app.use((err, req, res, next) => {
   if (err) {

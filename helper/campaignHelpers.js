@@ -1,12 +1,25 @@
+const crypto = require("crypto");
+
+const { secret } = require("@config/config");
 const { Campaign } = require("@models/index");
 const { campaignQueue, redis } = require("@helper/campaignScheduler");
+
+// Generate Security Token
+function generateSecurityToken(campaignId, scheduleDate) {
+  const secretKey = secret.SECURITY_TOKEN_SECRET;
+  const timestamp = scheduleDate
+    ? new Date(scheduleDate).getTime()
+    : Date.now();
+  const data = `${campaignId}:${timestamp}`;
+  return crypto.createHmac("sha256", secretKey).update(data).digest("hex");
+}
 
 async function updateScheduledCampaignStatuses(
   campaignId,
   statusToBeSet,
   scheduleDate
 ) {
-  const campaign = await await Campaign.findAll({
+  const campaign = await Campaign.findAll({
     where: {
       id: campaignId,
     },
@@ -20,7 +33,9 @@ async function updateScheduledCampaignStatuses(
   }
 
   const now = new Date();
-  const delay = new Date(scheduleDate).getTime() - now.getTime();
+  const delay = scheduleDate
+    ? new Date(scheduleDate).getTime() - now.getTime()
+    : 0;
 
   const job = await campaignQueue.add(
     "campaign-schedule-queue",
@@ -31,7 +46,9 @@ async function updateScheduledCampaignStatuses(
     {
       delay: delay > 0 ? delay : 0,
       attempts: 3,
-      jobId: `campaign-${campaignId}-${new Date(scheduleDate).getTime()}`,
+      jobId: `campaign-${campaignId}-${
+        scheduleDate ? new Date(scheduleDate).getTime() : Date.now()
+      }`,
     }
   );
 
@@ -54,4 +71,5 @@ async function updateScheduledCampaignStatuses(
 
 module.exports = {
   updateScheduledCampaignStatuses,
+  generateSecurityToken,
 };

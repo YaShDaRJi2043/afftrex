@@ -2,6 +2,7 @@
 const { Op } = require("sequelize");
 const slugify = require("slugify");
 const { v4: uuidv4 } = require("uuid");
+const { generateSecurityToken } = require("@helper/campaignHelpers");
 
 const {
   Campaign,
@@ -140,6 +141,8 @@ exports.createCampaign = async (req) => {
     conversionTracking: conversionTracking || "iframe_pixel",
     trackingSlug,
     uniqueId: campaign.unique_id, // Use unique_id instead of id
+    campaignId: campaign.id, // Pass campaign ID
+    scheduleDate: scheduleDate || null, // Pass scheduleDate if available
   });
 
   await campaign.update({ trackingScript });
@@ -409,6 +412,8 @@ exports.generateTrackingScript = async ({
   conversionTracking,
   trackingSlug,
   uniqueId,
+  campaignId,
+  scheduleDate,
 }) => {
   if (!conversionTracking || !trackingSlug || !uniqueId) {
     throw new Error("Missing required parameters for script generation.");
@@ -418,27 +423,18 @@ exports.generateTrackingScript = async ({
 
   switch (conversionTracking) {
     case "server_postback":
-      script = `
-<script>
-  fetch('${serverInfo.api_url}/track/${trackingSlug}', {
-    method: 'POST',
-    body: JSON.stringify({ event: 'conversion', userId: 'USER_ID' }),
-    headers: { 'Content-Type': 'application/json' }
-  });
-</script>
-      `.trim();
-      break;
+      // Generate security token
+      const securityToken = generateSecurityToken(campaignId, scheduleDate);
 
-    case "web_sdk":
+      // Store the security token in the database
+      const campaign = await Campaign.findByPk(campaignId);
+      if (campaign) {
+        await campaign.update({ security_token: securityToken });
+      }
+
       script = `
-<script src="${serverInfo.api_url}/sdk.js"></script>
-<script>
-  const sdk = new YourSDK(); // Replace with actual SDK logic
-  sdk.trackConversion({
-    campaignSlug: '${trackingSlug}',
-    userId: 'USER_ID'
-  });
-</script>
+<!-- Postback URL -->
+${serverInfo.api_url}/postback/${trackingSlug}?event_type=conversion&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR&security_token=${securityToken}
       `.trim();
       break;
 
@@ -452,7 +448,7 @@ exports.generateTrackingScript = async ({
   frameborder="0" 
   scrolling="no">
 </iframe>
-  `.trim();
+      `.trim();
       break;
 
     default:
