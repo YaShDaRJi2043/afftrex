@@ -48,8 +48,6 @@ exports.trackPixel = async (slug, data, req) => {
 
 exports.trackPostback = async (slug, data) => {
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
-  console.log(campaign);
-
   if (!campaign) throw new Error("Invalid tracking slug");
 
   // Extract clickId from postback (sent by advertiser)
@@ -84,7 +82,7 @@ exports.trackPostback = async (slug, data) => {
     saleAmount: amount,
     currency,
     clickId,
-    pageUrl: "postback", // static since no referer
+    pageUrl: campaign.defaultCampaignUrl,
     pixelType: "postback",
     eventType: "conversion",
     conversionStatus,
