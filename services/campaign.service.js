@@ -433,8 +433,8 @@ exports.generateTrackingScript = async ({
       }
 
       script = `
-${serverInfo.api_url}/postback/${trackingSlug}?event_type=conversion&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR&security_token=${securityToken}
-        `.trim();
+${serverInfo.api_url}/postback/${trackingSlug}?click_id=REPLACE_CLICK_ID_VAR&event_type=conversion&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR&security_token=${securityToken}
+`.trim();
       break;
     }
 
