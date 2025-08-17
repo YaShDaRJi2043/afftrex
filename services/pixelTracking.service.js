@@ -48,6 +48,8 @@ exports.trackPixel = async (slug, data, req) => {
 
 exports.trackPostback = async (slug, data) => {
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
+  console.log(campaign);
+
   if (!campaign) throw new Error("Invalid tracking slug");
 
   // Extract clickId from postback (sent by advertiser)
@@ -61,7 +63,7 @@ exports.trackPostback = async (slug, data) => {
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const { transaction_id, amount, currency, status, token } = data;
+  const { transaction_id, amount, currency, conversionStatus, token } = data;
 
   // Security check (optional, highly recommended)
   if (token !== process.env.POSTBACK_TOKEN) {
@@ -85,7 +87,7 @@ exports.trackPostback = async (slug, data) => {
     pageUrl: "postback", // static since no referer
     pixelType: "postback",
     eventType: "conversion",
-    conversionStatus: status || "completed",
+    conversionStatus,
     conversionValue: amount,
     conversionTime: new Date(),
   });
