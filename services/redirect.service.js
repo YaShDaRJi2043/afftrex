@@ -158,9 +158,15 @@ exports.trackClick = async (req, res) => {
     // ✅ Generate clickId & track event
     const clickId = uuidv4();
 
-    await CampaignTracking.create({
-      campaignId: campaign.id,
-      publisherId: assignment.publisherId,
+    // Append click_id to the initial redirect URL
+    const redirectUrl = new URL(campaign.defaultCampaignUrl);
+    redirectUrl.searchParams.append("clickId", clickId);
+
+    // Return the redirect URL with the click_id
+    return {
+      redirectUrl: `${req.protocol}://${req.get(
+        "host"
+      )}/public/c/${CampaignUniqueId}?pub=${shortPublisherId}&click_id=${clickId}`,
       clickId,
       ipAddress: ip,
       userAgent,
@@ -178,16 +184,16 @@ exports.trackClick = async (req, res) => {
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
-    });
+    };
 
-    const redirectUrl = new URL(campaign.defaultCampaignUrl);
-    redirectUrl.searchParams.append("clickId", clickId);
+    // const redirectUrl = new URL(campaign.defaultCampaignUrl);
+    // redirectUrl.searchParams.append("clickId", clickId);
 
     // Add a note for the target website to handle the clickId and set the cookie
     // Example: The target website should extract `clickId` from the query string
     // and set a cookie for `https://api.afftrex.org` using server-side logic.
 
-    return { redirectUrl: redirectUrl.toString(), clickId };
+    // return { redirectUrl: redirectUrl.toString(), clickId };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     return res.status(500).json({
