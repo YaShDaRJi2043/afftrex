@@ -13,8 +13,10 @@ document.addEventListener("DOMContentLoaded", () => {
   // Store the click ID in localStorage
   localStorage.setItem("click_id", clickId);
 
-  // Append click_id to the redirect URL
-  redirectUrl += `?click_id=${clickId}`;
+  // Append click_id to the redirect URL correctly
+  const url = new URL(redirectUrl);
+  url.searchParams.set("click_id", clickId);
+  redirectUrl = url.toString();
 
   // Redirect to the target URL
   setTimeout(() => {
