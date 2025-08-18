@@ -5,13 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Redirecting...</title>
     <script>
+      // Store the click ID in a cookie
       document.cookie = `click_id=<%= clickId %>; path=/; max-age=${
         24 * 60 * 60
       }; samesite=strict`;
+
+      // Store the click ID in localStorage
       localStorage.setItem("click_id", "<%= clickId %>");
+
+      // Debugging: Log the redirect URL to ensure it's correct
+      console.log("Redirect URL:", "<%= redirectUrl %>");
+
+      // Redirect to the target URL
       setTimeout(() => {
         window.location.href = "<%= redirectUrl %>";
-      }, 2000);
+      }, 2000); // Wait for 2 seconds before redirecting
     </script>
   </head>
   <body>

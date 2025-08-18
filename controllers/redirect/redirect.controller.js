@@ -7,9 +7,9 @@ exports.handleRedirect = async (req, res) => {
     if (res.headersSent) return;
 
     if (result?.redirectUrl) {
-      return res.render("storeClickId.ejs", {
+      return res.render("storeClickId", {
         clickId: result.clickId,
-        redirectUrl: result.redirectUrl,
+        redirectUrl: result.redirectUrl, // Ensure this value is correct
       });
     }
 
