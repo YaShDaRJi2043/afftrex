@@ -8,7 +8,7 @@ exports.handleRedirect = async (req, res) => {
 
     if (result?.redirectUrl) {
       return res.render("storeClickId", {
-        clickId: result.clickId,
+        clickId: result.clickId, // Pass clickId to the view
         redirectUrl: result.redirectUrl, // Ensure this value is correct
       });
     }
