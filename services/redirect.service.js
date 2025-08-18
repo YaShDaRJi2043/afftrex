@@ -158,15 +158,14 @@ exports.trackClick = async (req, res) => {
     // ✅ Generate clickId & track event
     const clickId = uuidv4();
 
-    // Append click_id to the initial redirect URL
-    const redirectUrl = new URL(campaign.defaultCampaignUrl);
-    redirectUrl.searchParams.append("clickId", clickId);
+    // Append click_id to the final campaign URL
+    const finalRedirectUrl = new URL(campaign.defaultCampaignUrl);
+    finalRedirectUrl.searchParams.append("click_id", clickId);
 
-    // Return the redirect URL with the click_id
-    return {
-      redirectUrl: `${req.protocol}://${req.get(
-        "host"
-      )}/public/c/${CampaignUniqueId}?pub=${shortPublisherId}&click_id=${clickId}`,
+    // Track the click event
+    await CampaignTracking.create({
+      campaignId: campaign.id,
+      publisherId: assignment.publisherId,
       clickId,
       ipAddress: ip,
       userAgent,
@@ -184,6 +183,12 @@ exports.trackClick = async (req, res) => {
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
+    });
+
+    // Return the final campaign URL with the click_id
+    return {
+      redirectUrl: finalRedirectUrl.toString(),
+      clickId,
     };
 
     // const redirectUrl = new URL(campaign.defaultCampaignUrl);
