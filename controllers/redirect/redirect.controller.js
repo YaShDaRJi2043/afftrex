@@ -9,11 +9,12 @@ exports.handleRedirect = async (req, res) => {
     if (result?.redirectUrl) {
       // Set the cookie before redirecting
       res.cookie("click_id", result.clickId, {
-        domain: "api.afftrex.org",
+        domain: ".afftrex.org", // notice the dot
         path: "/",
         httpOnly: true,
         secure: true,
         sameSite: "none",
+        maxAge: 24 * 60 * 60 * 1000, // persist for 1 day
       });
 
       // Redirect to the target URL
