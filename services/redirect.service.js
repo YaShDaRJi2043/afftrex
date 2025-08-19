@@ -1,3 +1,4 @@
+// services/redirect.service.js
 const { Campaign, CampaignAssignment, CampaignTracking } = require("@models");
 const geoip = require("geoip-lite");
 const { Op } = require("sequelize");
@@ -10,10 +11,10 @@ exports.trackClick = async (req, res) => {
     const shortPublisherId = req.query.pub;
 
     if (!CampaignUniqueId || !shortPublisherId) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing campaign or publisher ID.",
-      });
+      res
+        .status(400)
+        .json({ success: false, message: "Missing campaign or publisher ID." });
+      return; // controller checks res.headersSent
     }
 
     // 🔍 Find CampaignAssignment + Campaign
@@ -30,28 +31,27 @@ exports.trackClick = async (req, res) => {
       !assignment?.campaign ||
       assignment.campaign.unique_id !== CampaignUniqueId
     ) {
-      return res.status(404).json({
-        success: false,
-        message: "Campaign or publisher not found.",
-      });
+      res
+        .status(404)
+        .json({ success: false, message: "Campaign or publisher not found." });
+      return;
     }
 
     const campaign = assignment.campaign;
-
     if (campaign.campaignStatus !== "active") {
-      return res.status(403).json({
-        success: false,
-        message: "Campaign not active.",
-      });
+      res.status(403).json({ success: false, message: "Campaign not active." });
+      return;
     }
 
     // 🧠 Metadata: IP, UA, Geo, Time
     const ip =
-      req.headers["x-forwarded-for"]?.split(",")[0] ||
-      req.connection.remoteAddress;
+      (req.headers["x-forwarded-for"]?.split(",")[0] || "").trim() ||
+      req.socket?.remoteAddress ||
+      null;
+
     const userAgent = req.headers["user-agent"] || "";
     const referer = req.headers["referer"] || null;
-    const geo = geoip.lookup(ip);
+    const geo = ip ? geoip.lookup(ip) : null;
     const ua = new UAParser(userAgent).getResult();
     const now = new Date();
 
@@ -62,97 +62,101 @@ exports.trackClick = async (req, res) => {
     const end = campaign.campaignEndDate
       ? new Date(campaign.campaignEndDate)
       : null;
-
     if ((start && now < start) || (end && now > end)) {
-      return res.status(403).json({
-        success: false,
-        message: "Campaign not active at this time.",
-      });
+      res
+        .status(403)
+        .json({ success: false, message: "Campaign not active at this time." });
+      return;
     }
 
-    // 🎯 Time targeting
+    // 🗓️ Time targeting
     if (campaign.enableTimeTargeting) {
+      const tz = campaign.timezone || "UTC";
       const dayName = now.toLocaleString("en-US", {
         weekday: "long",
-        timeZone: campaign.timezone,
+        timeZone: tz,
       });
       const hour = parseInt(
         now.toLocaleString("en-US", {
           hour: "2-digit",
           hour12: false,
-          timeZone: campaign.timezone,
-        })
+          timeZone: tz,
+        }),
+        10
       );
 
-      const activeDays = campaign.activeDays || [];
-
-      // ✅ Allow all days if activeDays is empty
+      const activeDays = Array.isArray(campaign.activeDays)
+        ? campaign.activeDays
+        : [];
       const isActiveDay =
         activeDays.length === 0 || activeDays.includes(dayName);
-      if (
-        !isActiveDay ||
-        hour < campaign.startHour ||
-        hour > campaign.endHour
-      ) {
-        return res.status(403).json({
-          success: false,
-          message: "Click not allowed due to time targeting.",
-        });
+
+      const startHour = Number.isFinite(campaign.startHour)
+        ? campaign.startHour
+        : 0;
+      const endHour = Number.isFinite(campaign.endHour) ? campaign.endHour : 23;
+
+      if (!isActiveDay || hour < startHour || hour > endHour) {
+        res
+          .status(403)
+          .json({
+            success: false,
+            message: "Click not allowed due to time targeting.",
+          });
+        return;
       }
     }
 
-    // 🌍 Geo targeting
-    // if (
-    //   campaign.geoCoverage?.length &&
-    //   !campaign.geoCoverage.includes("all") &&
-    //   (!geo || !campaign.geoCoverage.includes(geo.country))
-    // ) {
-    //   return res.status(403).json({
-    //     success: false,
-    //     message: "Click not allowed from your country.",
-    //   });
-    // }
-
-    // 💻 Device targeting
-    const deviceType = ua.device.type || "desktop";
-    const allowedDevices = campaign.devices?.map((d) => d.toLowerCase()) || [];
+    // 📱 Device targeting
+    const deviceType = (ua.device.type || "desktop").toLowerCase();
+    const allowedDevices = (campaign.devices || []).map((d) =>
+      String(d).toLowerCase()
+    );
     if (
       allowedDevices.length &&
       !allowedDevices.includes("all") &&
-      !allowedDevices.includes(deviceType.toLowerCase())
+      !allowedDevices.includes(deviceType)
     ) {
-      return res.status(403).json({
-        success: false,
-        message: `Device type '${deviceType}' not allowed.`,
-      });
+      res
+        .status(403)
+        .json({
+          success: false,
+          message: `Device type '${deviceType}' not allowed.`,
+        });
+      return;
     }
 
     // 🖥️ OS targeting
-    const osName = ua.os.name || "";
-    const allowedOS =
-      campaign.operatingSystem?.map((os) => os.toLowerCase()) || [];
+    const osName = (ua.os.name || "").toLowerCase();
+    const allowedOS = (campaign.operatingSystem || []).map((os) =>
+      String(os).toLowerCase()
+    );
     if (
       allowedOS.length &&
       !allowedOS.includes("all") &&
-      (!osName || !allowedOS.includes(osName.toLowerCase()))
+      (!osName || !allowedOS.includes(osName))
     ) {
-      return res.status(403).json({
-        success: false,
-        message: `OS '${osName}' not allowed.`,
-      });
+      res
+        .status(403)
+        .json({
+          success: false,
+          message: `OS '${ua.os.name || "Unknown"}' not allowed.`,
+        });
+      return;
     }
 
-    // 📶 Carrier targeting (placeholder logic)
+    // (Optional) Carrier targeting placeholder
     const carrier = null;
     if (
-      campaign.carrierTargeting?.length &&
-      carrier &&
-      !campaign.carrierTargeting.includes(carrier)
+      Array.isArray(campaign.carrierTargeting) &&
+      campaign.carrierTargeting.length
     ) {
-      return res.status(403).json({
-        success: false,
-        message: "Carrier not allowed.",
-      });
+      if (carrier && !campaign.carrierTargeting.includes(carrier)) {
+        res
+          .status(403)
+          .json({ success: false, message: "Carrier not allowed." });
+        return;
+      }
     }
 
     // ✅ Generate clickId & track event
@@ -173,26 +177,21 @@ exports.trackClick = async (req, res) => {
       browser: ua.browser.name || null,
       carrier: null,
       eventType: "click",
-      timestamp: now, // ✅ explicitly set
+      timestamp: now,
       p1: req.query.p1 || null,
       p2: req.query.p2 || null,
       p3: req.query.p3 || null,
       p4: req.query.p4 || null,
     });
 
+    // 🚀 Build redirect URL with clickId passthrough
     const redirectUrl = new URL(campaign.defaultCampaignUrl);
     redirectUrl.searchParams.append("clickId", clickId);
 
-    // Add a note for the target website to handle the clickId and set the cookie
-    // Example: The target website should extract `clickId` from the query string
-    // and set a cookie for `https://api.afftrex.org` using server-side logic.
-
+    // Service returns data; controller sets cookie & redirects
     return { redirectUrl: redirectUrl.toString(), clickId };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error",
-    });
+    res.status(500).json({ success: false, message: "Internal Server Error" });
   }
 };
