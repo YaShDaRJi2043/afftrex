@@ -7,10 +7,17 @@ exports.handleRedirect = async (req, res) => {
     if (res.headersSent) return;
 
     if (result?.redirectUrl) {
-      return res.render("storeClickId", {
-        clickId: result.clickId, // Pass clickId to the view
-        redirectUrl: result.redirectUrl, // Ensure this value is correct
+      // Set the cookie before redirecting
+      res.cookie("click_id", result.clickId, {
+        domain: "api.afftrex.org",
+        path: "/",
+        httpOnly: true,
+        secure: true,
+        sameSite: "none",
       });
+
+      // Redirect to the target URL
+      return res.redirect(302, result.redirectUrl);
     }
 
     return;
