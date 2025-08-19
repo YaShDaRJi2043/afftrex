@@ -5,10 +5,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const redirectUrl = body.getAttribute("data-redirect-url");
 
   if (clickId) {
-    // Store the click_id in a cookie
+    // Store the click_id in a cookie with SameSite=None and domain .afftrex.org
     document.cookie = `click_id=${clickId}; path=/; max-age=${
       24 * 60 * 60
-    }; samesite=none`;
+    }; domain=.afftrex.org; samesite=none; secure`;
 
     // Store the click_id in localStorage
     localStorage.setItem("click_id", clickId);
