@@ -6,7 +6,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (clickId) {
     // Store the click_id in a cookie
-    document.cookie = `click_id=${clickId}; path=/; max-age=${24 * 60 * 60}; samesite=strict`;
+    document.cookie = `click_id=${clickId}; path=/; max-age=${
+      24 * 60 * 60
+    }; samesite=none`;
 
     // Store the click_id in localStorage
     localStorage.setItem("click_id", clickId);
