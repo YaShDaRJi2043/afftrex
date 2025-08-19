@@ -7,12 +7,18 @@ exports.handleRedirect = async (req, res) => {
     if (res.headersSent) return;
 
     if (result?.redirectUrl) {
-      return res.render("storeClickId", {
-        clickId: result.clickId,
-        redirectUrl: result.redirectUrl,
+      // Set the cookie before redirecting
+      res.cookie("click_id", result.clickId, {
+        domain: ".afftrex.org",
+        path: "/",
+        httpOnly: false,
+        secure: true,
+        sameSite: "none",
       });
+
+      // Redirect to the target URL
+      return res.redirect(302, result.redirectUrl);
     }
-    
     return;
   } catch (err) {
     console.error("Redirect error:", err);
