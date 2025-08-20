@@ -1,93 +1,155 @@
+// services/pixelTracking.service.js
 const { Campaign, CampaignTracking, PixelTracking } = require("@models");
 
+/**
+ * Normalize incoming fields to support both PHP-style and JS-style names.
+ */
+function normalizeData(data = {}) {
+  return {
+    eventType: data.event_type || data.eventType || "",
+
+    // parity with PHP
+    transactionId: data.transaction_id || data.transactionId || null,
+
+    // allow both sale_amount (PHP) and saleAmount (JS)
+    saleAmount:
+      data.sale_amount != null
+        ? data.sale_amount
+        : data.saleAmount != null
+        ? data.saleAmount
+        : null,
+
+    currency: data.currency || null,
+    conversionStatus: data.conversionStatus || data.status || null,
+
+    // pass-through
+    pageUrl: data.pageUrl || null,
+
+    // MUST: click_id should come from query; cookie is only fallback
+    clickId: data.click_id || data.clickId || null,
+  };
+}
+
+/**
+ * Pixel from browser (image pixel).
+ * - Accept click_id from query FIRST (works cross-site).
+ * - Fallback to cookie only if same-site (rare now due to 3P cookie blocking).
+ * - Writes a PixelTracking row mirroring pixel.php behavior.
+ */
 exports.trackPixel = async (slug, data, req) => {
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
   if (!campaign) throw new Error("Invalid tracking slug");
 
-  // Extract clickId from the cookie
-  const clickId = req.cookies?.click_id;
-  if (!clickId) throw new Error("Missing clickId in cookies");
+  const n = normalizeData(data);
 
-  // Find tracking using clickId
+  // 1) Resolve clickId: query first, then cookie
+  const clickId =
+    n.clickId || req.query?.click_id || req.cookies?.click_id || null;
+  if (!clickId) throw new Error("Missing clickId (pass as click_id in query)");
+
+  // 2) Find the original tracking row
   const tracking = await CampaignTracking.findOne({
     where: { clickId },
     order: [["createdAt", "DESC"]],
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const { transaction_id, saleAmount, currency, conversionStatus } = data;
+  // 3) Resolve pageUrl (referrer if not explicitly provided)
+  const pageUrl = n.pageUrl || req.headers?.referer || "unknown";
 
-  // Extract pageUrl from the request or data
-  const pageUrl =
-    req.query.pageUrl || data.pageUrl || req.headers.referer || "unknown";
+  // 4) Whitelist event types (mirror PHP flexibility)
+  const allowedEvents = new Set([
+    "click",
+    "conversion",
+    "view",
+    "impression",
+    "",
+  ]);
+  const eventType = allowedEvents.has(n.eventType) ? n.eventType : "";
 
+  // 5) Insert a PixelTracking record
   try {
     await PixelTracking.create({
       campaignId: campaign.id,
       trackingId: tracking.id,
-      transactionId: transaction_id,
-      saleAmount,
-      currency,
-      clickId, // Use clickId instead of sessionId
-      pageUrl, // Ensure pageUrl is provided
-      pixelType: "iframe",
-      clickTime: new Date(),
-      clickCount: 1,
-      conversionValue: saleAmount,
-      conversionStatus,
+
+      eventType: eventType || "conversion", // default if not provided
+      transactionId: n.transactionId || null,
+      clickId,
+
+      saleAmount: n.saleAmount || null,
+      conversionValue: n.saleAmount || null,
+      currency: n.currency || null,
+      conversionStatus: n.conversionStatus || "approved",
+
+      pixelType: "iframe", // like your PHP pixel use
+      pageUrl,
       conversionTime: new Date(),
+
+      // Optional parity fields if you keep them in schema:
+      // clickTime: new Date(),
+      // clickCount: 1,
     });
-    console.log("Pixel tracking data inserted successfully");
-  } catch (error) {
-    console.error("Error inserting pixel tracking data:", error);
+  } catch (err) {
+    console.error("Error inserting PixelTracking:", err);
     throw new Error("Failed to insert pixel tracking data");
   }
 
   return clickId;
 };
 
-exports.trackPostback = async (slug, data) => {
+/**
+ * Server-to-server postback.
+ * - Accept click_id, transaction_id, sale_amount/saleAmount, currency, conversionStatus, token
+ * - Validate clickId and de-dupe by transactionId
+ */
+exports.trackPostback = async (slug, data, req) => {
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
   if (!campaign) throw new Error("Invalid tracking slug");
 
-  // Extract clickId from postback (sent by advertiser)
-  const clickId = data.click_id;
+  const n = normalizeData(data);
+  const clickId = n.clickId;
   if (!clickId) throw new Error("Missing clickId in postback");
 
-  // Validate clickId
   const tracking = await CampaignTracking.findOne({
     where: { clickId },
     order: [["createdAt", "DESC"]],
   });
   if (!tracking) throw new Error("No campaign tracking found");
 
-  const { transaction_id, saleAmount, currency, conversionStatus, token } =
-    data;
-
-  // Security check (optional, highly recommended)
-  if (token !== process.env.POSTBACK_TOKEN) {
+  // Optional security: POSTBACK_TOKEN
+  const suppliedToken =
+    data.token || req.query?.token || req.headers["x-postback-token"];
+  if (
+    process.env.POSTBACK_TOKEN &&
+    suppliedToken !== process.env.POSTBACK_TOKEN
+  ) {
     throw new Error("Unauthorized postback");
   }
 
-  // Check duplicate transaction
-  const existing = await PixelTracking.findOne({
-    where: { transactionId: transaction_id },
-  });
-  if (existing) throw new Error("Duplicate transaction");
+  // Duplicate protection on transactionId
+  if (n.transactionId) {
+    const existing = await PixelTracking.findOne({
+      where: { transactionId: n.transactionId },
+    });
+    if (existing) throw new Error("Duplicate transaction");
+  }
 
-  // Save conversion
   await PixelTracking.create({
     campaignId: campaign.id,
     trackingId: tracking.id,
-    transactionId: transaction_id,
-    saleAmount,
-    currency,
-    clickId,
-    pageUrl: campaign.defaultCampaignUrl,
-    pixelType: "postback",
+
     eventType: "conversion",
-    conversionStatus,
-    conversionValue: saleAmount,
+    transactionId: n.transactionId || null,
+    clickId,
+
+    saleAmount: n.saleAmount || null,
+    conversionValue: n.saleAmount || null,
+    currency: n.currency || null,
+    conversionStatus: n.conversionStatus || "approved",
+
+    pixelType: "postback",
+    pageUrl: campaign.defaultCampaignUrl || "postback",
     conversionTime: new Date(),
   });
 
