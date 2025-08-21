@@ -30,7 +30,7 @@ router.get(
 router.put(
   "/:id",
   checkFeature("campaign_edit"),
-  validate(campaignValidator.updateCampaignValidator),
+  // validate(campaignValidator.updateCampaignValidator),
   campaignController.updateCampaign
 );
 

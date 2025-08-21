@@ -18,6 +18,15 @@ module.exports = {
       companies.map((c) => [c.subdomain, c.id])
     );
 
+    // Ensure all required roles exist
+    const requiredRoles = ["super-admin", "advertiser", "publisher", "viewer"];
+    for (const role of requiredRoles) {
+      if (!roleMap[role]) {
+        console.error(`Role "${role}" is missing in the roles table.`);
+        return;
+      }
+    }
+
     await queryInterface.bulkInsert("users", [
       {
         name: "Super Admin",

@@ -367,6 +367,22 @@ exports.updateCampaign = async (id, updates) => {
     }
   }
 
+  // ✅ If conversionTracking is being updated, regenerate trackingScript
+  if (
+    updates.conversionTracking &&
+    updates.conversionTracking !== campaign.conversionTracking
+  ) {
+    const newTrackingScript = await exports.generateTrackingScript({
+      conversionTracking: updates.conversionTracking,
+      trackingSlug: updates.trackingSlug || campaign.trackingSlug,
+      uniqueId: campaign.unique_id,
+      campaignId: campaign.id,
+      scheduleDate: updates.scheduleDate || campaign.scheduleDate,
+    });
+
+    updates.trackingScript = newTrackingScript;
+  }
+
   await campaign.update(updates);
 
   return await Campaign.findByPk(id, {
@@ -375,6 +391,11 @@ exports.updateCampaign = async (id, updates) => {
         model: Company,
         as: "company",
         attributes: ["id", "name", "admin_email"],
+      },
+      {
+        model: Advertiser,
+        as: "advertiser",
+        attributes: ["id", "name"],
       },
     ],
   });

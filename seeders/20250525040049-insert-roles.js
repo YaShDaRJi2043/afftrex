@@ -2,6 +2,7 @@
 
 module.exports = {
   async up(queryInterface, Sequelize) {
+    const now = new Date();
     await queryInterface.bulkInsert("roles", [
       {
         name: "super-admin",
@@ -68,6 +69,13 @@ module.exports = {
       },
       {
         name: "Analyst",
+        level: 5,
+        is_system_role: false,
+        created_at: now,
+        updated_at: now,
+      },
+      {
+        name: "viewer",
         level: 5,
         is_system_role: false,
         created_at: now,
