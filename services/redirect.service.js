@@ -122,6 +122,45 @@ exports.trackClick = async (req, res) => {
       }
     }
 
+    // 🌍 Geo targeting (Country + Region + City)
+    if (geo) {
+      if (
+        Array.isArray(campaign.geoCountries) &&
+        campaign.geoCountries.length &&
+        !campaign.geoCountries.includes(geo.country)
+      ) {
+        res.status(403).json({
+          success: false,
+          message: "Click not allowed from this country.",
+        });
+        return;
+      }
+
+      if (
+        Array.isArray(campaign.geoRegions) &&
+        campaign.geoRegions.length &&
+        !campaign.geoRegions.includes(geo.region)
+      ) {
+        res.status(403).json({
+          success: false,
+          message: "Click not allowed from this region.",
+        });
+        return;
+      }
+
+      if (
+        Array.isArray(campaign.geoCities) &&
+        campaign.geoCities.length &&
+        !campaign.geoCities.includes(geo.city)
+      ) {
+        res.status(403).json({
+          success: false,
+          message: "Click not allowed from this city.",
+        });
+        return;
+      }
+    }
+
     // 📱 Device targeting
     const deviceType = (ua.device.type || "desktop").toLowerCase();
     const allowedDevices = (campaign.devices || []).map((d) =>
