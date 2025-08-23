@@ -5,6 +5,26 @@ const { Op } = require("sequelize");
 const UAParser = require("ua-parser-js");
 const { v4: uuidv4 } = require("uuid");
 
+function getClientIp(req) {
+  let ip =
+    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
+    req.headers["x-real-ip"] || // if set by nginx
+    req.socket?.remoteAddress ||
+    null;
+
+  if (!ip) return null;
+
+  // Strip IPv6 prefix ::ffff:
+  if (ip.startsWith("::ffff:")) {
+    ip = ip.replace("::ffff:", "");
+  }
+
+  // Handle IPv6 localhost
+  if (ip === "::1") ip = "127.0.0.1";
+
+  return ip;
+}
+
 exports.trackClick = async (req, res) => {
   try {
     const CampaignUniqueId = req.params.campaignId;
@@ -44,10 +64,7 @@ exports.trackClick = async (req, res) => {
     }
 
     // 🧠 Metadata: IP, UA, Geo, Time
-    const ip =
-      (req.headers["x-forwarded-for"]?.split(",")[0] || "").trim() ||
-      req.socket?.remoteAddress ||
-      null;
+    const ip = getClientIp(req);
 
     const userAgent = req.headers["user-agent"] || "";
     const referer = req.headers["referer"] || null;
@@ -97,12 +114,10 @@ exports.trackClick = async (req, res) => {
       const endHour = Number.isFinite(campaign.endHour) ? campaign.endHour : 23;
 
       if (!isActiveDay || hour < startHour || hour > endHour) {
-        res
-          .status(403)
-          .json({
-            success: false,
-            message: "Click not allowed due to time targeting.",
-          });
+        res.status(403).json({
+          success: false,
+          message: "Click not allowed due to time targeting.",
+        });
         return;
       }
     }
@@ -117,12 +132,10 @@ exports.trackClick = async (req, res) => {
       !allowedDevices.includes("all") &&
       !allowedDevices.includes(deviceType)
     ) {
-      res
-        .status(403)
-        .json({
-          success: false,
-          message: `Device type '${deviceType}' not allowed.`,
-        });
+      res.status(403).json({
+        success: false,
+        message: `Device type '${deviceType}' not allowed.`,
+      });
       return;
     }
 
@@ -136,12 +149,10 @@ exports.trackClick = async (req, res) => {
       !allowedOS.includes("all") &&
       (!osName || !allowedOS.includes(osName))
     ) {
-      res
-        .status(403)
-        .json({
-          success: false,
-          message: `OS '${ua.os.name || "Unknown"}' not allowed.`,
-        });
+      res.status(403).json({
+        success: false,
+        message: `OS '${ua.os.name || "Unknown"}' not allowed.`,
+      });
       return;
     }
 
