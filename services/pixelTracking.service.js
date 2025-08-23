@@ -67,7 +67,17 @@ exports.trackPixel = async (slug, data, req) => {
   ]);
   const eventType = allowedEvents.has(n.eventType) ? n.eventType : "";
 
-  // 5) Insert a PixelTracking record
+  // 5) Count how many times this user clicked (IP + UA)
+  const sameUserClicks = await CampaignTracking.count({
+    where: {
+      campaignId: campaign.id,
+      ipAddress: tracking.ipAddress,
+      userAgent: tracking.userAgent,
+      eventType: "click",
+    },
+  });
+
+  // 6) Insert a PixelTracking record
   try {
     await PixelTracking.create({
       campaignId: campaign.id,
@@ -86,9 +96,8 @@ exports.trackPixel = async (slug, data, req) => {
       pageUrl,
       conversionTime: new Date(),
 
-      // Optional parity fields if you keep them in schema:
-      // clickTime: new Date(),
-      // clickCount: 1,
+      // Added clickCount
+      clickCount: sameUserClicks,
     });
   } catch (err) {
     console.error("Error inserting PixelTracking:", err);
@@ -135,6 +144,16 @@ exports.trackPostback = async (slug, data, req) => {
     if (existing) throw new Error("Duplicate transaction");
   }
 
+  // Count how many times this user clicked (IP + UA)
+  const sameUserClicks = await CampaignTracking.count({
+    where: {
+      campaignId: campaign.id,
+      ipAddress: tracking.ipAddress,
+      userAgent: tracking.userAgent,
+      eventType: "click",
+    },
+  });
+
   await PixelTracking.create({
     campaignId: campaign.id,
     trackingId: tracking.id,
@@ -151,6 +170,9 @@ exports.trackPostback = async (slug, data, req) => {
     pixelType: "postback",
     pageUrl: campaign.defaultCampaignUrl || "postback",
     conversionTime: new Date(),
+
+    // Added clickCount
+    clickCount: sameUserClicks,
   });
 
   return clickId;
