@@ -15,10 +15,10 @@ function normalizeData(data = {}) {
     saleAmount:
       data.sale_amount != null
         ? data.sale_amount
-        : data.saleAmount != null
-        ? data.saleAmount
-        : null,
-
+        : (() => {
+            if (data.saleAmount != null) return data.saleAmount;
+            return null;
+          })(),
     currency: data.currency || null,
     conversionStatus: data.conversionStatus || data.status || null,
 
