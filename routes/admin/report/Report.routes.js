@@ -8,13 +8,13 @@ const { checkFeature } = require("@middleware/checkFeature");
 router.use(authMiddleware);
 
 router.get(
-  "/campaign-trackings/:campaignId",
+  "/campaign-trackings",
   checkFeature("report_view_campaign_tracking"),
   trackingController.getCampaignTrackingByCampaignId
 );
 
 router.get(
-  "/conversion-trackings/:campaignId",
+  "/conversion-trackings",
   checkFeature("report_view_conversion_tracking"),
   trackingController.getPixelTrackingByTrackingId
 );

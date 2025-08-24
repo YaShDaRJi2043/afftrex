@@ -1,8 +1,7 @@
 const { CampaignTracking, PixelTracking, Publisher } = require("@models");
 
 exports.getCampaignTrackingByCampaignId = async (req) => {
-  const { campaignId } = req.params;
-  const { page = 1, pageSize = 10 } = req.query; // Default to page 1 and pageSize 10
+  const { campaignId, page = 1, pageSize = 10 } = req.query; // Retrieve campaignId from query
 
   const options = {
     include: [
@@ -26,8 +25,7 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
 };
 
 exports.getPixelTrackingByTrackingId = async (req) => {
-  const { campaignId } = req.params;
-  const { page = 1, pageSize = 10 } = req.query; // Default to page 1 and pageSize 10
+  const { campaignId, page = 1, pageSize = 10 } = req.query; // Retrieve campaignId from query
 
   const options = {
     limit: parseInt(pageSize),
