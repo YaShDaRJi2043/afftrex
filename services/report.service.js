@@ -24,7 +24,7 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
     CampaignTracking.count(options.where ? { where: options.where } : {}),
   ]);
 
-  return { ...trackings, total };
+  return { trackings, total };
 };
 
 exports.getPixelTrackingByTrackingId = async (req) => {
@@ -44,5 +44,5 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     PixelTracking.count(options.where ? { where: options.where } : {}),
   ]);
 
-  return { ...pixelTrackings, total };
+  return { pixelTrackings, total };
 };
