@@ -19,9 +19,12 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
     options.where = { campaignId };
   }
 
-  const trackings = await CampaignTracking.findAll(options);
+  const [trackings, total] = await Promise.all([
+    CampaignTracking.findAll(options),
+    CampaignTracking.count(options.where ? { where: options.where } : {}),
+  ]);
 
-  return trackings;
+  return { ...trackings, total };
 };
 
 exports.getPixelTrackingByTrackingId = async (req) => {
@@ -36,7 +39,10 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     options.where = { campaignId };
   }
 
-  const pixelTrackings = await PixelTracking.findAll(options);
+  const [pixelTrackings, total] = await Promise.all([
+    PixelTracking.findAll(options),
+    PixelTracking.count(options.where ? { where: options.where } : {}),
+  ]);
 
-  return pixelTrackings;
+  return { ...pixelTrackings, total };
 };
