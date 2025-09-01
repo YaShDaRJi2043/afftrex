@@ -234,12 +234,22 @@ exports.trackClick = async (req, res) => {
       p4: req.query.p4 || null,
     });
 
-    // 🚀 Build redirect URL with clickId passthrough
-    const redirectUrl = new URL(campaign.defaultCampaignUrl);
-    redirectUrl.searchParams.append("clickId", clickId);
+    let redirectUrl = campaign.defaultCampaignUrl;
+
+    // Replace macros if present
+    redirectUrl = redirectUrl
+      .replace(/{click_id}/g, clickId)
+      .replace(/{pub}/g, assignment.publisherId);
+
+    // If no {click_id} macro was present, append clickId as query param
+    if (!redirectUrl.includes(clickId)) {
+      const urlObj = new URL(redirectUrl);
+      urlObj.searchParams.append("clickId", clickId);
+      redirectUrl = urlObj.toString();
+    }
 
     // Service returns data; controller sets cookie & redirects
-    return { redirectUrl: redirectUrl.toString(), clickId };
+    return { redirectUrl, clickId };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     res.status(500).json({ success: false, message: "Internal Server Error" });
