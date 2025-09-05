@@ -34,7 +34,7 @@ exports.trackClick = async (req, res) => {
       res
         .status(400)
         .json({ success: false, message: "Missing campaign or publisher ID." });
-      return; // controller checks res.headersSent
+      return;
     }
 
     // 🔍 Find CampaignAssignment + Campaign
@@ -122,7 +122,7 @@ exports.trackClick = async (req, res) => {
       }
     }
 
-    // 🌍 Geo targeting (Country + Region + City)
+    // 🌍 Geo targeting
     if (geo) {
       if (
         Array.isArray(campaign.geoCountries) &&
@@ -195,7 +195,7 @@ exports.trackClick = async (req, res) => {
       return;
     }
 
-    // (Optional) Carrier targeting placeholder
+    // (Optional) Carrier targeting
     const carrier = null;
     if (
       Array.isArray(campaign.carrierTargeting) &&
@@ -234,12 +234,34 @@ exports.trackClick = async (req, res) => {
       p4: req.query.p4 || null,
     });
 
-    // 🚀 Build redirect URL with clickId passthrough
-    const redirectUrl = new URL(campaign.defaultCampaignUrl);
-    redirectUrl.searchParams.append("clickId", clickId);
+    // 🚀 Build redirect URL with macro replacements
+    let redirectUrl = campaign.defaultCampaignUrl;
 
-    // Service returns data; controller sets cookie & redirects
-    return { redirectUrl: redirectUrl.toString(), clickId };
+    const replacements = {
+      "{clickId}": clickId,
+      "{pub}": shortPublisherId,
+      "{campaignId}": CampaignUniqueId,
+      "{p1}": req.query.p1 || "",
+      "{p2}": req.query.p2 || "",
+      "{p3}": req.query.p3 || "",
+      "{p4}": req.query.p4 || "",
+    };
+
+    Object.entries(replacements).forEach(([macro, value]) => {
+      redirectUrl = redirectUrl.replace(
+        new RegExp(macro, "g"),
+        encodeURIComponent(value)
+      );
+    });
+
+    // If no {clickId} macro found, append clickId
+    if (!redirectUrl.includes(clickId)) {
+      const urlObj = new URL(redirectUrl);
+      urlObj.searchParams.append("clickId", clickId);
+      redirectUrl = urlObj.toString();
+    }
+
+    return { redirectUrl, clickId };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
     res.status(500).json({ success: false, message: "Internal Server Error" });
