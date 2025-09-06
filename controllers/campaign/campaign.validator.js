@@ -81,7 +81,7 @@ const baseCampaignFields = {
     .optional(),
   kpi: Joi.string().optional(),
   externalOfferId: Joi.string().optional(),
-  thumbnail: Joi.string().optional(),
+  thumbnail: Joi.any().optional(), // Allow file upload
   trackingDomain: Joi.string().optional(),
   trackingSlug: Joi.string().optional(),
 };
