@@ -113,14 +113,20 @@ exports.trackPixel = async (slug, data, req) => {
  * - Validate clickId and de-dupe by transactionId
  */
 // services/pixelTracking.service.js
-exports.trackPostbackPhpParity = async (query, req) => {
+exports.trackPostbackPhpParity = async (req) => {
   const expectedToken =
     "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
-  const suppliedToken = query.security_token || "";
+  const suppliedToken = req.query?.security_token || "";
 
-  const click_id = (query.click_id || "").trim();
-  const txn_id = (query.txn_id || "").trim();
-  const amount = query.amount != null ? parseFloat(query.amount) : 0;
+  const click_id = (
+    req.query?.click_id ||
+    req.cookies?.click_id ||
+    null
+  ).trim();
+  console.log(click_id);
+
+  const txn_id = (req.query?.txn_id || "").trim();
+  const amount = req.query?.amount != null ? parseFloat(req.query?.amount) : 0;
 
   if (suppliedToken !== expectedToken) {
     const err = new Error("Unauthorized");
