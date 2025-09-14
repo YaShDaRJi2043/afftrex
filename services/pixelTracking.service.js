@@ -115,7 +115,8 @@ exports.trackPixel = async (slug, data, req) => {
 // services/pixelTracking.service.js
 exports.trackPostbackPhpParity = async (query, req) => {
   const expectedToken = process.env.POSTBACK_TOKEN || "SECRET123";
-  const suppliedToken = query.token || req.headers["x-postback-token"] || "";
+  const suppliedToken =
+    query.security_token || req.headers["x-postback-token"] || "";
 
   const click_id = (query.click_id || "").trim();
   const txn_id = (query.txn_id || "").trim();
