@@ -126,18 +126,26 @@ function firstNonEmpty(obj, ...keys) {
 }
 
 exports.trackPostbackPhpParity = async (req = {}) => {
-  console.log(
-    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",
-    req.query
-  );
-
   const q = req.query || {};
   const headers = req.headers || {};
 
-  // PHP had a hardcoded SECRET; use env if set, else fallback
-  const expectedToken =
-    process.env.POSTBACK_TOKEN ||
-    "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
+  // Extract trackingSlug from query
+  const trackingSlug = firstNonEmpty(q, "tracking_slug", "slug");
+  if (!trackingSlug) {
+    const err = new Error("Missing tracking slug");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Fetch the campaign based on the trackingSlug
+  const campaign = await Campaign.findOne({
+    where: { unique_id: q.campaign_id },
+  });
+  if (!campaign) {
+    const err = new Error("Invalid tracking slug");
+    err.statusCode = 404;
+    throw err;
+  }
 
   // ACCEPT BOTH names like PHP+your current links: token OR security_token (or header)
   const suppliedToken =
@@ -145,8 +153,8 @@ exports.trackPostbackPhpParity = async (req = {}) => {
     headers["x-postback-token"] ||
     "";
 
-  // === Token check (PHP: 403 Unauthorized)
-  if (suppliedToken !== expectedToken) {
+  // === Token check (match with campaign's security_token)
+  if (suppliedToken !== campaign.security_token) {
     const err = new Error("Unauthorized");
     err.statusCode = 403;
     throw err;
@@ -219,8 +227,8 @@ exports.trackPostbackPhpParity = async (req = {}) => {
       transactionId: txn_id,
       clickId: click_id,
 
-      saleAmount: amount ? 0 : amount,
-      conversionValue: amount ? 0 : amount,
+      saleAmount: amount || 0,
+      conversionValue: amount || 0,
       currency: firstNonEmpty(q, "currency") || null,
       conversionStatus: firstNonEmpty(q, "conversionStatus") || "approved",
 
@@ -237,12 +245,4 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   }
 
   return true;
-};
-
-// Optional: keep old signature working
-exports.trackPostback = async (_slug, data, req) => {
-  // ignore slug; PHP parity uses only query
-  // if someone passes (data) only, synthesize a req:
-  const fauxReq = req || { query: data, headers: {} };
-  return exports.trackPostbackPhpParity(fauxReq);
 };
