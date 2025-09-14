@@ -123,6 +123,7 @@ exports.trackPostbackPhpParity = async (req) => {
     req.cookies?.click_id ||
     null
   ).trim();
+  console.log("@@@@@@@@@@@@@@@@@@@@@@@@", req.query);
 
   const txn_id = (req.query?.txn_id || "").trim();
   const amount = req.query?.amount != null ? parseFloat(req.query?.amount) : 0;
