@@ -199,7 +199,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
 
   // === Duplicate txn_id (PHP: 409 Duplicate transaction)
   const existing = await PixelTracking.findOne({
-    where: { txnId: txn_id },
+    where: { transactionId: txn_id },
     attributes: ["id"],
   });
   if (existing) {
