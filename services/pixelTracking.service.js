@@ -126,18 +126,11 @@ function firstNonEmpty(obj, ...keys) {
 }
 
 exports.trackPostbackPhpParity = async (req = {}) => {
-  console.log(
-    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",
-    req.query
-  );
-
   const q = req.query || {};
   const headers = req.headers || {};
 
   // PHP had a hardcoded SECRET; use env if set, else fallback
-  const expectedToken =
-    process.env.POSTBACK_TOKEN ||
-    "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
+  const expectedToken = q.security_token;
 
   // ACCEPT BOTH names like PHP+your current links: token OR security_token (or header)
   const suppliedToken =
@@ -237,12 +230,4 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   }
 
   return true;
-};
-
-// Optional: keep old signature working
-exports.trackPostback = async (_slug, data, req) => {
-  // ignore slug; PHP parity uses only query
-  // if someone passes (data) only, synthesize a req:
-  const fauxReq = req || { query: data, headers: {} };
-  return exports.trackPostbackPhpParity(fauxReq);
 };
