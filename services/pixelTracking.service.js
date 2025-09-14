@@ -210,13 +210,31 @@ exports.trackPostbackPhpParity = async (req = {}) => {
 
   // === Insert conversion (PHP: INSERT INTO conversions_postback ...)
   const now = new Date();
-  await PixelTracking.create({
-    clickId: click_id, // maps to column click_id
-    txnId: txn_id, // maps to column txn_id (unique)
-    conversionValue: isNaN(amount) ? 0 : amount,
-    createdAt: now,
-    updatedAt: now, // remove if your table is timestamps:false
-  });
+  try {
+    await PixelTracking.create({
+      campaignId: clickRow.campaignId,
+      trackingId: clickRow.id,
+
+      eventType: "conversion", // default for postback
+      transactionId: txn_id,
+      clickId: click_id,
+
+      saleAmount: isNaN(amount) ? 0 : amount,
+      conversionValue: isNaN(amount) ? 0 : amount,
+      currency: firstNonEmpty(q, "currency") || null,
+      conversionStatus: firstNonEmpty(q, "conversionStatus") || "approved",
+
+      pixelType: "postback", // differentiate from iframe
+      pageUrl: null, // no pageUrl in postback
+      conversionTime: now,
+
+      // Added clickCount (default 0 for postback)
+      clickCount: 0,
+    });
+  } catch (err) {
+    console.error("Error inserting PixelTracking:", err);
+    throw new Error("Failed to insert pixel tracking data");
+  }
 
   return true;
 };
