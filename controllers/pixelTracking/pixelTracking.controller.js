@@ -33,13 +33,17 @@ exports.handlePixelGet = async (req, res) => {
   }
 };
 
+// controllers/postback.controller.js
 exports.handlePostback = async (req, res) => {
   try {
-    await pixelTrackingService.trackPostbackPhpParity(req.query, req);
-    res.status(200).type("text/plain").send("Conversion tracked successfully");
+    await pixelTrackingService.trackPostbackPhpParity(req);
+    return res
+      .status(200)
+      .type("text/plain")
+      .send("Conversion tracked successfully");
   } catch (error) {
-    const status = error?.statusCode || 500;
-    const msg = error?.message || "Error inserting conversion";
-    res.status(status).type("text/plain").send(msg);
+    const code = error.statusCode || 500;
+    const msg = error.message || "Error inserting conversion";
+    return res.status(code).type("text/plain").send(msg);
   }
 };

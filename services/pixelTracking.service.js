@@ -113,32 +113,80 @@ exports.trackPixel = async (slug, data, req) => {
  * - Validate clickId and de-dupe by transactionId
  */
 // services/pixelTracking.service.js
-exports.trackPostbackPhpParity = async (req) => {
+// services/pixelTracking.service.js
+
+// helper: first non-empty among possible keys
+function firstNonEmpty(obj, ...keys) {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (v !== undefined && v !== null && String(v).trim() !== "")
+      return String(v).trim();
+  }
+  return "";
+}
+
+exports.trackPostbackPhpParity = async (req = {}) => {
+  console.log(
+    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",
+    req.query
+  );
+
+  const q = req.query || {};
+  const headers = req.headers || {};
+
+  // PHP had a hardcoded SECRET; use env if set, else fallback
   const expectedToken =
+    process.env.POSTBACK_TOKEN ||
     "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
-  const suppliedToken = req.query?.security_token || "";
 
-  const click_id = (
-    req.query?.click_id ||
-    req.cookies?.click_id ||
-    null
-  ).trim();
-  console.log("@@@@@@@@@@@@@@@@@@@@@@@@", req.query);
+  // ACCEPT BOTH names like PHP+your current links: token OR security_token (or header)
+  const suppliedToken =
+    firstNonEmpty(q, "security_token", "token") ||
+    headers["x-postback-token"] ||
+    "";
 
-  const txn_id = (req.query?.txn_id || "").trim();
-  const amount = req.query?.amount != null ? parseFloat(req.query?.amount) : 0;
-
+  // === Token check (PHP: 403 Unauthorized)
   if (suppliedToken !== expectedToken) {
     const err = new Error("Unauthorized");
     err.statusCode = 403;
     throw err;
   }
-  if (click_id === "") {
+
+  // === Read params exactly like PHP (but allow common aliases)
+  const click_id = firstNonEmpty(
+    q,
+    "click_id",
+    "aff_sub1",
+    "sub1",
+    "af_click_id",
+    "clickId"
+  );
+  const txn_id = firstNonEmpty(
+    q,
+    "txn_id",
+    "transaction_id",
+    "order_id",
+    "conv_id",
+    "transactionId"
+  );
+  const amountS = firstNonEmpty(
+    q,
+    "amount",
+    "sale_amount",
+    "revenue",
+    "value",
+    "payout"
+  );
+  const amount = amountS ? parseFloat(amountS) : 0;
+
+  // === Required params (PHP: 400 Missing parameters)
+  if (!click_id || !txn_id) {
     const err = new Error("Missing parameters");
     err.statusCode = 400;
     throw err;
   }
 
+  // === Check click_id existence (PHP: 404 Invalid click_id)
   const clickRow = await CampaignTracking.findOne({
     where: { clickId: click_id },
     order: [["createdAt", "DESC"]],
@@ -149,6 +197,7 @@ exports.trackPostbackPhpParity = async (req) => {
     throw err;
   }
 
+  // === Duplicate txn_id (PHP: 409 Duplicate transaction)
   const existing = await PixelTracking.findOne({
     where: { txnId: txn_id },
     attributes: ["id"],
@@ -159,14 +208,23 @@ exports.trackPostbackPhpParity = async (req) => {
     throw err;
   }
 
+  // === Insert conversion (PHP: INSERT INTO conversions_postback ...)
   const now = new Date();
   await PixelTracking.create({
-    clickId: click_id,
-    txnId: txn_id,
+    clickId: click_id, // maps to column click_id
+    txnId: txn_id, // maps to column txn_id (unique)
     amount: isNaN(amount) ? 0 : amount,
     createdAt: now,
-    updatedAt: now,
+    updatedAt: now, // remove if your table is timestamps:false
   });
 
   return true;
+};
+
+// Optional: keep old signature working
+exports.trackPostback = async (_slug, data, req) => {
+  // ignore slug; PHP parity uses only query
+  // if someone passes (data) only, synthesize a req:
+  const fauxReq = req || { query: data, headers: {} };
+  return exports.trackPostbackPhpParity(fauxReq);
 };
