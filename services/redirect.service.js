@@ -265,6 +265,11 @@ exports.trackClick = async (req, res) => {
       );
     }
 
+    console.log(
+      "##########################################################",
+      redirectUrl
+    );
+
     return { redirectUrl, clickId };
   } catch (err) {
     console.error("🔥 Tracking error:", err);
