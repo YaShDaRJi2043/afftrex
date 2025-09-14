@@ -123,7 +123,6 @@ exports.trackPostbackPhpParity = async (req) => {
     req.cookies?.click_id ||
     null
   ).trim();
-  console.log(click_id);
 
   const txn_id = (req.query?.txn_id || "").trim();
   const amount = req.query?.amount != null ? parseFloat(req.query?.amount) : 0;
@@ -149,7 +148,7 @@ exports.trackPostbackPhpParity = async (req) => {
     throw err;
   }
 
-  const existing = await ConversionsPostback.findOne({
+  const existing = await PixelTracking.findOne({
     where: { txnId: txn_id },
     attributes: ["id"],
   });
@@ -160,7 +159,7 @@ exports.trackPostbackPhpParity = async (req) => {
   }
 
   const now = new Date();
-  await ConversionsPostback.create({
+  await PixelTracking.create({
     clickId: click_id,
     txnId: txn_id,
     amount: isNaN(amount) ? 0 : amount,
