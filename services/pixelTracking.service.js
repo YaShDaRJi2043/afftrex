@@ -113,81 +113,62 @@ exports.trackPixel = async (slug, data, req) => {
  * - Validate clickId and de-dupe by transactionId
  */
 // services/pixelTracking.service.js
-exports.trackPostbackPhpParity = async (query) => {
-  // --- PHP: $expected_token = 'SECRET123';
+async function trackPostbackPhpParity(query, req) {
   const expectedToken = process.env.POSTBACK_TOKEN || "SECRET123";
+  const suppliedToken = query.token || req.headers["x-postback-token"] || "";
 
-  // --- PHP: read $_GET values
   const click_id = (query.click_id || "").trim();
   const txn_id = (query.txn_id || "").trim();
   const amount = query.amount != null ? parseFloat(query.amount) : 0;
-  const token = query.token || "";
 
-  // --- PHP: token check -> 403 Unauthorized
-  if (token !== expectedToken) {
+  if (suppliedToken !== expectedToken) {
     const err = new Error("Unauthorized");
     err.statusCode = 403;
     throw err;
   }
-
-  // --- PHP: required params -> 400 Missing parameters
   if (click_id === "" || txn_id === "") {
     const err = new Error("Missing parameters");
     err.statusCode = 400;
     throw err;
   }
 
-  // --- PHP: SELECT * FROM cliksv2 WHERE click_id = ?
-  // Map cliksv2 -> CampaignTracking (assuming click rows stored here)
   const clickRow = await CampaignTracking.findOne({
     where: { clickId: click_id },
     order: [["createdAt", "DESC"]],
   });
-
   if (!clickRow) {
-    // --- PHP: 404 Invalid click_id
     const err = new Error("Invalid click_id");
     err.statusCode = 404;
     throw err;
   }
 
-  // --- PHP: SELECT id FROM conversions_postback WHERE txn_id = ?
   const existing = await ConversionsPostback.findOne({
     where: { txnId: txn_id },
     attributes: ["id"],
   });
-
   if (existing) {
-    // --- PHP: 409 Duplicate transaction
     const err = new Error("Duplicate transaction");
     err.statusCode = 409;
     throw err;
   }
 
-  // --- PHP: INSERT INTO conversions_postback (click_id, txn_id, amount, created_at) ...
-  // Create the row; created_at is usually auto by Sequelize timestamps,
-  // but we can set it explicitly to mirror NOW().
   const now = new Date();
   await ConversionsPostback.create({
-    clickId: click_id, // column name should match your model (e.g., click_id if underscored)
-    txnId: txn_id, // column name should match your model (e.g., txn_id if underscored)
+    clickId: click_id,
+    txnId: txn_id,
     amount: isNaN(amount) ? 0 : amount,
-    createdAt: now, // only if your model doesn't auto-manage timestamps
-    updatedAt: now, // only if needed
+    createdAt: now,
+    updatedAt: now,
   });
 
-  // If you DON'T have a ConversionsPostback model/table yet and want to reuse PixelTracking instead,
-  // comment the create() above and use this:
-  //
-  // await PixelTracking.create({
-  //   eventType: "conversion",
-  //   transactionId: txn_id,
-  //   clickId: click_id,
-  //   saleAmount: isNaN(amount) ? 0 : amount,
-  //   pixelType: "postback",
-  //   pageUrl: "postback",
-  //   conversionTime: new Date(),
-  // });
-
   return true;
+}
+
+// --- export BOTH names; keep controller compatibility
+module.exports = {
+  trackPostbackPhpParity,
+  trackPostback: async (slug, data, req) => {
+    // your controller passes (slug, req.query, req); we ignore slug for PHP parity
+    return trackPostbackPhpParity(data, req);
+  },
 };

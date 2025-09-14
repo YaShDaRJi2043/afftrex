@@ -35,10 +35,11 @@ exports.handlePixelGet = async (req, res) => {
 
 exports.handlePostback = async (req, res) => {
   try {
-    await pixelTrackingService.trackPostback(req.params.slug, req.query, req);
-    return res.status(200).send("Postback tracked successfully");
+    await pixelTrackingService.trackPostbackPhpParity(req.query);
+    res.status(200).type("text/plain").send("Conversion tracked successfully");
   } catch (error) {
-    console.error("postback error:", error?.message || error);
-    return res.status(400).send(error.message || "Bad Request");
+    const status = error?.statusCode || 500;
+    const msg = error?.message || "Error inserting conversion";
+    res.status(status).type("text/plain").send(msg);
   }
 };
