@@ -213,7 +213,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   await PixelTracking.create({
     clickId: click_id, // maps to column click_id
     txnId: txn_id, // maps to column txn_id (unique)
-    amount: isNaN(amount) ? 0 : amount,
+    conversionValue: isNaN(amount) ? 0 : amount,
     createdAt: now,
     updatedAt: now, // remove if your table is timestamps:false
   });
