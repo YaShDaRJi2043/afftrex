@@ -238,7 +238,7 @@ exports.trackClick = async (req, res) => {
     let redirectUrl = campaign.defaultCampaignUrl;
 
     const replacements = {
-      "{clickId}": clickId,
+      "{click_id}": clickId,
       "{pub}": shortPublisherId,
       "{campaignId}": CampaignUniqueId,
       "{p1}": req.query.p1 || "",
