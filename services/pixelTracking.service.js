@@ -129,8 +129,25 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   const q = req.query || {};
   const headers = req.headers || {};
 
-  // PHP had a hardcoded SECRET; use env if set, else fallback
-  const expectedToken = q.security_token;
+  // Extract trackingSlug from query
+  const trackingSlug = firstNonEmpty(q, "tracking_slug", "slug");
+  if (!trackingSlug) {
+    const err = new Error("Missing tracking slug");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // Fetch the campaign based on the trackingSlug
+  const campaign = await Campaign.findOne({
+    where: { campaign_id: q.campaign_id },
+  });
+  if (!campaign) {
+    const err = new Error("Invalid tracking slug");
+    err.statusCode = 404;
+    throw err;
+  }
+
+  console.log("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@", campaign);
 
   // ACCEPT BOTH names like PHP+your current links: token OR security_token (or header)
   const suppliedToken =
@@ -138,8 +155,8 @@ exports.trackPostbackPhpParity = async (req = {}) => {
     headers["x-postback-token"] ||
     "";
 
-  // === Token check (PHP: 403 Unauthorized)
-  if (suppliedToken !== expectedToken) {
+  // === Token check (match with campaign's security_token)
+  if (suppliedToken !== campaign.security_token) {
     const err = new Error("Unauthorized");
     err.statusCode = 403;
     throw err;
