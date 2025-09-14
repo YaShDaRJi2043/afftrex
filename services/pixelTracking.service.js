@@ -172,7 +172,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   const amountS = firstNonEmpty(
     q,
     "amount",
-    "sale_amount",
+    "saleAmount",
     "revenue",
     "value",
     "payout"
