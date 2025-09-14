@@ -127,7 +127,7 @@ exports.trackPostbackPhpParity = async (query, req) => {
     err.statusCode = 403;
     throw err;
   }
-  if (click_id === "" || txn_id === "") {
+  if (click_id === "") {
     const err = new Error("Missing parameters");
     err.statusCode = 400;
     throw err;
