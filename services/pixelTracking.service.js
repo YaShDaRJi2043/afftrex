@@ -124,9 +124,7 @@ exports.trackPostback = async (slug, data, req) => {
     where: { clickId },
     order: [["createdAt", "DESC"]],
   });
-
-  // ❌ Commented out error
-  // if (!tracking) throw new Error("No campaign tracking found");
+  if (!tracking) throw new Error("No campaign tracking found");
 
   // Optional security: POSTBACK_TOKEN
   const suppliedToken =
@@ -147,21 +145,18 @@ exports.trackPostback = async (slug, data, req) => {
   }
 
   // Count how many times this user clicked (IP + UA)
-  let sameUserClicks = 0;
-  if (tracking) {
-    sameUserClicks = await CampaignTracking.count({
-      where: {
-        campaignId: campaign.id,
-        ipAddress: tracking.ipAddress,
-        userAgent: tracking.userAgent,
-        eventType: "click",
-      },
-    });
-  }
+  const sameUserClicks = await CampaignTracking.count({
+    where: {
+      campaignId: campaign.id,
+      ipAddress: tracking.ipAddress,
+      userAgent: tracking.userAgent,
+      eventType: "click",
+    },
+  });
 
   await PixelTracking.create({
     campaignId: campaign.id,
-    trackingId: tracking ? tracking.id : null, // fallback to null if not found
+    trackingId: tracking.id,
 
     eventType: "conversion",
     transactionId: n.transactionId || null,
@@ -176,7 +171,7 @@ exports.trackPostback = async (slug, data, req) => {
     pageUrl: campaign.defaultCampaignUrl || "postback",
     conversionTime: new Date(),
 
-    // Added clickCount (fallback 0 if no tracking)
+    // Added clickCount
     clickCount: sameUserClicks,
   });
 
