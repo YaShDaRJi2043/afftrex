@@ -180,7 +180,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   const amount = amountS ? parseFloat(amountS) : 0;
 
   // === Required params (PHP: 400 Missing parameters)
-  if (!click_id || !txn_id) {
+  if (!click_id) {
     const err = new Error("Missing parameters");
     err.statusCode = 400;
     throw err;
