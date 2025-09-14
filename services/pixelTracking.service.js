@@ -219,8 +219,8 @@ exports.trackPostbackPhpParity = async (req = {}) => {
       transactionId: txn_id,
       clickId: click_id,
 
-      saleAmount: isNaN(amount) ? 0 : amount,
-      conversionValue: isNaN(amount) ? 0 : amount,
+      saleAmount: amount ? 0 : amount,
+      conversionValue: amount ? 0 : amount,
       currency: firstNonEmpty(q, "currency") || null,
       conversionStatus: firstNonEmpty(q, "conversionStatus") || "approved",
 
