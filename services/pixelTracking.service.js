@@ -112,68 +112,82 @@ exports.trackPixel = async (slug, data, req) => {
  * - Accept click_id, transaction_id, sale_amount/saleAmount, currency, conversionStatus, token
  * - Validate clickId and de-dupe by transactionId
  */
-exports.trackPostback = async (slug, data, req) => {
-  const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
-  if (!campaign) throw new Error("Invalid tracking slug");
+// services/pixelTracking.service.js
+exports.trackPostbackPhpParity = async (query) => {
+  // --- PHP: $expected_token = 'SECRET123';
+  const expectedToken = process.env.POSTBACK_TOKEN || "SECRET123";
 
-  const n = normalizeData(data);
-  const clickId = n.clickId;
-  if (!clickId) throw new Error("Missing clickId in postback");
+  // --- PHP: read $_GET values
+  const click_id = (query.click_id || "").trim();
+  const txn_id = (query.txn_id || "").trim();
+  const amount = query.amount != null ? parseFloat(query.amount) : 0;
+  const token = query.token || "";
 
-  const tracking = await CampaignTracking.findOne({
-    where: { clickId },
+  // --- PHP: token check -> 403 Unauthorized
+  if (token !== expectedToken) {
+    const err = new Error("Unauthorized");
+    err.statusCode = 403;
+    throw err;
+  }
+
+  // --- PHP: required params -> 400 Missing parameters
+  if (click_id === "" || txn_id === "") {
+    const err = new Error("Missing parameters");
+    err.statusCode = 400;
+    throw err;
+  }
+
+  // --- PHP: SELECT * FROM cliksv2 WHERE click_id = ?
+  // Map cliksv2 -> CampaignTracking (assuming click rows stored here)
+  const clickRow = await CampaignTracking.findOne({
+    where: { clickId: click_id },
     order: [["createdAt", "DESC"]],
   });
-  if (!tracking) throw new Error("No campaign tracking found");
 
-  // Optional security: POSTBACK_TOKEN
-  const suppliedToken =
-    data.token || req.query?.token || req.headers["x-postback-token"];
-  if (
-    process.env.POSTBACK_TOKEN &&
-    suppliedToken !== process.env.POSTBACK_TOKEN
-  ) {
-    throw new Error("Unauthorized postback");
+  if (!clickRow) {
+    // --- PHP: 404 Invalid click_id
+    const err = new Error("Invalid click_id");
+    err.statusCode = 404;
+    throw err;
   }
 
-  // Duplicate protection on transactionId
-  if (n.transactionId) {
-    const existing = await PixelTracking.findOne({
-      where: { transactionId: n.transactionId },
-    });
-    if (existing) throw new Error("Duplicate transaction");
+  // --- PHP: SELECT id FROM conversions_postback WHERE txn_id = ?
+  const existing = await ConversionsPostback.findOne({
+    where: { txnId: txn_id },
+    attributes: ["id"],
+  });
+
+  if (existing) {
+    // --- PHP: 409 Duplicate transaction
+    const err = new Error("Duplicate transaction");
+    err.statusCode = 409;
+    throw err;
   }
 
-  // Count how many times this user clicked (IP + UA)
-  const sameUserClicks = await CampaignTracking.count({
-    where: {
-      campaignId: campaign.id,
-      ipAddress: tracking.ipAddress,
-      userAgent: tracking.userAgent,
-      eventType: "click",
-    },
+  // --- PHP: INSERT INTO conversions_postback (click_id, txn_id, amount, created_at) ...
+  // Create the row; created_at is usually auto by Sequelize timestamps,
+  // but we can set it explicitly to mirror NOW().
+  const now = new Date();
+  await ConversionsPostback.create({
+    clickId: click_id, // column name should match your model (e.g., click_id if underscored)
+    txnId: txn_id, // column name should match your model (e.g., txn_id if underscored)
+    amount: isNaN(amount) ? 0 : amount,
+    createdAt: now, // only if your model doesn't auto-manage timestamps
+    updatedAt: now, // only if needed
   });
 
-  await PixelTracking.create({
-    campaignId: campaign.id,
-    trackingId: tracking.id,
+  // If you DON'T have a ConversionsPostback model/table yet and want to reuse PixelTracking instead,
+  // comment the create() above and use this:
+  //
+  // await PixelTracking.create({
+  //   eventType: "conversion",
+  //   transactionId: txn_id,
+  //   clickId: click_id,
+  //   saleAmount: isNaN(amount) ? 0 : amount,
+  //   pixelType: "postback",
+  //   pageUrl: "postback",
+  //   conversionTime: new Date(),
+  // });
 
-    eventType: "conversion",
-    transactionId: n.transactionId || null,
-    clickId,
-
-    saleAmount: n.saleAmount || null,
-    conversionValue: n.saleAmount || null,
-    currency: n.currency || null,
-    conversionStatus: n.conversionStatus || "approved",
-
-    pixelType: "postback",
-    pageUrl: campaign.defaultCampaignUrl || "postback",
-    conversionTime: new Date(),
-
-    // Added clickCount
-    clickCount: sameUserClicks,
-  });
-
-  return clickId;
+  return true;
 };
