@@ -259,6 +259,10 @@ exports.trackClick = async (req, res) => {
       const urlObj = new URL(redirectUrl);
       urlObj.searchParams.append("clickId", clickId);
       redirectUrl = urlObj.toString();
+      console.log(
+        "------------------------------------------------------------------",
+        redirectUrl
+      );
     }
 
     return { redirectUrl, clickId };
