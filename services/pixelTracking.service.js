@@ -139,7 +139,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
 
   // Fetch the campaign based on the trackingSlug
   const campaign = await Campaign.findOne({
-    where: { campaign_id: q.campaign_id },
+    where: { unique_id: q.campaign_id },
   });
   if (!campaign) {
     const err = new Error("Invalid tracking slug");
