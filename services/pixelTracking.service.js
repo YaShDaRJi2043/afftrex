@@ -87,8 +87,8 @@ exports.trackPixel = async (slug, data, req) => {
       transactionId: n.transactionId || null,
       clickId,
 
-      saleAmount: n.saleAmount || null,
-      conversionValue: n.saleAmount || null,
+      saleAmount: n.saleAmount || 0,
+      conversionValue: n.saleAmount || 0,
       currency: n.currency || null,
       conversionStatus: n.conversionStatus || "approved",
 
