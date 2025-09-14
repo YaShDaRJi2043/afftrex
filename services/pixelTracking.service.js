@@ -113,7 +113,7 @@ exports.trackPixel = async (slug, data, req) => {
  * - Validate clickId and de-dupe by transactionId
  */
 // services/pixelTracking.service.js
-async function trackPostbackPhpParity(query, req) {
+exports.trackPostbackPhpParity = async (query, req) => {
   const expectedToken = process.env.POSTBACK_TOKEN || "SECRET123";
   const suppliedToken = query.token || req.headers["x-postback-token"] || "";
 
@@ -162,13 +162,4 @@ async function trackPostbackPhpParity(query, req) {
   });
 
   return true;
-}
-
-// --- export BOTH names; keep controller compatibility
-module.exports = {
-  trackPostbackPhpParity,
-  trackPostback: async (slug, data, req) => {
-    // your controller passes (slug, req.query, req); we ignore slug for PHP parity
-    return trackPostbackPhpParity(data, req);
-  },
 };

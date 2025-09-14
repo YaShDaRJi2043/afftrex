@@ -35,7 +35,7 @@ exports.handlePixelGet = async (req, res) => {
 
 exports.handlePostback = async (req, res) => {
   try {
-    await pixelTrackingService.trackPostbackPhpParity(req.query);
+    await pixelTrackingService.trackPostbackPhpParity(req.query, req);
     res.status(200).type("text/plain").send("Conversion tracked successfully");
   } catch (error) {
     const status = error?.statusCode || 500;
