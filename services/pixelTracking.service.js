@@ -124,7 +124,7 @@ exports.trackPostback = async (slug, data, req) => {
     where: { clickId },
     order: [["createdAt", "DESC"]],
   });
-  // if (!tracking) throw new Error("No campaign tracking found");
+  if (!tracking) throw new Error("No campaign tracking found");
 
   // Optional security: POSTBACK_TOKEN
   const suppliedToken =
