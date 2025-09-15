@@ -153,6 +153,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
     where: { security_token: req.query.security_token },
   });
   if (!campaign) throw new Error("Invalid security token");
+  console.log("campaign", campaign);
 
   const expectedToken = campaign.security_token;
 
