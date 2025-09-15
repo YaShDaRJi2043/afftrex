@@ -37,6 +37,11 @@ function normalizeData(data = {}) {
  * - Writes a PixelTracking row mirroring pixel.php behavior.
  */
 exports.trackPixel = async (slug, data, req) => {
+  console.log(
+    "dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    data
+  );
+
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
   if (!campaign) throw new Error("Invalid tracking slug");
 
