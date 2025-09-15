@@ -35,6 +35,7 @@ exports.handlePixelGet = async (req, res) => {
 
 // controllers/postback.controller.js
 exports.handlePostback = async (req, res) => {
+  console.log("qweqweqweqewqeqewqeqeqweqweqweqew", req);
   try {
     await pixelTrackingService.trackPostbackPhpParity(req);
     return res
