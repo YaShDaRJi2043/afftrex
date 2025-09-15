@@ -41,10 +41,16 @@ exports.trackPixel = async (slug, data, req) => {
   if (!campaign) throw new Error("Invalid tracking slug");
 
   const n = normalizeData(data);
+  console.log(
+    "heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+    n
+  );
 
   // 1) Resolve clickId: query first, then cookie
   const clickId =
     n.clickId || req.query?.click_id || req.cookies?.click_id || null;
+  console.log("clickIdclickIdclickIdclickIdclickIdclickId", clickId);
+
   if (!clickId) throw new Error("Missing clickId (pass as click_id in query)");
 
   // 2) Find the original tracking row
