@@ -139,15 +139,22 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   const headers = req.headers || {};
 
   // PHP had a hardcoded SECRET; use env if set, else fallback
-  const expectedToken =
-    process.env.POSTBACK_TOKEN ||
-    "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
+  // const expectedToken =
+  //   process.env.POSTBACK_TOKEN ||
+  //   "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
 
   // ACCEPT BOTH names like PHP+your current links: token OR security_token (or header)
   const suppliedToken =
     firstNonEmpty(q, "security_token", "token") ||
     headers["x-postback-token"] ||
     "";
+
+  const campaign = await Campaign.findOne({
+    where: { security_token: req.query.security_token },
+  });
+  if (!campaign) throw new Error("Invalid security token");
+
+  const expectedToken = campaign.security_token;
 
   // === Token check (PHP: 403 Unauthorized)
   if (suppliedToken !== expectedToken) {
