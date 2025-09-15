@@ -127,12 +127,11 @@ function firstNonEmpty(obj, ...keys) {
 
 exports.trackPostbackPhpParity = async (req = {}) => {
   const q = req.query || {};
-  console.log("#####################################################", req, q);
-
+  const reqSlug = req.params.slug || {};
   const headers = req.headers || {};
 
   // Extract trackingSlug from query
-  const trackingSlug = firstNonEmpty(q, "tracking_slug", "slug");
+  const trackingSlug = reqSlug;
   if (!trackingSlug) {
     const err = new Error("Missing tracking slug");
     err.statusCode = 400;
@@ -141,7 +140,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
 
   // Fetch the campaign based on the trackingSlug
   const campaign = await Campaign.findOne({
-    where: { unique_id: q.campaign_id },
+    where: { trackingSlug },
   });
   if (!campaign) {
     const err = new Error("Invalid tracking slug");
