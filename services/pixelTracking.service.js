@@ -39,7 +39,9 @@ function normalizeData(data = {}) {
 exports.trackPixel = async (slug, data, req) => {
   console.log(
     "dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    data
+    data,
+    req.query,
+    req
   );
 
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
