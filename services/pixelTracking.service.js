@@ -37,27 +37,14 @@ function normalizeData(data = {}) {
  * - Writes a PixelTracking row mirroring pixel.php behavior.
  */
 exports.trackPixel = async (slug, data, req) => {
-  console.log(
-    "dataaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    data,
-    req.query,
-    req
-  );
-
   const campaign = await Campaign.findOne({ where: { trackingSlug: slug } });
   if (!campaign) throw new Error("Invalid tracking slug");
 
   const n = normalizeData(data);
-  console.log(
-    "heeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
-    n
-  );
 
   // 1) Resolve clickId: query first, then cookie
   const clickId =
     n.clickId || req.query?.click_id || req.cookies?.click_id || null;
-  console.log("clickIdclickIdclickIdclickIdclickIdclickId", clickId);
-
   if (!clickId) throw new Error("Missing clickId (pass as click_id in query)");
 
   // 2) Find the original tracking row
@@ -139,27 +126,18 @@ function firstNonEmpty(obj, ...keys) {
 }
 
 exports.trackPostbackPhpParity = async (req = {}) => {
+  console.log(
+    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",
+    req.query
+  );
+
   const q = req.query || {};
-  const reqSlug = req.params.slug || {};
   const headers = req.headers || {};
 
-  // Extract trackingSlug from query
-  const trackingSlug = reqSlug;
-  if (!trackingSlug) {
-    const err = new Error("Missing tracking slug");
-    err.statusCode = 400;
-    throw err;
-  }
-
-  // Fetch the campaign based on the trackingSlug
-  const campaign = await Campaign.findOne({
-    where: { trackingSlug },
-  });
-  if (!campaign) {
-    const err = new Error("Invalid tracking slug");
-    err.statusCode = 404;
-    throw err;
-  }
+  // PHP had a hardcoded SECRET; use env if set, else fallback
+  const expectedToken =
+    process.env.POSTBACK_TOKEN ||
+    "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
 
   // ACCEPT BOTH names like PHP+your current links: token OR security_token (or header)
   const suppliedToken =
@@ -167,8 +145,8 @@ exports.trackPostbackPhpParity = async (req = {}) => {
     headers["x-postback-token"] ||
     "";
 
-  // === Token check (match with campaign's security_token)
-  if (suppliedToken !== campaign.security_token) {
+  // === Token check (PHP: 403 Unauthorized)
+  if (suppliedToken !== expectedToken) {
     const err = new Error("Unauthorized");
     err.statusCode = 403;
     throw err;
@@ -241,8 +219,8 @@ exports.trackPostbackPhpParity = async (req = {}) => {
       transactionId: txn_id,
       clickId: click_id,
 
-      saleAmount: amount || 0,
-      conversionValue: amount || 0,
+      saleAmount: amount ? 0 : amount,
+      conversionValue: amount ? 0 : amount,
       currency: firstNonEmpty(q, "currency") || null,
       conversionStatus: firstNonEmpty(q, "conversionStatus") || "approved",
 
@@ -259,4 +237,12 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   }
 
   return true;
+};
+
+// Optional: keep old signature working
+exports.trackPostback = async (_slug, data, req) => {
+  // ignore slug; PHP parity uses only query
+  // if someone passes (data) only, synthesize a req:
+  const fauxReq = req || { query: data, headers: {} };
+  return exports.trackPostbackPhpParity(fauxReq);
 };
