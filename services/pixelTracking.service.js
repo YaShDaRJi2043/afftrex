@@ -41,10 +41,6 @@ exports.trackPixel = async (slug, data, req) => {
   if (!campaign) throw new Error("Invalid tracking slug");
 
   const n = normalizeData(data);
-  console.log(
-    "daaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-    data
-  );
 
   // 1) Resolve clickId: query first, then cookie
   const clickId =
@@ -111,14 +107,7 @@ exports.trackPixel = async (slug, data, req) => {
   return clickId;
 };
 
-/**
- * Server-to-server postback.
- * - Accept click_id, transaction_id, sale_amount/saleAmount, currency, conversionStatus, token
- * - Validate clickId and de-dupe by transactionId
- */
 // services/pixelTracking.service.js
-// services/pixelTracking.service.js
-
 // helper: first non-empty among possible keys
 function firstNonEmpty(obj, ...keys) {
   for (const k of keys) {
@@ -129,21 +118,10 @@ function firstNonEmpty(obj, ...keys) {
   return "";
 }
 
-exports.trackPostbackPhpParity = async (req = {}) => {
-  console.log(
-    "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@",
-    req.query
-  );
-
+exports.trackPostback = async (req = {}) => {
   const q = req.query || {};
   const headers = req.headers || {};
 
-  // PHP had a hardcoded SECRET; use env if set, else fallback
-  // const expectedToken =
-  //   process.env.POSTBACK_TOKEN ||
-  //   "b9efc4ceefb3d63991cf334ef9ce96548743cd51c9bbfdd0e5042c3020b16bd8";
-
-  // ACCEPT BOTH names like PHP+your current links: token OR security_token (or header)
   const suppliedToken =
     firstNonEmpty(q, "security_token", "token") ||
     headers["x-postback-token"] ||
@@ -153,8 +131,6 @@ exports.trackPostbackPhpParity = async (req = {}) => {
     where: { security_token: req.query.security_token },
   });
   if (!campaign) throw new Error("Invalid security token");
-  console.log("campaign", campaign);
-
   const expectedToken = campaign.security_token;
 
   // === Token check (PHP: 403 Unauthorized)
@@ -191,14 +167,14 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   );
   const amount = amountS ? parseFloat(amountS) : 0;
 
-  // === Required params (PHP: 400 Missing parameters)
+  // === Required params
   if (!click_id) {
     const err = new Error("Missing parameters");
     err.statusCode = 400;
     throw err;
   }
 
-  // === Check click_id existence (PHP: 404 Invalid click_id)
+  // === Check click_id existence
   const clickRow = await CampaignTracking.findOne({
     where: { clickId: click_id },
     order: [["createdAt", "DESC"]],
@@ -209,7 +185,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
     throw err;
   }
 
-  // === Duplicate txn_id (PHP: 409 Duplicate transaction)
+  // === Duplicate transactionId
   const existing = await PixelTracking.findOne({
     where: { transactionId: txn_id },
     attributes: ["id"],
@@ -220,28 +196,37 @@ exports.trackPostbackPhpParity = async (req = {}) => {
     throw err;
   }
 
-  // === Insert conversion (PHP: INSERT INTO conversions_postback ...)
+  const sameUserClicks = await CampaignTracking.count({
+    where: {
+      campaignId: campaign.id,
+      ipAddress: tracking.ipAddress,
+      userAgent: tracking.userAgent,
+      eventType: "click",
+    },
+  });
+
+  // === Insert conversion
   const now = new Date();
   try {
     await PixelTracking.create({
       campaignId: clickRow.campaignId,
       trackingId: clickRow.id,
 
-      eventType: "conversion", // default for postback
+      eventType: "conversion",
       transactionId: txn_id,
       clickId: click_id,
 
-      saleAmount: amount ? 0 : amount,
-      conversionValue: amount ? 0 : amount,
+      saleAmount: amount || 0,
+      conversionValue: amount || 0,
       currency: firstNonEmpty(q, "currency") || null,
       conversionStatus: firstNonEmpty(q, "conversionStatus") || "approved",
 
-      pixelType: "postback", // differentiate from iframe
-      pageUrl: campaign.defaultCampaignUrl || null, // no pageUrl in postback
+      pixelType: "postback",
+      pageUrl: campaign.defaultCampaignUrl || null,
       conversionTime: now,
 
       // Added clickCount (default 0 for postback)
-      clickCount: 0,
+      clickCount: sameUserClicks || 0,
     });
   } catch (err) {
     console.error("Error inserting PixelTracking:", err);
@@ -249,12 +234,4 @@ exports.trackPostbackPhpParity = async (req = {}) => {
   }
 
   return true;
-};
-
-// Optional: keep old signature working
-exports.trackPostback = async (_slug, data, req) => {
-  // ignore slug; PHP parity uses only query
-  // if someone passes (data) only, synthesize a req:
-  const fauxReq = req || { query: data, headers: {} };
-  return exports.trackPostbackPhpParity(fauxReq);
 };
