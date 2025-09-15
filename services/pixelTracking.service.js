@@ -127,7 +127,7 @@ function firstNonEmpty(obj, ...keys) {
 
 exports.trackPostbackPhpParity = async (req = {}) => {
   const q = req.query || {};
-  console.log("#####################################################", q);
+  console.log("#####################################################", req, q);
 
   const headers = req.headers || {};
 
