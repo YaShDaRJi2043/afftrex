@@ -237,7 +237,7 @@ exports.trackPostbackPhpParity = async (req = {}) => {
       conversionStatus: firstNonEmpty(q, "conversionStatus") || "approved",
 
       pixelType: "postback", // differentiate from iframe
-      pageUrl: null, // no pageUrl in postback
+      pageUrl: campaign.defaultCampaignUrl || null, // no pageUrl in postback
       conversionTime: now,
 
       // Added clickCount (default 0 for postback)
