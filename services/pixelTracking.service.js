@@ -189,7 +189,7 @@ exports.trackPostback = async (req = {}) => {
 
   // === Duplicate transactionId
   const existing = await PixelTracking.findOne({
-    where: { transactionId: txn_id },
+    where: { transactionId: txn_id, pixelType: "postback" },
     attributes: ["id"],
   });
   if (existing) {
