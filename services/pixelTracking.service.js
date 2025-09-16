@@ -189,6 +189,8 @@ exports.trackPostback = async (req = {}) => {
   const existing = await PixelTracking.findOne({
     where: { transactionId: txn_id },
   });
+  console.log("ttttttttttttttttttttttttttttttttttttt", existing);
+
   if (existing) {
     const err = new Error("Duplicate transaction");
     err.statusCode = 409;
