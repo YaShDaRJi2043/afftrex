@@ -15,8 +15,8 @@ const baseCampaignFields = {
     .required(), // Mandatory
   title: Joi.string().trim().max(255).required(), // Mandatory
   description: Joi.string().max(5000).optional(),
-  preview_url: Joi.string().uri().optional(),
-  defaultCampaignUrl: Joi.string().uri().required(), // Mandatory
+  preview_url: Joi.string().optional(),
+  defaultCampaignUrl: Joi.string().required(), // Mandatory
   defaultLandingPageName: Joi.string().optional(),
   enableTimeTargeting: Joi.boolean().optional(),
   timezone: Joi.string().optional(),
