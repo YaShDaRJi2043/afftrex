@@ -5,11 +5,7 @@ const validate = (schema) => {
     if (error) {
       return res.status(400).json({
         success: false,
-        message: "Validation Error",
-        errors: error.details.map((err) => ({
-          field: err.context.key,
-          message: err.message,
-        })),
+        message: error.details[0].message, // ✅ only first message
       });
     }
 
