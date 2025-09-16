@@ -157,6 +157,8 @@ exports.trackPostback = async (req = {}) => {
     "conv_id",
     "transactionId"
   );
+  console.log("transaction_id:", txn_id);
+
   const amountS = firstNonEmpty(
     q,
     "amount",
@@ -179,6 +181,8 @@ exports.trackPostback = async (req = {}) => {
     where: { clickId: click_id },
     order: [["createdAt", "DESC"]],
   });
+  console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", clickRow);
+
   if (!clickRow) {
     const err = new Error("Invalid click_id");
     err.statusCode = 404;
