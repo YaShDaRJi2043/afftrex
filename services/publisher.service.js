@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, UniqueConstraintError } = require("sequelize");
 
 const {
   Publisher,
@@ -14,97 +14,96 @@ const { serverInfo } = require("@config/config");
 exports.createPublisher = async (req) => {
   const {
     name,
-    username,
     email,
     password,
     notify = false,
+    status = "Pending",
+    country = null,
+    city = null,
+    state = null,
+    zip_code = null,
     phone = null,
-    status = "Active",
-    country,
-    city,
-    state,
-    zip_code,
-    entity_type,
-    im_type,
-    im_username,
-    promotion_method,
-    reference_id,
-    tax_id,
-    referred_by,
-    managers,
-    currency,
-    tags,
-    companyName,
-    companyAddress,
+    entity_type = null,
+    im_type = null,
+    im_username = null,
+    promotion_method = null,
+    reference_id = null,
+    tax_id = null,
+    referred_by = null,
+    managers = null,
+    currency = null,
+    tags = [],
+    companyName = null,
+    companyAddress = null,
   } = req.body;
 
   const companyId = req.user.company_id;
 
-  const signup_ip =
-    req.headers["x-forwarded-for"]?.split(",")[0]?.trim() ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
-    null;
-
   const Password = password || generatePassword();
 
-  const publisher = await Publisher.create({
-    name,
-    username,
-    email,
-    password: Password,
-    notify,
-    phone,
-    status,
-    country,
-    city,
-    state,
-    zip_code,
-    entity_type,
-    im_type,
-    im_username,
-    promotion_method,
-    reference_id,
-    tax_id,
-    referred_by,
-    managers,
-    signup_ip,
-    currency,
-    tags,
-    companyName,
-    companyAddress,
-    company_id: companyId,
-  });
+  try {
+    const publisher = await Publisher.create({
+      name,
+      email,
+      password: Password,
+      status,
+      country,
+      city,
+      state,
+      zip_code,
+      phone,
+      entity_type,
+      im_type,
+      im_username,
+      promotion_method,
+      reference_id,
+      tax_id,
+      referred_by,
+      managers,
+      currency,
+      tags,
+      companyName,
+      companyAddress,
+      company_id: companyId,
+    });
 
-  if (notify) {
-    const company = await Company.findByPk(companyId);
-    if (!company) throw new Error("Company not found");
+    if (notify) {
+      const company = await Company.findByPk(companyId);
+      if (!company) throw new Error("Company not found");
 
-    const adminName = req.user.name;
-    const adminRole = req.user.role?.name || "Admin";
+      const adminName = req.user.name;
+      const adminRole = req.user.role?.name || "Admin";
 
-    const emailSubject = {
-      company_name: company.name,
-      app_name: "Afftrex",
-    };
+      const emailSubject = {
+        company_name: company.name,
+        app_name: "Afftrex",
+      };
 
-    const emailData = {
-      app_name: "Afftrex",
-      company_name: company.name,
-      company_initial: company.name?.[0]?.toUpperCase() || "A",
-      employee_name: name,
-      employee_email: email,
-      employee_password: Password,
-      employee_role: "Publisher",
-      login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
-      admin_name: adminName,
-      admin_role: adminRole,
-    };
+      const emailData = {
+        app_name: "Afftrex",
+        company_name: company.name,
+        company_initial: company.name?.[0]?.toUpperCase() || "A",
+        employee_name: name,
+        employee_email: email,
+        employee_password: Password,
+        employee_role: "Publisher",
+        login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
+        admin_name: adminName,
+        admin_role: adminRole,
+      };
 
-    await mailer.sendMail(email, "employee-welcome", emailSubject, emailData);
+      await mailer.sendMail(email, "employee-welcome", emailSubject, emailData);
+    }
+
+    return publisher;
+  } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      const validationError = new Error("Email already exists");
+      validationError.statusCode = 400;
+      throw validationError;
+    }
+    throw error;
   }
-
-  return publisher;
 };
 
 exports.getAllPublishers = async (req) => {

@@ -1,4 +1,4 @@
-const { Op } = require("sequelize");
+const { Op, UniqueConstraintError } = require("sequelize");
 const bcrypt = require("bcryptjs");
 
 const { Company, User, Role } = require("@models");
@@ -27,45 +27,54 @@ exports.createUser = async (req) => {
   const Password = password || generatePassword();
 
   // Create the user
-  const user = await User.create({
-    name,
-    email,
-    number,
-    status,
-    password: Password,
-    company_id: companyId,
-    role_id: roleData.id,
-  });
+  try {
+    const user = await User.create({
+      name,
+      email,
+      number,
+      status,
+      password: Password,
+      company_id: companyId,
+      role_id: roleData.id,
+    });
 
-  // Only send email if notify flag is true
-  if (notify) {
-    const company = await Company.findByPk(companyId);
-    if (!company) throw new Error("Company not found");
+    // Only send email if notify flag is true
+    if (notify) {
+      const company = await Company.findByPk(companyId);
+      if (!company) throw new Error("Company not found");
 
-    const admin = req.user;
+      const admin = req.user;
 
-    const emailSubject = {
-      company_name: company.name,
-      app_name: "Afftrex",
-    };
+      const emailSubject = {
+        company_name: company.name,
+        app_name: "Afftrex",
+      };
 
-    const emailData = {
-      app_name: "Afftrex",
-      company_name: company.name,
-      company_initial: company.name?.[0]?.toUpperCase() || "A",
-      employee_name: name,
-      employee_email: email,
-      employee_password: Password,
-      employee_role: roleData.name,
-      login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
-      admin_name: admin.name,
-      admin_role: admin.role?.name || "Admin",
-    };
+      const emailData = {
+        app_name: "Afftrex",
+        company_name: company.name,
+        company_initial: company.name?.[0]?.toUpperCase() || "A",
+        employee_name: name,
+        employee_email: email,
+        employee_password: Password,
+        employee_role: roleData.name,
+        login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
+        admin_name: admin.name,
+        admin_role: admin.role?.name || "Admin",
+      };
 
-    await mailer.sendMail(email, "employee-welcome", emailSubject, emailData);
+      await mailer.sendMail(email, "employee-welcome", emailSubject, emailData);
+    }
+
+    return user;
+  } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      const validationError = new Error("Email already exists");
+      validationError.statusCode = 400;
+      throw validationError;
+    }
+    throw error;
   }
-
-  return user;
 };
 
 exports.listCompanyUsers = async (req) => {
