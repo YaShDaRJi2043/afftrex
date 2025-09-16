@@ -181,8 +181,6 @@ exports.trackPostback = async (req = {}) => {
     where: { clickId: click_id },
     order: [["createdAt", "DESC"]],
   });
-  console.log("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", clickRow);
-
   if (!clickRow) {
     const err = new Error("Invalid click_id");
     err.statusCode = 404;
@@ -203,8 +201,8 @@ exports.trackPostback = async (req = {}) => {
   const sameUserClicks = await CampaignTracking.count({
     where: {
       campaignId: campaign.id,
-      ipAddress: tracking.ipAddress,
-      userAgent: tracking.userAgent,
+      ipAddress: clickRow.ipAddress,
+      userAgent: clickRow.userAgent,
       eventType: "click",
     },
   });
