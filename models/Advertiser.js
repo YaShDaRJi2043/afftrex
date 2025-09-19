@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Advertiser.belongsTo(models.Company, {
         foreignKey: "company_id",
-        as: "company",
+        as: "companyInfo",
       });
       Advertiser.hasMany(models.Campaign, {
         foreignKey: "advertiser_id",
@@ -32,6 +32,10 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       companyName: DataTypes.STRING,
+      company: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       email: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -75,15 +79,8 @@ module.exports = (sequelize, DataTypes) => {
       },
       reference_id: DataTypes.STRING,
       managers: DataTypes.STRING,
-      country: DataTypes.STRING,
       state: DataTypes.STRING,
-      city: DataTypes.STRING,
-      currency: DataTypes.STRING,
       website_url: DataTypes.STRING,
-      tags: {
-        type: DataTypes.ARRAY(DataTypes.STRING),
-        allowNull: true,
-      },
       phone: DataTypes.STRING,
       entity_type: DataTypes.STRING,
       notes: DataTypes.TEXT,

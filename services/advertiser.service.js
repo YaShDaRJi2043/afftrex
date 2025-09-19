@@ -15,19 +15,15 @@ exports.createAdvertiser = async (req) => {
     reference_id = null,
     managers = null,
     notes = null,
-    country = null,
     state = null,
-    city = null,
     phone = null,
-    currency = null,
     entity_type = null,
     website_url = null,
-    tags = [],
     companyName = null,
+    company = null,
   } = req.body;
 
   const companyId = req.user.company_id;
-
   const Password = password || generatePassword();
 
   try {
@@ -39,15 +35,12 @@ exports.createAdvertiser = async (req) => {
       reference_id,
       managers,
       notes,
-      country,
       state,
-      city,
       phone,
-      currency,
       entity_type,
       website_url,
-      tags,
       companyName,
+      company,
       company_id: companyId,
     });
 
@@ -99,14 +92,12 @@ exports.getAllAdvertisers = async (req) => {
     "reference_id",
     "managers",
     "notes",
-    "country",
     "state",
-    "city",
     "phone",
-    "currency",
     "entity_type",
     "website_url",
     "companyName",
+    "company",
   ];
 
   const exactFields = ["status"];
@@ -131,7 +122,7 @@ exports.getAllAdvertisers = async (req) => {
     include: [
       {
         model: Company,
-        as: "company",
+        as: "companyInfo",
         attributes: ["id", "name", "admin_email"],
         required: false,
       },

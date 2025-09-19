@@ -27,8 +27,6 @@ const createAdvertiserSchema = Joi.object({
   reference_id: Joi.string().optional().allow(null, ""),
   managers: Joi.string().optional().allow(null, ""),
   notes: Joi.string().optional().allow(null, ""),
-  country: Joi.string().optional().allow(null, ""),
-  city: Joi.string().optional().allow(null, ""),
   phone: Joi.string()
     .pattern(/^\+?\d{10,15}$/)
     .optional()
@@ -36,11 +34,10 @@ const createAdvertiserSchema = Joi.object({
     .messages({
       "string.pattern.base": "Phone must be 10-15 digits and can start with +",
     }),
-  currency: Joi.string().optional().allow(null, ""),
   entity_type: Joi.string().optional().allow(null, ""),
   website_url: Joi.string().uri().optional().allow(null, ""),
-  tags: Joi.array().items(Joi.string()).optional(),
   companyName: Joi.string().optional().allow(null, ""),
+  company: Joi.string().optional().allow(null, ""),
   notify: Joi.boolean().optional(),
   state: Joi.string().optional().allow(null, ""),
 });
@@ -69,8 +66,6 @@ const updateAdvertiserSchema = Joi.object({
   reference_id: Joi.string().optional().allow(null, ""),
   managers: Joi.string().optional().allow(null, ""),
   notes: Joi.string().optional().allow(null, ""),
-  country: Joi.string().optional().allow(null, ""),
-  city: Joi.string().optional().allow(null, ""),
   phone: Joi.string()
     .pattern(/^\+?\d{10,15}$/)
     .optional()
@@ -78,10 +73,8 @@ const updateAdvertiserSchema = Joi.object({
     .messages({
       "string.pattern.base": "Phone must be 10-15 digits and can start with +",
     }),
-  currency: Joi.string().optional().allow(null, ""),
   entity_type: Joi.string().optional().allow(null, ""),
   website_url: Joi.string().uri().optional().allow(null, ""),
-  tags: Joi.array().items(Joi.string()).optional(),
   companyName: Joi.string().optional().allow(null, ""),
   state: Joi.string().optional().allow(null, ""),
 });

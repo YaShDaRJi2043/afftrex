@@ -17,6 +17,10 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      company: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       email: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -53,28 +57,12 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      country: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
       state: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      city: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      currency: {
         type: Sequelize.STRING,
         allowNull: true,
       },
       website_url: {
         type: Sequelize.STRING,
-        allowNull: true,
-      },
-      tags: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
         allowNull: true,
       },
       phone: {
