@@ -23,22 +23,28 @@ exports.createPublisher = async (req) => {
     state = null,
     zip_code = null,
     phone = null,
+    country_secondary = null,
+    city_secondary = null,
+    state_secondary = null,
+    zip_code_secondary = null,
+    phone_secondary = null,
     entity_type = null,
     im_type = null,
     im_username = null,
     promotion_method = null,
-    reference_id = null,
     tax_id = null,
     referred_by = null,
     managers = null,
-    currency = null,
     tags = [],
     companyName = null,
     companyAddress = null,
+    company = null,
+    microsoft_teams = null,
+    address = null,
+    note = null,
   } = req.body;
 
   const companyId = req.user.company_id;
-
   const Password = password || generatePassword();
 
   try {
@@ -52,42 +58,50 @@ exports.createPublisher = async (req) => {
       state,
       zip_code,
       phone,
+      country_secondary,
+      city_secondary,
+      state_secondary,
+      zip_code_secondary,
+      phone_secondary,
       entity_type,
       im_type,
       im_username,
       promotion_method,
-      reference_id,
       tax_id,
       referred_by,
       managers,
-      currency,
       tags,
       companyName,
       companyAddress,
+      company,
+      microsoft_teams,
+      address,
+      note,
       company_id: companyId,
+      notify,
     });
 
     if (notify) {
-      const company = await Company.findByPk(companyId);
-      if (!company) throw new Error("Company not found");
+      const companyObj = await Company.findByPk(companyId);
+      if (!companyObj) throw new Error("Company not found");
 
       const adminName = req.user.name;
       const adminRole = req.user.role?.name || "Admin";
 
       const emailSubject = {
-        company_name: company.name,
+        company_name: companyObj.name,
         app_name: "Afftrex",
       };
 
       const emailData = {
         app_name: "Afftrex",
-        company_name: company.name,
-        company_initial: company.name?.[0]?.toUpperCase() || "A",
+        company_name: companyObj.name,
+        company_initial: companyObj.name?.[0]?.toUpperCase() || "A",
         employee_name: name,
         employee_email: email,
         employee_password: Password,
         employee_role: "Publisher",
-        login_url: `${serverInfo.api_url}/login/${company.subdomain}`,
+        login_url: `${serverInfo.api_url}/login/${companyObj.subdomain}`,
         admin_name: adminName,
         admin_role: adminRole,
       };
@@ -110,8 +124,6 @@ exports.getAllPublishers = async (req) => {
   const filters = req.body;
   const companyId = req.user.company.id;
 
-  console.log(filters?.excludeApprovedForCampaign, filters?.campaign_id);
-
   const stringFields = [
     "name",
     "username",
@@ -121,17 +133,23 @@ exports.getAllPublishers = async (req) => {
     "city",
     "zip_code",
     "state",
+    "country_secondary",
+    "city_secondary",
+    "state_secondary",
+    "zip_code_secondary",
+    "phone_secondary",
     "entity_type",
     "im_type",
     "im_username",
     "promotion_method",
-    "reference_id",
     "tax_id",
     "referred_by",
-    "signup_ip",
-    "currency",
     "companyName",
     "companyAddress",
+    "company",
+    "microsoft_teams",
+    "address",
+    "note",
     "tags",
   ];
 
@@ -170,7 +188,7 @@ exports.getAllPublishers = async (req) => {
     include: [
       {
         model: Company,
-        as: "company",
+        as: "companyInfo",
         attributes: ["id", "name", "admin_email"],
         required: false,
       },

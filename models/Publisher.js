@@ -7,7 +7,7 @@ module.exports = (sequelize, DataTypes) => {
     static associate(models) {
       Publisher.belongsTo(models.Company, {
         foreignKey: "company_id",
-        as: "company",
+        as: "companyInfo",
       });
     }
 
@@ -34,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         unique: {
           args: true,
-          msg: "Email already exists", // custom error for duplicate email
+          msg: "Email already exists",
         },
         validate: {
           notEmpty: { msg: "Email is required" },
@@ -64,21 +64,34 @@ module.exports = (sequelize, DataTypes) => {
         ),
         defaultValue: "Pending",
       },
+
+      // Existing fields
       country: DataTypes.STRING,
       city: DataTypes.STRING,
       state: DataTypes.STRING,
       zip_code: DataTypes.STRING,
       phone: DataTypes.STRING,
+
+      // Secondary versions
+      country_secondary: DataTypes.STRING,
+      city_secondary: DataTypes.STRING,
+      state_secondary: DataTypes.STRING,
+      zip_code_secondary: DataTypes.STRING,
+      phone_secondary: DataTypes.STRING,
+
+      // New fields
+      company: DataTypes.STRING,
+      microsoft_teams: DataTypes.STRING,
+      address: DataTypes.STRING,
+      note: DataTypes.TEXT,
+
       entity_type: DataTypes.STRING,
       im_type: DataTypes.STRING,
       im_username: DataTypes.STRING,
       promotion_method: DataTypes.STRING,
-      reference_id: DataTypes.STRING,
       tax_id: DataTypes.STRING,
       referred_by: DataTypes.STRING,
       managers: DataTypes.STRING,
-      signup_ip: DataTypes.STRING,
-      currency: DataTypes.STRING,
       tags: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,

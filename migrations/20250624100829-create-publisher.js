@@ -44,93 +44,44 @@ module.exports = {
         ),
         defaultValue: "Pending",
       },
-      country: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      city: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      state: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      zip_code: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      phone: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      entity_type: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      im_type: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      im_username: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      promotion_method: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      reference_id: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      tax_id: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      referred_by: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      managers: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      signup_ip: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      currency: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      tags: {
-        type: Sequelize.ARRAY(Sequelize.STRING),
-        allowNull: true,
-      },
-      last_login: {
-        type: Sequelize.DATE,
-        allowNull: true,
-      },
-      notify: {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      },
-      companyName: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
-      companyAddress: {
-        type: Sequelize.STRING,
-        allowNull: true,
-      },
+
+      // Existing fields
+      country: { type: Sequelize.STRING, allowNull: true },
+      city: { type: Sequelize.STRING, allowNull: true },
+      state: { type: Sequelize.STRING, allowNull: true },
+      zip_code: { type: Sequelize.STRING, allowNull: true },
+      phone: { type: Sequelize.STRING, allowNull: true },
+
+      // Secondary fields
+      country_secondary: { type: Sequelize.STRING, allowNull: true },
+      city_secondary: { type: Sequelize.STRING, allowNull: true },
+      state_secondary: { type: Sequelize.STRING, allowNull: true },
+      zip_code_secondary: { type: Sequelize.STRING, allowNull: true },
+      phone_secondary: { type: Sequelize.STRING, allowNull: true },
+
+      // New fields
+      company: { type: Sequelize.STRING, allowNull: true },
+      microsoft_teams: { type: Sequelize.STRING, allowNull: true },
+      address: { type: Sequelize.STRING, allowNull: true },
+      note: { type: Sequelize.TEXT, allowNull: true },
+
+      entity_type: { type: Sequelize.STRING, allowNull: true },
+      im_type: { type: Sequelize.STRING, allowNull: true },
+      im_username: { type: Sequelize.STRING, allowNull: true },
+      promotion_method: { type: Sequelize.STRING, allowNull: true },
+      tax_id: { type: Sequelize.STRING, allowNull: true },
+      referred_by: { type: Sequelize.STRING, allowNull: true },
+      managers: { type: Sequelize.STRING, allowNull: true },
+      tags: { type: Sequelize.ARRAY(Sequelize.STRING), allowNull: true },
+      last_login: { type: Sequelize.DATE, allowNull: true },
+      notify: { type: Sequelize.BOOLEAN, defaultValue: false },
+
+      companyName: { type: Sequelize.STRING, allowNull: true },
+      companyAddress: { type: Sequelize.STRING, allowNull: true },
       company_id: {
         type: Sequelize.INTEGER,
         allowNull: false,
-        references: {
-          model: "companies",
-          key: "id",
-        },
+        references: { model: "companies", key: "id" },
         onUpdate: "CASCADE",
         onDelete: "CASCADE",
       },
