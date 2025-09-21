@@ -93,6 +93,12 @@ module.exports = {
         defaultValue: 0,
         comment: "Payout to publisher/partner",
       },
+      profit: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0,
+        comment: "Profit from this conversion",
+      },
 
       created_at: {
         type: Sequelize.DATE,
