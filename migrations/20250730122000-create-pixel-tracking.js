@@ -81,6 +81,19 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
+      revenue: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0,
+        comment: "Revenue earned from this conversion",
+      },
+      payout: {
+        type: Sequelize.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0,
+        comment: "Payout to publisher/partner",
+      },
+
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,

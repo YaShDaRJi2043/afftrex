@@ -8,6 +8,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "trackingId",
         as: "campaignTracking",
       });
+      PixelTracking.belongsTo(models.CampaignTracking, {
+        foreignKey: "clickId",
+        targetKey: "clickId",
+        as: "campaignTrackingByClickId",
+      });
     }
   }
 
@@ -76,6 +81,19 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      revenue: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0,
+        comment: "Revenue earned from this conversion",
+      },
+      payout: {
+        type: DataTypes.DECIMAL(10, 2),
+        allowNull: true,
+        defaultValue: 0,
+        comment: "Payout to publisher/partner",
+      },
+
       createdAt: {
         type: DataTypes.DATE,
       },

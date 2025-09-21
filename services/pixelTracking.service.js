@@ -30,6 +30,17 @@ function normalizeData(data = {}) {
   };
 }
 
+// === Helper to clean saleAmount strings like INR5000, ₹5000, INR 5000 ===
+function parseNumericAmount(value) {
+  if (!value) return 0;
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const numeric = value.replace(/[^0-9.]/g, ""); // strip everything except digits and dot
+    return numeric ? parseFloat(numeric) : 0;
+  }
+  return 0;
+}
+
 /**
  * Pixel from browser (image pixel).
  * - Accept click_id from query FIRST (works cross-site).
@@ -77,6 +88,22 @@ exports.trackPixel = async (slug, data, req) => {
     },
   });
 
+  // === Added revenue/payout calculation ===
+  let revenue = 0;
+  let payout = 0;
+  const numericSaleAmount = parseNumericAmount(n.saleAmount);
+
+  if (campaign.objective === "conversions") {
+    revenue = campaign.revenue || 0;
+    payout = campaign.payout || 0;
+  } else if (campaign.objective === "sale") {
+    revenue = ((campaign.revenue || 0) / 100) * numericSaleAmount;
+    payout = ((campaign.payout || 0) / 100) * numericSaleAmount;
+  }
+
+  // === Added profit calculation ===
+  const profit = revenue - payout;
+
   // 6) Insert a PixelTracking record
   try {
     await PixelTracking.create({
@@ -98,6 +125,11 @@ exports.trackPixel = async (slug, data, req) => {
 
       // Added clickCount
       clickCount: sameUserClicks,
+
+      // === Added fields ===
+      revenue,
+      payout,
+      profit,
     });
   } catch (err) {
     console.error("Error inserting PixelTracking:", err);
@@ -167,7 +199,7 @@ exports.trackPostback = async (req = {}) => {
     "value",
     "payout"
   );
-  const amount = amountS ? parseFloat(amountS) : 0;
+  const amount = parseNumericAmount(amountS);
 
   // === Required params
   if (!click_id) {
@@ -207,6 +239,20 @@ exports.trackPostback = async (req = {}) => {
     },
   });
 
+  // === Added revenue/payout calculation ===
+  let revenue = 0;
+  let payout = 0;
+  if (campaign.objective === "conversions") {
+    revenue = campaign.revenue || 0;
+    payout = campaign.payout || 0;
+  } else if (campaign.objective === "sale") {
+    revenue = ((campaign.revenue || 0) / 100) * amount;
+    payout = ((campaign.payout || 0) / 100) * amount;
+  }
+
+  // === Added profit calculation ===
+  const profit = revenue - payout;
+
   // === Insert conversion
   const now = new Date();
   try {
@@ -229,6 +275,11 @@ exports.trackPostback = async (req = {}) => {
 
       // Added clickCount (default 0 for postback)
       clickCount: sameUserClicks || 0,
+
+      // === Added fields ===
+      revenue,
+      payout,
+      profit,
     });
   } catch (err) {
     console.error("Error inserting PixelTracking:", err);
