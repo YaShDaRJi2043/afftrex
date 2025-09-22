@@ -14,8 +14,10 @@ dotenv.config({ path: envFilePath });
 const commonConfig = {
   database: process.env.DB_MYSQL_DATABASE || "postgres", // Database name (default: 'node_react_web_mobile_api_boilerplate')
   username: process.env.DB_MYSQL_USERNAME || "postgres", // Database username (default: 'root')
-  password: process.env.DB_MYSQL_PASSWORD || "root", // Database password (default: 'root')
-  host: process.env.DB_MYSQL_HOST || "127.0.0.1", // Database host (default: '127.0.0.1')
+  password: process.env.DB_MYSQL_PASSWORD || "95QGT4Oah9HYXvD0Dm0Y", // Database password (default: 'root')
+  host:
+    process.env.DB_MYSQL_HOST ||
+    "afftrx.cr0oe04acaq0.eu-north-1.rds.amazonaws.com", // Database host (default: '127.0.0.1')
   port: process.env.DB_MYSQL_PORT || 5432, // MySQL port (default: 3306)
   dialect: process.env.DB_DIALECT || "postgres", // Database DB_DIALECT (default: 'mysql')
   dialectOptions:

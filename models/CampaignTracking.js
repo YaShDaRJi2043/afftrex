@@ -16,6 +16,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "trackingId",
         as: "pixelTrackings",
       });
+      CampaignTracking.hasMany(models.PixelTracking, {
+        foreignKey: "clickId",
+        sourceKey: "clickId", // Use clickId as the linking field
+        as: "pixelTrackingsByClickId",
+      });
     }
   }
 

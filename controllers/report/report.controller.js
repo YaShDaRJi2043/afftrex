@@ -28,3 +28,17 @@ exports.getPixelTrackingByTrackingId = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.getMainReport = async (req, res) => {
+  try {
+    const result = await TrackingService.getMainReport(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Main report fetched successfully",
+      result // Return the flattened data directly in the data object
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

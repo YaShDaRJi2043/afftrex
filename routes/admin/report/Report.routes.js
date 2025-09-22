@@ -19,4 +19,10 @@ router.get(
   trackingController.getPixelTrackingByTrackingId
 );
 
+router.get(
+  "/main-report",
+  checkFeature("report_view_main"),
+  trackingController.getMainReport
+);
+
 module.exports = router;
