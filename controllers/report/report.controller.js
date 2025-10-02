@@ -32,12 +32,13 @@ exports.getPixelTrackingByTrackingId = async (req, res) => {
 exports.getMainReport = async (req, res) => {
   try {
     const result = await TrackingService.getMainReport(req);
-    responseHelper.successResponse(
-      req,
-      res,
-      "Main report fetched successfully",
-      result // Return the flattened data directly in the data object
-    );
+
+    // Flatten response (do not nest under "data")
+    res.status(200).json({
+      success: true,
+      message: "Main report fetched successfully",
+      ...result,
+    });
   } catch (err) {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }

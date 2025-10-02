@@ -107,7 +107,7 @@ exports.getMainReport = async (req) => {
         if (["day", "month", "year", "week"].includes(key)) {
           return `${col} AS "${key.charAt(0).toUpperCase() + key.slice(1)}"`;
         }
-        return col;
+        return `${col} AS "${key}"`;
       })
       .join(", ");
 
@@ -129,34 +129,60 @@ exports.getMainReport = async (req) => {
       replacements.endDate = endDate;
     }
 
-    // Raw SQL query with date filter
+    // Query to get paginated results
     const results = await sequelize.query(
       `
-      SELECT 
-        ${selectColumns},
-        COUNT(DISTINCT ct.id) AS "grossClicks",
-        COUNT(DISTINCT pt.id) AS "totalConversions",
-        COALESCE(SUM(pt.revenue), 0) AS "totalRevenue",
-        COALESCE(SUM(pt.payout), 0) AS "totalPayout",
-        COALESCE(SUM(pt.profit), 0) AS "totalProfit"
-      FROM campaigns c
-      LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
-      LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
-      LEFT JOIN publishers pub ON pub.id = ct.publisher_id
-      LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
-      WHERE 1=1
-      ${dateFilter}
-      GROUP BY ${groupClause}
-      ORDER BY ${groupClause}
-      LIMIT :limit OFFSET :offset
-      `,
+        SELECT 
+          ${selectColumns},
+          COUNT(DISTINCT ct.id) AS "grossClicks",
+          COUNT(DISTINCT pt.id) AS "totalConversions",
+          COALESCE(SUM(pt.revenue), 0) AS "totalRevenue",
+          COALESCE(SUM(pt.payout), 0) AS "totalPayout",
+          COALESCE(SUM(pt.profit), 0) AS "totalProfit"
+        FROM campaigns c
+        LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
+        LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
+        LEFT JOIN publishers pub ON pub.id = ct.publisher_id
+        LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
+        WHERE 1=1
+        ${dateFilter}
+        GROUP BY ${groupClause}
+        ORDER BY ${groupClause}
+        LIMIT :limit OFFSET :offset
+        `,
       {
         replacements,
         type: sequelize.QueryTypes.SELECT,
       }
     );
 
-    return results;
+    // Query to get total count (without pagination)
+    const totalRecordsQuery = await sequelize.query(
+      `
+        SELECT COUNT(*) AS count FROM (
+          SELECT ${groupClause}
+          FROM campaigns c
+          LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
+          LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
+          LEFT JOIN publishers pub ON pub.id = ct.publisher_id
+          LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
+          WHERE 1=1
+          ${dateFilter}
+          GROUP BY ${groupClause}
+        ) sub
+        `,
+      {
+        replacements,
+        type: sequelize.QueryTypes.SELECT,
+      }
+    );
+
+    const total = parseInt(totalRecordsQuery[0].count, 10);
+
+    return {
+      total,
+      data: results,
+    };
   } catch (err) {
     console.error("TrackingService.getMainReport error:", err);
     throw new Error(`Failed to generate main report: ${err.message}`);
