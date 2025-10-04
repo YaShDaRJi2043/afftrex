@@ -40,7 +40,15 @@ function buildBuckets(from, to) {
   );
   while (cur <= end) {
     const key = toISODate(cur);
-    buckets.set(key, { date: key, clicks: 0, conversions: 0 }); // revenue removed
+    // Initialize daily buckets including financial metrics
+    buckets.set(key, {
+      date: key,
+      clicks: 0,
+      conversions: 0,
+      revenue: 0,
+      payout: 0,
+      profit: 0,
+    });
     cur = addDays(cur, 1);
   }
   return buckets;
@@ -86,7 +94,14 @@ async function getSeries(companyId, from, to) {
 
   // Conversions (PixelTracking)
   const convRows = await PixelTracking.findAll({
-    attributes: ["id", "created_at", "event_type"], // revenue removed
+    attributes: [
+      "id",
+      "created_at",
+      "event_type",
+      "revenue",
+      "payout",
+      "profit",
+    ],
     where: {
       campaignId: { [Op.in]: campaignIds },
       event_type: "conversion",
@@ -98,7 +113,16 @@ async function getSeries(companyId, from, to) {
   for (const row of convRows) {
     const key = dateKeyUTC(row.created_at);
     const b = buckets.get(key);
-    if (b) b.conversions += 1;
+    if (b) {
+      b.conversions += 1;
+      // Sum up financials, ensuring numeric conversion (DECIMAL may come as string)
+      const rev = Number(row.revenue) || 0;
+      const pay = Number(row.payout) || 0;
+      const prof = Number(row.profit) || rev - pay; // fallback if not stored
+      b.revenue += rev;
+      b.payout += pay;
+      b.profit += prof;
+    }
   }
 
   return Array.from(buckets.values());
@@ -183,8 +207,10 @@ exports.getDashboard = async ({ companyId, from, to }) => {
     getTiles(companyId),
   ]);
 
-  return {
-    series, // clicks, conversions
-    tiles, // clicks, conversions
-  };
+  // Return series directly in data and include clicks/conversions objects at the end
+  return [
+    ...series,
+    { clicks: tiles.clicks },
+    { conversions: tiles.conversions },
+  ];
 };
