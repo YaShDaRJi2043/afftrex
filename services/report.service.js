@@ -56,9 +56,9 @@ const groupByMap = {
   campaign: "c.title",
   campaignId: "c.id",
   campaignUniqueId: "c.unique_id",
-  campaignStatus: "c.campaign_status",
-  campaignGeoCoverage: "c.geo_coverage",
-  campaignAppName: "c.app_name",
+  campaignStatus: `c."campaignStatus"`,
+  campaignGeoCoverage: `CAST(c."geoCoverage" AS TEXT)`,
+  campaignAppName: `c."appName"`,
   publisher: "pub.name",
   publisherId: "pub.id",
   publisherManager: "pub.managers",
@@ -82,12 +82,15 @@ exports.getMainReport = async (req) => {
       groupBy = "",
       startDate,
       endDate,
+      campaign, // can be single ID or array
+      publisher, // can be single ID or array
+      advertiser, // can be single ID or array
     } = req.query;
 
     const limit = parseInt(pageSize, 10);
     const offset = (parseInt(page, 10) - 1) * limit;
 
-    // Prepare groupBy columns
+    // ---------------- Prepare groupBy columns ----------------
     const groupKeys = groupBy
       .split(",")
       .map((k) => k.trim())
@@ -113,23 +116,51 @@ exports.getMainReport = async (req) => {
 
     const groupClause = groupColumns.join(", ");
 
-    // Date filter clause
-    let dateFilter = "AND ct.timestamp IS NOT NULL";
+    // ---------------- Filters ----------------
+    let filters = "WHERE 1=1";
     const replacements = { limit, offset };
 
+    // Date filters
     if (startDate && endDate) {
-      dateFilter = `AND ct.timestamp BETWEEN :startDate AND :endDate`;
+      filters += ` AND ct.timestamp BETWEEN :startDate AND :endDate`;
       replacements.startDate = startDate;
       replacements.endDate = endDate;
     } else if (startDate) {
-      dateFilter = `AND ct.timestamp >= :startDate`;
+      filters += ` AND ct.timestamp >= :startDate`;
       replacements.startDate = startDate;
     } else if (endDate) {
-      dateFilter = `AND ct.timestamp <= :endDate`;
+      filters += ` AND ct.timestamp <= :endDate`;
       replacements.endDate = endDate;
     }
 
-    // Query to get paginated results
+    // Campaign filter (supports single or multiple)
+    if (campaign) {
+      const campaignArray = Array.isArray(campaign)
+        ? campaign
+        : campaign.split(",").map((id) => id.trim());
+      filters += ` AND c.id IN (:campaignArray)`;
+      replacements.campaignArray = campaignArray;
+    }
+
+    // Publisher filter (supports single or multiple)
+    if (publisher) {
+      const publisherArray = Array.isArray(publisher)
+        ? publisher
+        : publisher.split(",").map((id) => id.trim());
+      filters += ` AND pub.id IN (:publisherArray)`;
+      replacements.publisherArray = publisherArray;
+    }
+
+    // Advertiser filter (supports single or multiple)
+    if (advertiser) {
+      const advertiserArray = Array.isArray(advertiser)
+        ? advertiser
+        : advertiser.split(",").map((id) => id.trim());
+      filters += ` AND adv.id IN (:advertiserArray)`;
+      replacements.advertiserArray = advertiserArray;
+    }
+
+    // ---------------- Main Query ----------------
     const results = await sequelize.query(
       `
         SELECT 
@@ -144,19 +175,18 @@ exports.getMainReport = async (req) => {
         LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
         LEFT JOIN publishers pub ON pub.id = ct.publisher_id
         LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
-        WHERE 1=1
-        ${dateFilter}
+        ${filters}
         GROUP BY ${groupClause}
         ORDER BY ${groupClause}
         LIMIT :limit OFFSET :offset
-        `,
+      `,
       {
         replacements,
         type: sequelize.QueryTypes.SELECT,
       }
     );
 
-    // Query to get total count (without pagination)
+    // ---------------- Count Query ----------------
     const totalRecordsQuery = await sequelize.query(
       `
         SELECT COUNT(*) AS count FROM (
@@ -166,11 +196,10 @@ exports.getMainReport = async (req) => {
           LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
           LEFT JOIN publishers pub ON pub.id = ct.publisher_id
           LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
-          WHERE 1=1
-          ${dateFilter}
+          ${filters}
           GROUP BY ${groupClause}
         ) sub
-        `,
+      `,
       {
         replacements,
         type: sequelize.QueryTypes.SELECT,
