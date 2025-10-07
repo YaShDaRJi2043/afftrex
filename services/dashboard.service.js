@@ -186,8 +186,8 @@ async function getTiles(companyId) {
 }
 
 // ----------------- Main Service -----------------
-exports.getDashboard = async ({ companyId, from, to }) => {
-  if (!companyId) {
+exports.getDashboard = async ({ company_id, from, to }) => {
+  if (!company_id) {
     const err = new Error("companyId is required");
     err.statusCode = 400;
     throw err;
@@ -203,8 +203,8 @@ exports.getDashboard = async ({ companyId, from, to }) => {
   const toDate = to ? new Date(to) : defTo;
 
   const [series, tiles] = await Promise.all([
-    getSeries(companyId, fromDate, toDate),
-    getTiles(companyId),
+    getSeries(company_id, fromDate, toDate),
+    getTiles(company_id),
   ]);
 
   // Return series directly in data and include clicks/conversions objects at the end
