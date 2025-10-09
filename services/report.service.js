@@ -2,34 +2,56 @@ const {
   CampaignTracking,
   PixelTracking,
   Publisher,
+  Campaign,
   sequelize,
 } = require("@models");
 
 exports.getCampaignTrackingByCampaignId = async (req) => {
-  const { campaignId, page = 1, pageSize = 10 } = req.query; // Retrieve campaignId from query
+  try {
+    const { campaignId, page = 1, pageSize = 10 } = req.query;
+    const { company } = req.user; // Only use company for filtering
 
-  const options = {
-    include: [
-      {
-        model: Publisher,
-        as: "publisher",
-        attributes: ["id", "name"],
-      },
-    ],
-    limit: parseInt(pageSize),
-    offset: (parseInt(page) - 1) * parseInt(pageSize),
-  };
+    const limit = parseInt(pageSize, 10);
+    const offset = (parseInt(page, 10) - 1) * limit;
 
-  if (campaignId) {
-    options.where = { campaignId };
+    const options = {
+      include: [
+        {
+          model: Publisher,
+          as: "publisher",
+          attributes: ["id", "name"],
+        },
+        {
+          model: Campaign,
+          as: "campaign",
+          attributes: ["id", "title", "company_id"],
+          where: { company_id: company.id },
+        },
+      ],
+      limit,
+      offset,
+      where: {},
+    };
+
+    // Filter by campaign ID if provided
+    if (campaignId) {
+      options.where.campaign_id = campaignId;
+    }
+
+    const [trackings, total] = await Promise.all([
+      CampaignTracking.findAll(options),
+      CampaignTracking.count({
+        where: options.where,
+        include: options.include,
+        distinct: true,
+      }),
+    ]);
+
+    return { total, trackings };
+  } catch (error) {
+    console.error("Error in getCampaignTrackingByCampaignId:", error);
+    throw new Error(`Failed to get campaign tracking data: ${error.message}`);
   }
-
-  const [trackings, total] = await Promise.all([
-    CampaignTracking.findAll(options),
-    CampaignTracking.count(options.where ? { where: options.where } : {}),
-  ]);
-
-  return { trackings, total };
 };
 
 exports.getPixelTrackingByTrackingId = async (req) => {
