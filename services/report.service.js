@@ -131,6 +131,8 @@ exports.getMainReport = async (req) => {
       advertiser, // can be single ID or array
     } = req.query;
 
+    const { company } = req.user; // Logged-in user's company
+
     const limit = parseInt(pageSize, 10);
     const offset = (parseInt(page, 10) - 1) * limit;
 
@@ -163,6 +165,12 @@ exports.getMainReport = async (req) => {
     // ---------------- Filters ----------------
     let filters = "WHERE 1=1";
     const replacements = { limit, offset };
+
+    // Company filter
+    if (company && company.id) {
+      filters += " AND c.company_id = :companyId";
+      replacements.companyId = company.id;
+    }
 
     // Date filters
     if (startDate && endDate) {
