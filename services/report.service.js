@@ -63,11 +63,19 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     offset: (parseInt(page) - 1) * parseInt(pageSize),
     include: [
       {
-        model: Campaign,
-        as: "campaign",
-        attributes: ["id", "title", "company_id"],
-        where: { company_id: company.id }, // Added company filter
-        required: true, // Ensures only pixelTrackings with campaigns of this company
+        model: CampaignTracking,
+        as: "campaignTracking",
+        attributes: ["id", "campaignId"],
+        required: true,
+        include: [
+          {
+            model: Campaign,
+            as: "campaign",
+            attributes: ["id", "title", "company_id"],
+            where: { company_id: company.id }, // Company filter
+            required: true,
+          },
+        ],
       },
     ],
   };
@@ -78,12 +86,15 @@ exports.getPixelTrackingByTrackingId = async (req) => {
 
   const [pixelTrackings, total] = await Promise.all([
     PixelTracking.findAll(options),
-    PixelTracking.count(options.where ? { where: options.where, include: options.include } : { include: options.include }),
+    PixelTracking.count(
+      options.where
+        ? { where: options.where, include: options.include }
+        : { include: options.include }
+    ),
   ]);
 
   return { pixelTrackings, total };
 };
-
 
 const groupByMap = {
   campaign: "c.title",
