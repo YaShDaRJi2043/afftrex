@@ -56,6 +56,7 @@ exports.trackPixel = async (slug, data, req) => {
   // 1) Resolve clickId: query first, then cookie
   const clickId =
     n.clickId || req.query?.click_id || req.cookies?.click_id || null;
+  console.log("trackPixel: clickId =", clickId);
   if (!clickId) throw new Error("Missing clickId (pass as click_id in query)");
 
   // 2) Find the original tracking row
@@ -63,6 +64,7 @@ exports.trackPixel = async (slug, data, req) => {
     where: { clickId },
     order: [["createdAt", "DESC"]],
   });
+  console.log("trackPixel: tracking =", tracking);
   if (!tracking) throw new Error("No campaign tracking found");
 
   // 3) Resolve pageUrl (referrer if not explicitly provided)
@@ -162,6 +164,7 @@ exports.trackPostback = async (req = {}) => {
   const campaign = await Campaign.findOne({
     where: { security_token: req.query.security_token },
   });
+  console.log("campaign postback", campaign);
   if (!campaign) throw new Error("Invalid security token");
   const expectedToken = campaign.security_token;
 
@@ -200,6 +203,7 @@ exports.trackPostback = async (req = {}) => {
     "payout"
   );
   const amount = parseNumericAmount(amountS);
+  console.log("postback click_id:", click_id);
 
   // === Required params
   if (!click_id) {
