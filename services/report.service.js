@@ -126,12 +126,12 @@ exports.getMainReport = async (req) => {
       groupBy = "",
       startDate,
       endDate,
-      campaign, // can be single ID or array
-      publisher, // can be single ID or array
-      advertiser, // can be single ID or array
+      campaign,
+      publisher,
+      advertiser,
     } = req.query;
 
-    const { company } = req.user; // Logged-in user's company
+    const { company } = req.user;
 
     const limit = parseInt(pageSize, 10);
     const offset = (parseInt(page, 10) - 1) * limit;
@@ -172,20 +172,24 @@ exports.getMainReport = async (req) => {
       replacements.companyId = company.id;
     }
 
-    // Date filters
+    // --- ✅ Date filters (handles same-day range correctly)
     if (startDate && endDate) {
+      const startOfDay = `${startDate} 00:00:00`;
+      const endOfDay = `${endDate} 23:59:59`;
       filters += ` AND ct.timestamp BETWEEN :startDate AND :endDate`;
-      replacements.startDate = startDate;
-      replacements.endDate = endDate;
+      replacements.startDate = startOfDay;
+      replacements.endDate = endOfDay;
     } else if (startDate) {
+      const startOfDay = `${startDate} 00:00:00`;
       filters += ` AND ct.timestamp >= :startDate`;
-      replacements.startDate = startDate;
+      replacements.startDate = startOfDay;
     } else if (endDate) {
+      const endOfDay = `${endDate} 23:59:59`;
       filters += ` AND ct.timestamp <= :endDate`;
-      replacements.endDate = endDate;
+      replacements.endDate = endOfDay;
     }
 
-    // Campaign filter (supports single or multiple)
+    // Campaign filter
     if (campaign) {
       const campaignArray = Array.isArray(campaign)
         ? campaign
@@ -194,7 +198,7 @@ exports.getMainReport = async (req) => {
       replacements.campaignArray = campaignArray;
     }
 
-    // Publisher filter (supports single or multiple)
+    // Publisher filter
     if (publisher) {
       const publisherArray = Array.isArray(publisher)
         ? publisher
@@ -203,7 +207,7 @@ exports.getMainReport = async (req) => {
       replacements.publisherArray = publisherArray;
     }
 
-    // Advertiser filter (supports single or multiple)
+    // Advertiser filter
     if (advertiser) {
       const advertiserArray = Array.isArray(advertiser)
         ? advertiser
