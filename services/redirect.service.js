@@ -241,6 +241,7 @@ exports.trackClick = async (req, res) => {
       "{click_id}": clickId,
       "{pub}": shortPublisherId,
       "{campaignId}": CampaignUniqueId,
+      "{publisher_id}": assignment.publisherId,
       "{p1}": req.query.p1 || "",
       "{p2}": req.query.p2 || "",
       "{p3}": req.query.p3 || "",
