@@ -188,10 +188,10 @@ const groupByMap = {
   device: "ct.device",
   os: "ct.os",
   country: "ct.country",
-  year: `TO_CHAR(ct.timestamp, 'YYYY')`,
-  month: `TO_CHAR(ct.timestamp, 'Mon')`,
-  week: `TO_CHAR(DATE_TRUNC('week', ct.timestamp), 'DD-MM-YYYY') || ' to ' || TO_CHAR(DATE_TRUNC('week', ct.timestamp) + INTERVAL '6 days', 'DD-MM-YYYY')`,
-  day: `TO_CHAR(ct.timestamp, 'DD-MM-YYYY')`,
+  year: `TO_CHAR(ct.timestamp + interval '5 hours 30 minutes', 'YYYY')`,
+  month: `TO_CHAR(ct.timestamp + interval '5 hours 30 minutes', 'Mon')`,
+  week: `TO_CHAR(DATE_TRUNC('week', ct.timestamp + interval '5 hours 30 minutes'), 'DD-MM-YYYY') || ' to ' || TO_CHAR(DATE_TRUNC('week', ct.timestamp + interval '5 hours 30 minutes') + INTERVAL '6 days', 'DD-MM-YYYY')`,
+  day: `TO_CHAR(ct.timestamp + interval '5 hours 30 minutes', 'DD-MM-YYYY')`,
 };
 
 exports.getMainReport = async (req) => {
