@@ -150,15 +150,24 @@ exports.getMainReport = async (req) => {
       throw new Error("Invalid groupBy field(s)");
     }
 
-    const selectColumns = groupColumns
-      .map((col, index) => {
+    // ✅ Add corresponding ID fields dynamically based on groupBy
+    let idColumns = [];
+    if (groupKeys.includes("campaign")) idColumns.push(`c.id AS "campaignId"`);
+    if (groupKeys.includes("publisher"))
+      idColumns.push(`pub.id AS "publisherId"`);
+    if (groupKeys.includes("advertiser"))
+      idColumns.push(`adv.id AS "advertiserId"`);
+
+    const selectColumns = [
+      ...groupColumns.map((col, index) => {
         const key = groupKeys[index];
         if (["day", "month", "year", "week"].includes(key)) {
           return `${col} AS "${key.charAt(0).toUpperCase() + key.slice(1)}"`;
         }
         return `${col} AS "${key}"`;
-      })
-      .join(", ");
+      }),
+      ...idColumns, // ✅ Include ID fields
+    ].join(", ");
 
     const groupClause = groupColumns.join(", ");
 
@@ -232,7 +241,9 @@ exports.getMainReport = async (req) => {
         LEFT JOIN publishers pub ON pub.id = ct.publisher_id
         LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
         ${filters}
-        GROUP BY ${groupClause}
+        GROUP BY ${groupClause}, ${idColumns
+        .map((col) => col.split(" AS")[0])
+        .join(", ")}
         ORDER BY ${groupClause}
         LIMIT :limit OFFSET :offset
       `,
