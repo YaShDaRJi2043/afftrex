@@ -228,6 +228,7 @@ exports.getMainReport = async (req) => {
     if (groupKeys.includes("advertiser"))
       idColumns.push(`adv.id AS "advertiserId"`);
 
+    // ✅ Updated selectColumns: same as your old code
     const selectColumns = [
       ...groupColumns.map((col, index) => {
         const key = groupKeys[index];
@@ -239,7 +240,16 @@ exports.getMainReport = async (req) => {
       ...idColumns,
     ].join(", ");
 
-    const groupClause = groupColumns.join(", ");
+    // ✅ Updated groupClause: use expressions, not aliases
+    const groupClauseExpressions = groupKeys
+      .map((k) => groupByMap[k])
+      .filter(Boolean);
+
+    const groupClauseArray = [...groupClauseExpressions];
+    if (idColumns.length) {
+      groupClauseArray.push(...idColumns.map((col) => col.split(" AS")[0]));
+    }
+    const groupClauseSQL = groupClauseArray.join(", ");
 
     let filters = "WHERE 1=1";
     const replacements = { limit, offset };
@@ -301,10 +311,8 @@ exports.getMainReport = async (req) => {
       LEFT JOIN publishers pub ON pub.id = ct.publisher_id
       LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
       ${filters}
-      GROUP BY ${groupClause}, ${idColumns
-        .map((col) => col.split(" AS")[0])
-        .join(", ")}
-      ORDER BY ${groupClause}
+      GROUP BY ${groupClauseSQL}
+      ORDER BY ${groupClauseSQL}
       LIMIT :limit OFFSET :offset
       `,
       { replacements, type: sequelize.QueryTypes.SELECT }
@@ -313,14 +321,14 @@ exports.getMainReport = async (req) => {
     const totalRecordsQuery = await sequelize.query(
       `
       SELECT COUNT(*) AS count FROM (
-        SELECT ${groupClause}
+        SELECT ${groupClauseExpressions.join(", ")}
         FROM campaigns c
         LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
         LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
         LEFT JOIN publishers pub ON pub.id = ct.publisher_id
         LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
         ${filters}
-        GROUP BY ${groupClause}
+        GROUP BY ${groupClauseExpressions.join(", ")}
       ) sub
       `,
       { replacements, type: sequelize.QueryTypes.SELECT }
