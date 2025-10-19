@@ -2,6 +2,7 @@ const {
   CampaignTracking,
   PixelTracking,
   Publisher,
+  Advertiser,
   Campaign,
   sequelize,
 } = require("@models");
@@ -20,14 +21,19 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
     } = req.query;
     const { company } = req.user; // Only use company for filtering
 
-    const limit = parseInt(pageSize, 10);
-    const offset = (parseInt(page, 10) - 1) * limit;
+    const limit = Number.parseInt(pageSize, 10);
+    const offset = (Number.parseInt(page, 10) - 1) * limit;
 
     const options = {
       include: [
         {
           model: Publisher,
           as: "publisher",
+          attributes: ["id", "name"],
+        },
+        {
+          model: Advertiser,
+          as: "advertiser",
           attributes: ["id", "name"],
         },
         {
@@ -113,9 +119,22 @@ exports.getPixelTrackingByTrackingId = async (req) => {
   const { company } = req.user; // Company filter
 
   const options = {
-    limit: parseInt(pageSize, 10),
-    offset: (parseInt(page, 10) - 1) * parseInt(pageSize, 10),
+    limit: Number.parseInt(pageSize, 10),
+    offset: (Number.parseInt(page, 10) - 1) * Number.parseInt(pageSize, 10),
     include: [
+      {
+        model: Publisher,
+        as: "publisher",
+        attributes: ["id", "name"],
+        required: false,
+      },
+      // Include advertiser to return its id and name
+      {
+        model: Advertiser,
+        as: "advertiser",
+        attributes: ["id", "name"],
+        required: false,
+      },
       {
         model: CampaignTracking,
         as: "campaignTracking",
@@ -226,8 +245,8 @@ exports.getMainReport = async (req) => {
 
     const { company } = req.user;
 
-    const limit = parseInt(pageSize, 10);
-    const offset = (parseInt(page, 10) - 1) * limit;
+    const limit = Number.parseInt(pageSize, 10);
+    const offset = (Number.parseInt(page, 10) - 1) * limit;
 
     // ---------------- Prepare groupBy columns ----------------
     const groupKeys = groupBy
@@ -269,7 +288,7 @@ exports.getMainReport = async (req) => {
     const replacements = { limit, offset };
 
     // Company filter
-    if (company && company.id) {
+    if (company?.id) {
       filters += " AND c.company_id = :companyId";
       replacements.companyId = company.id;
     }
@@ -366,7 +385,7 @@ exports.getMainReport = async (req) => {
       }
     );
 
-    const total = parseInt(totalRecordsQuery[0].count, 10);
+    const total = Number.parseInt(totalRecordsQuery[0].count, 10);
 
     return {
       total,
