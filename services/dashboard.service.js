@@ -76,42 +76,44 @@ async function getSeries(companyId, from, to) {
 
   const buckets = buildBuckets(from, to);
 
-  // Clicks (CampaignTracking)
+  // Clicks (CampaignTracking) - use tracking timestamp
   const clickRows = await CampaignTracking.findAll({
-    attributes: ["id", "created_at"],
+    attributes: ["id", "timestamp"],
     where: {
       campaignId: { [Op.in]: campaignIds },
-      created_at: { [Op.between]: [startOfDayUTC(from), endOfDayUTC(to)] },
+      timestamp: { [Op.between]: [startOfDayUTC(from), endOfDayUTC(to)] },
     },
     raw: true,
   });
 
   for (const row of clickRows) {
-    const key = dateKeyUTC(row.created_at);
+    const key = dateKeyUTC(row.timestamp);
     const b = buckets.get(key);
     if (b) b.clicks += 1;
   }
 
-  // Conversions (PixelTracking)
+  // Conversions (PixelTracking) - use conversionTime and eventType
   const convRows = await PixelTracking.findAll({
     attributes: [
       "id",
-      "created_at",
-      "event_type",
+      "conversionTime",
+      "eventType",
       "revenue",
       "payout",
       "profit",
     ],
     where: {
       campaignId: { [Op.in]: campaignIds },
-      event_type: "conversion",
-      created_at: { [Op.between]: [startOfDayUTC(from), endOfDayUTC(to)] },
+      eventType: "conversion",
+      conversionTime: {
+        [Op.between]: [startOfDayUTC(from), endOfDayUTC(to)],
+      },
     },
     raw: true,
   });
 
   for (const row of convRows) {
-    const key = dateKeyUTC(row.created_at);
+    const key = dateKeyUTC(row.conversionTime);
     const b = buckets.get(key);
     if (b) {
       b.conversions += 1;
@@ -152,30 +154,30 @@ async function getTiles(companyId) {
   // Clicks
   const [clicksToday, clicksYesterday, clicksMTD] = await Promise.all([
     CampaignTracking.count({
-      where: { ...base, created_at: { [Op.between]: [todayStart, todayEnd] } },
+      where: { ...base, timestamp: { [Op.between]: [todayStart, todayEnd] } },
     }),
     CampaignTracking.count({
-      where: { ...base, created_at: { [Op.between]: [yStart, yEnd] } },
+      where: { ...base, timestamp: { [Op.between]: [yStart, yEnd] } },
     }),
     CampaignTracking.count({
-      where: { ...base, created_at: { [Op.between]: [mStart, mEnd] } },
+      where: { ...base, timestamp: { [Op.between]: [mStart, mEnd] } },
     }),
   ]);
 
   // Conversions
-  const convBase = { ...base, event_type: "conversion" };
+  const convBase = { ...base, eventType: "conversion" };
   const [convToday, convYesterday, convMTD] = await Promise.all([
     PixelTracking.count({
       where: {
         ...convBase,
-        created_at: { [Op.between]: [todayStart, todayEnd] },
+        conversionTime: { [Op.between]: [todayStart, todayEnd] },
       },
     }),
     PixelTracking.count({
-      where: { ...convBase, created_at: { [Op.between]: [yStart, yEnd] } },
+      where: { ...convBase, conversionTime: { [Op.between]: [yStart, yEnd] } },
     }),
     PixelTracking.count({
-      where: { ...convBase, created_at: { [Op.between]: [mStart, mEnd] } },
+      where: { ...convBase, conversionTime: { [Op.between]: [mStart, mEnd] } },
     }),
   ]);
 
@@ -199,8 +201,11 @@ exports.getDashboard = async ({ company_id, from, to }) => {
   );
   const defFrom = addDays(defTo, -6);
 
-  const fromDate = from ? new Date(from) : defFrom;
-  const toDate = to ? new Date(to) : defTo;
+  // Align date bounds with other services: interpret from/to as dates (UTC day bounds)
+  const fromDate = from
+    ? startOfDayUTC(new Date(`${from}T00:00:00.000Z`))
+    : defFrom;
+  const toDate = to ? endOfDayUTC(new Date(`${to}T00:00:00.000Z`)) : defTo;
 
   const [series, tiles] = await Promise.all([
     getSeries(company_id, fromDate, toDate),

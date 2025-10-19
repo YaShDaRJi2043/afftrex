@@ -293,19 +293,25 @@ exports.getMainReport = async (req) => {
       replacements.companyId = company.id;
     }
 
-    // --- ✅ Date filters (handles same-day range correctly)
+    // --- ✅ Date filters (aligned with other APIs, using UTC day bounds)
     if (startDate && endDate) {
-      const startOfDay = `${startDate} 00:00:00`;
-      const endOfDay = `${endDate} 23:59:59`;
-      filters += ` AND ct.timestamp BETWEEN :startDate AND :endDate`;
+      const startOfDay = `${startDate}T00:00:00.000Z`;
+      const endOfDay = `${endDate}T23:59:59.999Z`;
+      if (startDate === endDate) {
+        // Same day full range
+        filters += ` AND ct.timestamp BETWEEN :startDate AND :endDate`;
+      } else {
+        // Range using gte/lte
+        filters += ` AND ct.timestamp >= :startDate AND ct.timestamp <= :endDate`;
+      }
       replacements.startDate = startOfDay;
       replacements.endDate = endOfDay;
     } else if (startDate) {
-      const startOfDay = `${startDate} 00:00:00`;
+      const startOfDay = `${startDate}T00:00:00.000Z`;
       filters += ` AND ct.timestamp >= :startDate`;
       replacements.startDate = startOfDay;
     } else if (endDate) {
-      const endOfDay = `${endDate} 23:59:59`;
+      const endOfDay = `${endDate}T23:59:59.999Z`;
       filters += ` AND ct.timestamp <= :endDate`;
       replacements.endDate = endOfDay;
     }
