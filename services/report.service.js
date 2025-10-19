@@ -8,6 +8,24 @@ const {
 } = require("@models");
 const { Op } = require("sequelize");
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // 5:30 in milliseconds
+
+// Helper: convert IST date string to UTC Date for DB filtering
+function istDateToUTC(startOrEnd, isStart = true) {
+  const [year, month, day] = startOrEnd.split("-").map(Number);
+  const hours = isStart ? 0 : 23;
+  const minutes = isStart ? 0 : 59;
+  const seconds = isStart ? 0 : 59;
+  const ms = isStart ? 0 : 999;
+
+  // Create local IST date
+  const istDate = new Date(
+    Date.UTC(year, month - 1, day, hours, minutes, seconds, ms)
+  );
+  // Subtract IST offset to get UTC equivalent
+  return new Date(istDate.getTime() - IST_OFFSET_MS);
+}
+
 exports.getCampaignTrackingByCampaignId = async (req) => {
   try {
     const {
@@ -19,23 +37,15 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
       startDate,
       endDate,
     } = req.query;
-    const { company } = req.user; // Only use company for filtering
+    const { company } = req.user;
 
     const limit = Number.parseInt(pageSize, 10);
     const offset = (Number.parseInt(page, 10) - 1) * limit;
 
     const options = {
       include: [
-        {
-          model: Publisher,
-          as: "publisher",
-          attributes: ["id", "name"],
-        },
-        {
-          model: Advertiser,
-          as: "advertiser",
-          attributes: ["id", "name"],
-        },
+        { model: Publisher, as: "publisher", attributes: ["id", "name"] },
+        { model: Advertiser, as: "advertiser", attributes: ["id", "name"] },
         {
           model: Campaign,
           as: "campaign",
@@ -48,46 +58,22 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
       where: {},
     };
 
-    // Filter by campaign ID if provided
-    if (campaignId) {
-      options.where.campaignId = campaignId;
-    }
+    if (campaignId) options.where.campaignId = campaignId;
+    if (publisherId) options.where.publisherId = publisherId;
+    if (advertiserId) options.where.advertiserId = advertiserId;
 
-    // Filter by publisher ID if provided
-    if (publisherId) {
-      options.where.publisherId = publisherId;
-    }
-
-    // Filter by advertiser ID if provided
-    if (advertiserId) {
-      options.where.advertiserId = advertiserId;
-    }
-
-    // ✅ Add date filter
+    // ✅ IST date filter
     if (startDate && endDate) {
-      if (startDate === endDate) {
-        // Same day filter (full day)
-        options.where.timestamp = {
-          [Op.between]: [
-            new Date(`${startDate}T00:00:00.000Z`),
-            new Date(`${endDate}T23:59:59.999Z`),
-          ],
-        };
-      } else {
-        // Date range filter
-        options.where.timestamp = {
-          [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
-          [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
-        };
-      }
+      options.where.timestamp = {
+        [Op.between]: [
+          istDateToUTC(startDate, true),
+          istDateToUTC(endDate, false),
+        ],
+      };
     } else if (startDate) {
-      options.where.timestamp = {
-        [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
-      };
+      options.where.timestamp = { [Op.gte]: istDateToUTC(startDate, true) };
     } else if (endDate) {
-      options.where.timestamp = {
-        [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
-      };
+      options.where.timestamp = { [Op.lte]: istDateToUTC(endDate, false) };
     }
 
     const [trackings, total] = await Promise.all([
@@ -115,12 +101,15 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     endDate,
     page = 1,
     pageSize = 10,
-  } = req.query; // Retrieve filters from query
-  const { company } = req.user; // Company filter
+  } = req.query;
+  const { company } = req.user;
+
+  const limit = Number.parseInt(pageSize, 10);
+  const offset = (Number.parseInt(page, 10) - 1) * limit;
 
   const options = {
-    limit: Number.parseInt(pageSize, 10),
-    offset: (Number.parseInt(page, 10) - 1) * Number.parseInt(pageSize, 10),
+    limit,
+    offset,
     include: [
       {
         model: Publisher,
@@ -128,7 +117,6 @@ exports.getPixelTrackingByTrackingId = async (req) => {
         attributes: ["id", "name"],
         required: false,
       },
-      // Include advertiser to return its id and name
       {
         model: Advertiser,
         as: "advertiser",
@@ -145,7 +133,7 @@ exports.getPixelTrackingByTrackingId = async (req) => {
             model: Campaign,
             as: "campaign",
             attributes: ["id", "title", "company_id"],
-            where: { company_id: company.id }, // Company filter
+            where: { company_id: company.id },
             required: true,
           },
         ],
@@ -154,46 +142,22 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     where: {},
   };
 
-  // Filter by campaign ID if provided
-  if (campaignId) {
-    options.where.campaignId = campaignId;
-  }
+  if (campaignId) options.where.campaignId = campaignId;
+  if (publisherId) options.where.publisherId = publisherId;
+  if (advertiserId) options.where.advertiserId = advertiserId;
 
-  // Filter by publisher ID if provided
-  if (publisherId) {
-    options.where.publisherId = publisherId;
-  }
-
-  // Filter by advertiser ID if provided
-  if (advertiserId) {
-    options.where.advertiserId = advertiserId;
-  }
-
-  // Date filters on conversionTime (conversion date)
+  // ✅ IST date filter for conversionTime
   if (startDate && endDate) {
-    if (startDate === endDate) {
-      // Same day filter (full day)
-      options.where.conversionTime = {
-        [Op.between]: [
-          new Date(`${startDate}T00:00:00.000Z`),
-          new Date(`${endDate}T23:59:59.999Z`),
-        ],
-      };
-    } else {
-      // Date range filter
-      options.where.conversionTime = {
-        [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
-        [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
-      };
-    }
+    options.where.conversionTime = {
+      [Op.between]: [
+        istDateToUTC(startDate, true),
+        istDateToUTC(endDate, false),
+      ],
+    };
   } else if (startDate) {
-    options.where.conversionTime = {
-      [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
-    };
+    options.where.conversionTime = { [Op.gte]: istDateToUTC(startDate, true) };
   } else if (endDate) {
-    options.where.conversionTime = {
-      [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
-    };
+    options.where.conversionTime = { [Op.lte]: istDateToUTC(endDate, false) };
   }
 
   const [pixelTrackings, total] = await Promise.all([
@@ -242,27 +206,21 @@ exports.getMainReport = async (req) => {
       publisher,
       advertiser,
     } = req.query;
-
     const { company } = req.user;
 
     const limit = Number.parseInt(pageSize, 10);
     const offset = (Number.parseInt(page, 10) - 1) * limit;
 
-    // ---------------- Prepare groupBy columns ----------------
     const groupKeys = groupBy
       .split(",")
       .map((k) => k.trim())
       .filter(Boolean);
-    if (!groupKeys.length) {
+    if (!groupKeys.length)
       throw new Error("Please provide at least one groupBy field");
-    }
 
     const groupColumns = groupKeys.map((k) => groupByMap[k]).filter(Boolean);
-    if (!groupColumns.length) {
-      throw new Error("Invalid groupBy field(s)");
-    }
+    if (!groupColumns.length) throw new Error("Invalid groupBy field(s)");
 
-    // ✅ Add corresponding ID fields dynamically based on groupBy
     let idColumns = [];
     if (groupKeys.includes("campaign")) idColumns.push(`c.id AS "campaignId"`);
     if (groupKeys.includes("publisher"))
@@ -278,45 +236,32 @@ exports.getMainReport = async (req) => {
         }
         return `${col} AS "${key}"`;
       }),
-      ...idColumns, // ✅ Include ID fields
+      ...idColumns,
     ].join(", ");
 
     const groupClause = groupColumns.join(", ");
 
-    // ---------------- Filters ----------------
     let filters = "WHERE 1=1";
     const replacements = { limit, offset };
 
-    // Company filter
     if (company?.id) {
       filters += " AND c.company_id = :companyId";
       replacements.companyId = company.id;
     }
 
-    // --- ✅ Date filters (aligned with other APIs, using UTC day bounds)
+    // ✅ IST date filter
     if (startDate && endDate) {
-      const startOfDay = `${startDate}T00:00:00.000Z`;
-      const endOfDay = `${endDate}T23:59:59.999Z`;
-      if (startDate === endDate) {
-        // Same day full range
-        filters += ` AND ct.timestamp BETWEEN :startDate AND :endDate`;
-      } else {
-        // Range using gte/lte
-        filters += ` AND ct.timestamp >= :startDate AND ct.timestamp <= :endDate`;
-      }
-      replacements.startDate = startOfDay;
-      replacements.endDate = endOfDay;
+      filters += ` AND ct.timestamp BETWEEN :startDate AND :endDate`;
+      replacements.startDate = istDateToUTC(startDate, true).toISOString();
+      replacements.endDate = istDateToUTC(endDate, false).toISOString();
     } else if (startDate) {
-      const startOfDay = `${startDate}T00:00:00.000Z`;
       filters += ` AND ct.timestamp >= :startDate`;
-      replacements.startDate = startOfDay;
+      replacements.startDate = istDateToUTC(startDate, true).toISOString();
     } else if (endDate) {
-      const endOfDay = `${endDate}T23:59:59.999Z`;
       filters += ` AND ct.timestamp <= :endDate`;
-      replacements.endDate = endOfDay;
+      replacements.endDate = istDateToUTC(endDate, false).toISOString();
     }
 
-    // Campaign filter
     if (campaign) {
       const campaignArray = Array.isArray(campaign)
         ? campaign
@@ -325,7 +270,6 @@ exports.getMainReport = async (req) => {
       replacements.campaignArray = campaignArray;
     }
 
-    // Publisher filter
     if (publisher) {
       const publisherArray = Array.isArray(publisher)
         ? publisher
@@ -334,7 +278,6 @@ exports.getMainReport = async (req) => {
       replacements.publisherArray = publisherArray;
     }
 
-    // Advertiser filter
     if (advertiser) {
       const advertiserArray = Array.isArray(advertiser)
         ? advertiser
@@ -343,58 +286,48 @@ exports.getMainReport = async (req) => {
       replacements.advertiserArray = advertiserArray;
     }
 
-    // ---------------- Main Query ----------------
     const results = await sequelize.query(
       `
-        SELECT 
-          ${selectColumns},
-          COUNT(DISTINCT ct.id) AS "grossClicks",
-          COUNT(DISTINCT pt.id) AS "totalConversions",
-          COALESCE(SUM(pt.revenue), 0) AS "totalRevenue",
-          COALESCE(SUM(pt.payout), 0) AS "totalPayout",
-          COALESCE(SUM(pt.profit), 0) AS "totalProfit"
+      SELECT 
+        ${selectColumns},
+        COUNT(DISTINCT ct.id) AS "grossClicks",
+        COUNT(DISTINCT pt.id) AS "totalConversions",
+        COALESCE(SUM(pt.revenue), 0) AS "totalRevenue",
+        COALESCE(SUM(pt.payout), 0) AS "totalPayout",
+        COALESCE(SUM(pt.profit), 0) AS "totalProfit"
+      FROM campaigns c
+      LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
+      LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
+      LEFT JOIN publishers pub ON pub.id = ct.publisher_id
+      LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
+      ${filters}
+      GROUP BY ${groupClause}, ${idColumns
+        .map((col) => col.split(" AS")[0])
+        .join(", ")}
+      ORDER BY ${groupClause}
+      LIMIT :limit OFFSET :offset
+      `,
+      { replacements, type: sequelize.QueryTypes.SELECT }
+    );
+
+    const totalRecordsQuery = await sequelize.query(
+      `
+      SELECT COUNT(*) AS count FROM (
+        SELECT ${groupClause}
         FROM campaigns c
         LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
         LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
         LEFT JOIN publishers pub ON pub.id = ct.publisher_id
         LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
         ${filters}
-        GROUP BY ${groupClause}, ${idColumns
-        .map((col) => col.split(" AS")[0])
-        .join(", ")}
-        ORDER BY ${groupClause}
-        LIMIT :limit OFFSET :offset
+        GROUP BY ${groupClause}
+      ) sub
       `,
-      {
-        replacements,
-        type: sequelize.QueryTypes.SELECT,
-      }
+      { replacements, type: sequelize.QueryTypes.SELECT }
     );
-
-    // ---------------- Count Query ----------------
-    const totalRecordsQuery = await sequelize.query(
-      `
-        SELECT COUNT(*) AS count FROM (
-          SELECT ${groupClause}
-          FROM campaigns c
-          LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
-          LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
-          LEFT JOIN publishers pub ON pub.id = ct.publisher_id
-          LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
-          ${filters}
-          GROUP BY ${groupClause}
-        ) sub
-      `,
-      {
-        replacements,
-        type: sequelize.QueryTypes.SELECT,
-      }
-    );
-
-    const total = Number.parseInt(totalRecordsQuery[0].count, 10);
 
     return {
-      total,
+      total: Number.parseInt(totalRecordsQuery[0].count, 10),
       data: results,
     };
   } catch (err) {
