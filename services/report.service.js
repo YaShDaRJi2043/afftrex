@@ -5,10 +5,17 @@ const {
   Campaign,
   sequelize,
 } = require("@models");
+const { Op } = require("sequelize");
 
 exports.getCampaignTrackingByCampaignId = async (req) => {
   try {
-    const { campaignId, page = 1, pageSize = 10 } = req.query;
+    const {
+      campaignId,
+      page = 1,
+      pageSize = 10,
+      startDate,
+      endDate,
+    } = req.query;
     const { company } = req.user; // Only use company for filtering
 
     const limit = parseInt(pageSize, 10);
@@ -36,6 +43,33 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
     // Filter by campaign ID if provided
     if (campaignId) {
       options.where.campaign_id = campaignId;
+    }
+
+    // ✅ Add date filter
+    if (startDate && endDate) {
+      if (startDate === endDate) {
+        // Same day filter (full day)
+        options.where.timestamp = {
+          [Op.between]: [
+            new Date(`${startDate}T00:00:00.000Z`),
+            new Date(`${endDate}T23:59:59.999Z`),
+          ],
+        };
+      } else {
+        // Date range filter
+        options.where.timestamp = {
+          [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
+          [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
+        };
+      }
+    } else if (startDate) {
+      options.where.timestamp = {
+        [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
+      };
+    } else if (endDate) {
+      options.where.timestamp = {
+        [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
+      };
     }
 
     const [trackings, total] = await Promise.all([
