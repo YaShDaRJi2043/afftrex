@@ -11,6 +11,8 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
   try {
     const {
       campaignId,
+      publisherId,
+      advertiserId,
       page = 1,
       pageSize = 10,
       startDate,
@@ -42,7 +44,17 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
 
     // Filter by campaign ID if provided
     if (campaignId) {
-      options.where.campaign_id = campaignId;
+      options.where.campaignId = campaignId;
+    }
+
+    // Filter by publisher ID if provided
+    if (publisherId) {
+      options.where.publisherId = publisherId;
+    }
+
+    // Filter by advertiser ID if provided
+    if (advertiserId) {
+      options.where.advertiserId = advertiserId;
     }
 
     // ✅ Add date filter
@@ -89,12 +101,20 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
 };
 
 exports.getPixelTrackingByTrackingId = async (req) => {
-  const { campaignId, page = 1, pageSize = 10 } = req.query; // Retrieve campaignId from query
+  const {
+    campaignId,
+    publisherId,
+    advertiserId,
+    startDate,
+    endDate,
+    page = 1,
+    pageSize = 10,
+  } = req.query; // Retrieve filters from query
   const { company } = req.user; // Company filter
 
   const options = {
-    limit: parseInt(pageSize),
-    offset: (parseInt(page) - 1) * parseInt(pageSize),
+    limit: parseInt(pageSize, 10),
+    offset: (parseInt(page, 10) - 1) * parseInt(pageSize, 10),
     include: [
       {
         model: CampaignTracking,
@@ -112,19 +132,58 @@ exports.getPixelTrackingByTrackingId = async (req) => {
         ],
       },
     ],
+    where: {},
   };
 
+  // Filter by campaign ID if provided
   if (campaignId) {
-    options.where = { campaignId };
+    options.where.campaignId = campaignId;
+  }
+
+  // Filter by publisher ID if provided
+  if (publisherId) {
+    options.where.publisherId = publisherId;
+  }
+
+  // Filter by advertiser ID if provided
+  if (advertiserId) {
+    options.where.advertiserId = advertiserId;
+  }
+
+  // Date filters on conversionTime (conversion date)
+  if (startDate && endDate) {
+    if (startDate === endDate) {
+      // Same day filter (full day)
+      options.where.conversionTime = {
+        [Op.between]: [
+          new Date(`${startDate}T00:00:00.000Z`),
+          new Date(`${endDate}T23:59:59.999Z`),
+        ],
+      };
+    } else {
+      // Date range filter
+      options.where.conversionTime = {
+        [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
+        [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
+      };
+    }
+  } else if (startDate) {
+    options.where.conversionTime = {
+      [Op.gte]: new Date(`${startDate}T00:00:00.000Z`),
+    };
+  } else if (endDate) {
+    options.where.conversionTime = {
+      [Op.lte]: new Date(`${endDate}T23:59:59.999Z`),
+    };
   }
 
   const [pixelTrackings, total] = await Promise.all([
     PixelTracking.findAll(options),
-    PixelTracking.count(
-      options.where
-        ? { where: options.where, include: options.include }
-        : { include: options.include }
-    ),
+    PixelTracking.count({
+      where: options.where,
+      include: options.include,
+      distinct: true,
+    }),
   ]);
 
   return { pixelTrackings, total };

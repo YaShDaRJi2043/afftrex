@@ -111,6 +111,8 @@ exports.trackPixel = async (slug, data, req) => {
     await PixelTracking.create({
       campaignId: campaign.id,
       trackingId: tracking.id,
+      publisherId: tracking.publisherId || null,
+      advertiserId: tracking.advertiserId || null,
 
       eventType: eventType || "conversion", // default if not provided
       transactionId: n.transactionId || null,
@@ -263,6 +265,8 @@ exports.trackPostback = async (req = {}) => {
     await PixelTracking.create({
       campaignId: clickRow.campaignId,
       trackingId: clickRow.id,
+      publisherId: clickRow.publisherId || null,
+      advertiserId: clickRow.advertiserId || null,
 
       eventType: "conversion",
       transactionId: txn_id,

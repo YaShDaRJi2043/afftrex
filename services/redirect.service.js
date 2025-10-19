@@ -215,6 +215,7 @@ exports.trackClick = async (req, res) => {
     await CampaignTracking.create({
       campaignId: campaign.id,
       publisherId: assignment.publisherId,
+      advertiserId: campaign.advertiser_id,
       clickId,
       ipAddress: ip,
       userAgent,

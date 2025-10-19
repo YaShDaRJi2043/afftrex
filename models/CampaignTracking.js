@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "publisherId",
         as: "publisher",
       });
+      CampaignTracking.belongsTo(models.Advertiser, {
+        foreignKey: "advertiserId",
+        as: "advertiser",
+      });
       CampaignTracking.hasMany(models.PixelTracking, {
         foreignKey: "trackingId",
         as: "pixelTrackings",
@@ -36,6 +40,10 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
       },
       publisherId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      advertiserId: {
         type: DataTypes.INTEGER,
         allowNull: true,
       },

@@ -99,7 +99,34 @@ module.exports = {
         defaultValue: 0,
         comment: "Profit from this conversion",
       },
-
+      campaign_id: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+        references: {
+          model: "campaigns",
+          key: "id",
+        },
+      },
+      publisher_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "publishers",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+      advertiser_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "advertisers",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
       created_at: {
         type: Sequelize.DATE,
         allowNull: false,
@@ -109,14 +136,6 @@ module.exports = {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW,
-      },
-      campaign_id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: "campaigns",
-          key: "id",
-        },
       },
     });
   },

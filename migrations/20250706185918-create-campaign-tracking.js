@@ -29,7 +29,17 @@ module.exports = {
         onUpdate: "CASCADE",
         onDelete: "SET NULL",
       },
-      click_id: {
+      advertiser_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "advertisers",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+      clickId: {
         type: Sequelize.STRING,
         allowNull: true,
         unique: true,
