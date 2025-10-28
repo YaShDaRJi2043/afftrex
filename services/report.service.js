@@ -143,8 +143,22 @@ exports.getPixelTrackingByTrackingId = async (req) => {
   };
 
   if (campaignId) options.where.campaignId = campaignId;
-  if (publisherId) options.where.publisherId = publisherId;
-  if (advertiserId) options.where.advertiserId = advertiserId;
+
+  // Handle multiple publisherId values
+  if (publisherId) {
+    const publisherArray = Array.isArray(publisherId)
+      ? publisherId
+      : publisherId.split(",").map((id) => id.trim());
+    options.where.publisherId = { [Op.in]: publisherArray };
+  }
+
+  // Handle multiple advertiserId values
+  if (advertiserId) {
+    const advertiserArray = Array.isArray(advertiserId)
+      ? advertiserId
+      : advertiserId.split(",").map((id) => id.trim());
+    options.where.advertiserId = { [Op.in]: advertiserArray };
+  }
 
   // ✅ IST date filter for conversionTime
   if (startDate && endDate) {
