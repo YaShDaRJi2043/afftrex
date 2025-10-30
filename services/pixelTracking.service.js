@@ -131,7 +131,7 @@ exports.trackPixel = async (slug, data, req) => {
       clickCount: sameUserClicks,
 
       // === Added fields ===
-      revenue,
+      revenue: n.conv_revenue ? n.conv_revenue : revenue,
       payout,
       profit,
     });
