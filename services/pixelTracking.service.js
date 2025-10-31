@@ -90,16 +90,23 @@ exports.trackPixel = async (slug, data, req) => {
     },
   });
 
-  // === Added revenue/payout calculation ===
+  // === Revenue/payout calculation ===
   let revenue = 0;
   let payout = 0;
   const numericSaleAmount = parseNumericAmount(n.saleAmount);
 
-  if (campaign.objective === "conversions") {
+  if (n.conv_revenue != null) {
+    // Use provided conv_revenue if available
+    revenue = parseNumericAmount(n.conv_revenue);
+  } else if (campaign.objective === "conversions") {
     revenue = campaign.revenue || 0;
-    payout = campaign.payout || 0;
   } else if (campaign.objective === "sale") {
     revenue = ((campaign.revenue || 0) / 100) * numericSaleAmount;
+  }
+
+  if (campaign.objective === "conversions") {
+    payout = campaign.payout || 0;
+  } else if (campaign.objective === "sale") {
     payout = ((campaign.payout || 0) / 100) * numericSaleAmount;
   }
 
@@ -131,7 +138,7 @@ exports.trackPixel = async (slug, data, req) => {
       clickCount: sameUserClicks,
 
       // === Added fields ===
-      revenue: n.conv_revenue ? n.conv_revenue : revenue,
+      revenue,
       payout,
       profit,
     });
