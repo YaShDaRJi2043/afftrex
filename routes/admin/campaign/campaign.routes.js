@@ -41,6 +41,12 @@ router.patch(
   campaignController.updateCampaignStatus
 );
 
+router.patch(
+  "/:id/settings",
+  checkFeature("campaign_settings_update"),
+  campaignController.updateCampaignSettings
+);
+
 router.delete(
   "/:id",
   checkFeature("campaign_delete"),

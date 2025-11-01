@@ -184,6 +184,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
+      hidePayoutForPublisher: { type: DataTypes.BOOLEAN, defaultValue: false },
     },
     {
       sequelize,

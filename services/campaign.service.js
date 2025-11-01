@@ -253,7 +253,7 @@ exports.getCampaigns = async (req) => {
     whereFilter.company_id = company.id;
   }
 
-  return await Campaign.findAll({
+  const campaigns = await Campaign.findAll({
     where: whereFilter,
     include: [
       {
@@ -270,6 +270,16 @@ exports.getCampaigns = async (req) => {
     ],
     order: [["created_at", "DESC"]],
   });
+
+  if (role === "publisher") {
+    for (const campaign of campaigns) {
+      if (campaign.hidePayoutForPublisher) {
+        campaign.payout = undefined;
+      }
+    }
+  }
+
+  return campaigns;
 };
 
 exports.getCampaignById = async (req, id) => {
@@ -477,4 +487,32 @@ ${serverInfo.api_url}/postback/${trackingSlug}?click_id=REPLACE_CLICK_ID_VAR&eve
   }
 
   return script;
+};
+
+exports.updateCampaignSettings = async (id, updates) => {
+  const campaign = await Campaign.findByPk(id);
+  if (!campaign) {
+    const error = new Error("Campaign not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Only allow updates for specific fields
+  const allowedUpdates = {};
+
+  if (updates.hasOwnProperty("hidePayoutForPublisher")) {
+    allowedUpdates.hidePayoutForPublisher = updates.hidePayoutForPublisher;
+  }
+
+  if (updates.hasOwnProperty("redirectType")) {
+    allowedUpdates.redirectType = updates.redirectType;
+  }
+
+  if (Object.keys(allowedUpdates).length === 0) {
+    const error = new Error("No valid fields provided for update");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  return await campaign.update(allowedUpdates);
 };

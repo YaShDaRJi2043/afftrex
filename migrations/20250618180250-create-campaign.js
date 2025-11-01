@@ -235,6 +235,10 @@ module.exports = {
         allowNull: false,
         defaultValue: Sequelize.literal("NOW()"),
       },
+      hidePayoutForPublisher: {
+        type: Sequelize.BOOLEAN,
+        defaultValue: false,
+      },
     });
 
     await queryInterface.addIndex("campaigns", ["company_id"]);

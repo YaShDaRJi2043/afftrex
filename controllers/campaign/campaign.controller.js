@@ -96,3 +96,23 @@ exports.updateCampaignStatus = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.updateCampaignSettings = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    const updatedCampaign = await CampaignService.updateCampaignSettings(
+      id,
+      updates
+    );
+    responseHelper.successResponse(
+      req,
+      res,
+      "Campaign settings updated successfully",
+      updatedCampaign
+    );
+  } catch (err) {
+    console.error("Update campaign settings error:", err);
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};
