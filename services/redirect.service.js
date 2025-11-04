@@ -73,6 +73,17 @@ exports.trackClick = async (req, res) => {
       req.headers["origin"] ||
       req.query.ref ||
       null;
+
+    // 🧹 Clean up invalid or placeholder referers
+    if (
+      !referer ||
+      referer === "{ref}" ||
+      referer.toLowerCase() === "undefined" ||
+      referer.toLowerCase() === "null"
+    ) {
+      referer = null;
+    }
+
     const geo = ip ? geoip.lookup(ip) : null;
     const ua = new UAParser(userAgent).getResult();
     const now = new Date();
