@@ -2,10 +2,9 @@ const { Campaign, Publisher, CampaignAssignment } = require("@models");
 const { serverInfo } = require("@config/config");
 const crypto = require("crypto");
 
-// Encrypt using AES-256-GCM with base64 output
 const encrypt = (text) => {
-  const hash = crypto.createHash("sha256").update(text).digest("base64url"); // URL-safe base64
-  return hash.slice(0, 5); // Truncate to 5 characters
+  const hash = crypto.createHash("sha256").update(text).digest("base64url");
+  return hash.slice(0, 5);
 };
 
 exports.assignCampaignToPublishers = async ({
@@ -33,9 +32,12 @@ exports.assignCampaignToPublishers = async ({
     if (p3) queryParams.append("p3", p3);
     if (p4) queryParams.append("p4", p4);
 
+    // ✅ Optional placeholder for referer (in case you add later tracking logic)
+    queryParams.append("ref", "{ref}");
+
     const publisherLink = `${serverInfo.api_url}/public/c/${
       campaign.unique_id
-    }?${queryParams.toString()}`; // Use unique_id directly
+    }?${queryParams.toString()}`;
 
     const assignment = await CampaignAssignment.create({
       campaignId,

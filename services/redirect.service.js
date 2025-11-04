@@ -67,7 +67,12 @@ exports.trackClick = async (req, res) => {
     const ip = getClientIp(req);
 
     const userAgent = req.headers["user-agent"] || "";
-    const referer = req.headers["referer"] || null;
+    let referer =
+      req.headers["referer"] ||
+      req.headers["referrer"] ||
+      req.headers["origin"] ||
+      req.query.ref ||
+      null;
     const geo = ip ? geoip.lookup(ip) : null;
     const ua = new UAParser(userAgent).getResult();
     const now = new Date();
