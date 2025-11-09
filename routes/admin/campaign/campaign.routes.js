@@ -47,6 +47,8 @@ router.patch(
   campaignController.updateCampaignSettings
 );
 
+router.patch("/:id/fallback", campaignController.updateFallbackFields);
+
 router.delete(
   "/:id",
   checkFeature("campaign_delete"),

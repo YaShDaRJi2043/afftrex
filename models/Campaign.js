@@ -174,6 +174,17 @@ module.exports = (sequelize, DataTypes) => {
         unique: true,
         defaultValue: null,
       },
+      hidePayoutForPublisher: { type: DataTypes.BOOLEAN, defaultValue: false },
+      fallbackCampaignId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        defaultValue: null,
+      },
+      fallbackUrl: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        defaultValue: null,
+      },
       created_at: {
         type: DataTypes.DATE,
         allowNull: false,
@@ -184,7 +195,6 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: DataTypes.NOW,
       },
-      hidePayoutForPublisher: { type: DataTypes.BOOLEAN, defaultValue: false },
     },
     {
       sequelize,

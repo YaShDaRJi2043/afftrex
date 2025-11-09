@@ -50,6 +50,20 @@ module.exports = {
         type: Sequelize.TEXT,
         allowNull: false,
       },
+      fallbackCampaignId: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "campaigns",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
+      fallbackUrl: {
+        type: Sequelize.STRING,
+        allowNull: true,
+      },
       defaultLandingPageName: {
         type: Sequelize.STRING,
         defaultValue: "Default",

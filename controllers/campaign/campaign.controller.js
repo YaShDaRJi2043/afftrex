@@ -116,3 +116,25 @@ exports.updateCampaignSettings = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.updateFallbackFields = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { fallbackCampaignId, fallbackUrl } = req.body;
+
+    const updatedCampaign = await CampaignService.updateFallbackFields(id, {
+      fallbackCampaignId,
+      fallbackUrl,
+    });
+
+    responseHelper.successResponse(
+      req,
+      res,
+      "Fallback fields updated successfully",
+      updatedCampaign
+    );
+  } catch (err) {
+    console.error("Update fallback fields error:", err);
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

@@ -516,3 +516,27 @@ exports.updateCampaignSettings = async (id, updates) => {
 
   return await campaign.update(allowedUpdates);
 };
+
+exports.updateFallbackFields = async (id, updates) => {
+  const campaign = await Campaign.findByPk(id);
+  if (!campaign) {
+    throw new Error("Campaign not found");
+  }
+
+  if (updates.fallbackCampaignId) {
+    const fallbackCampaign = await Campaign.findByPk(
+      updates.fallbackCampaignId
+    );
+    if (!fallbackCampaign) {
+      throw new Error("Fallback campaign not found");
+    }
+    updates.defaultCampaignUrl = fallbackCampaign.defaultCampaignUrl;
+  }
+
+  if (updates.fallbackUrl) {
+    updates.defaultCampaignUrl = updates.fallbackUrl;
+  }
+
+  await campaign.update(updates);
+  return campaign;
+};
