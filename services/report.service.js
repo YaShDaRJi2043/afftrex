@@ -49,7 +49,7 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
         {
           model: Campaign,
           as: "campaign",
-          attributes: ["id", "title", "company_id"],
+          attributes: ["id", "title", "company_id", "redirectType"],
           where: { company_id: company.id },
         },
       ],
@@ -84,6 +84,13 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
         distinct: true,
       }),
     ]);
+
+    // Modify referer if it is 302 with hide referrer
+    trackings.forEach((tracking) => {
+      if (tracking?.campaign?.redirectType === "302 with hide referrer") {
+        tracking.referer = "Hide Referrer";
+      }
+    });
 
     return { total, trackings };
   } catch (error) {
