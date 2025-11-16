@@ -143,3 +143,17 @@ exports.removePublisherFromApprovedList = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.signUpPublisher = async (req, res) => {
+  try {
+    const result = await publisherService.signUpPublisher(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Publisher signed up successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

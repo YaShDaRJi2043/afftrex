@@ -7,7 +7,14 @@ const validate = require("@middleware/validate");
 const authMiddleware = require("@middleware/auth.middleware");
 const { checkFeature } = require("@middleware/checkFeature");
 
-// Apply JWT auth to all publisher routes
+// =========================
+// Public Route (No Token)
+// =========================
+router.post("/signup", publisherController.signUpPublisher);
+
+// =========================
+// Protected Routes (Requires Token)
+// =========================
 router.use(authMiddleware);
 
 // Routes
