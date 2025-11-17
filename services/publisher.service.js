@@ -6,6 +6,8 @@ const {
   CampaignAssignment,
   Campaign,
   ApprovedCampaignPublisher,
+  User,
+  Advertiser,
 } = require("@models");
 const { generatePassword } = require("@utils/password");
 const mailer = require("@utils/mail");
@@ -47,15 +49,33 @@ exports.createPublisher = async (req) => {
   const companyId = req.user.company_id;
   const Password = password || generatePassword();
 
-  // Check if email already exists for the same company
-  const existingPublisher = await Publisher.findOne({
+  // Check if email already exists in User, Advertiser, or Publisher tables for the same company
+  const existingEmailInUser = await User.findOne({
     where: {
       email,
       company_id: companyId,
     },
   });
 
-  if (existingPublisher) {
+  const existingEmailInAdvertiser = await Advertiser.findOne({
+    where: {
+      email,
+      company_id: companyId,
+    },
+  });
+
+  const existingEmailInPublisher = await Publisher.findOne({
+    where: {
+      email,
+      company_id: companyId,
+    },
+  });
+
+  if (
+    existingEmailInUser ||
+    existingEmailInAdvertiser ||
+    existingEmailInPublisher
+  ) {
     const error = new Error("Email already exists for this company");
     error.statusCode = 400;
     throw error;
@@ -395,15 +415,33 @@ exports.signUpPublisher = async (req) => {
     throw error;
   }
 
-  // Check if email already exists for the same company
-  const existingPublisher = await Publisher.findOne({
+  // Check if email already exists in User, Advertiser, or Publisher tables for the same company
+  const existingEmailInUser = await User.findOne({
     where: {
       email,
       company_id: companyId.id,
     },
   });
 
-  if (existingPublisher) {
+  const existingEmailInAdvertiser = await Advertiser.findOne({
+    where: {
+      email,
+      company_id: companyId.id,
+    },
+  });
+
+  const existingEmailInPublisher = await Publisher.findOne({
+    where: {
+      email,
+      company_id: companyId.id,
+    },
+  });
+
+  if (
+    existingEmailInUser ||
+    existingEmailInAdvertiser ||
+    existingEmailInPublisher
+  ) {
     const error = new Error("Email already exists for this company");
     error.statusCode = 400;
     throw error;

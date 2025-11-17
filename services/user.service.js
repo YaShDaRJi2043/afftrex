@@ -1,7 +1,6 @@
 const { Op, UniqueConstraintError } = require("sequelize");
-const bcrypt = require("bcryptjs");
 
-const { Company, User, Role } = require("@models");
+const { Company, User, Role, Advertiser, Publisher } = require("@models");
 const { generatePassword } = require("@utils/password");
 const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
@@ -18,6 +17,38 @@ exports.createUser = async (req) => {
   } = req.body;
 
   const companyId = req.user.company_id;
+
+  // Check if email already exists in User, Advertiser, or Publisher tables for the same company
+  const existingEmailInUser = await User.findOne({
+    where: {
+      email,
+      company_id: companyId,
+    },
+  });
+
+  const existingEmailInAdvertiser = await Advertiser.findOne({
+    where: {
+      email,
+      company_id: companyId,
+    },
+  });
+
+  const existingEmailInPublisher = await Publisher.findOne({
+    where: {
+      email,
+      company_id: companyId,
+    },
+  });
+
+  if (
+    existingEmailInUser ||
+    existingEmailInAdvertiser ||
+    existingEmailInPublisher
+  ) {
+    const error = new Error("Email already exists for this company");
+    error.statusCode = 400;
+    throw error;
+  }
 
   // Get role data
   const roleData = await Role.findOne({ where: { name: role } });
