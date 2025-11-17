@@ -26,6 +26,20 @@ exports.createAdvertiser = async (req) => {
   const companyId = req.user.company_id;
   const Password = password || generatePassword();
 
+  // Check if email already exists for the same company
+  const existingAdvertiser = await Advertiser.findOne({
+    where: {
+      email,
+      company_id: companyId,
+    },
+  });
+
+  if (existingAdvertiser) {
+    const error = new Error("Email already exists for this company");
+    error.statusCode = 400;
+    throw error;
+  }
+
   try {
     const advertiser = await Advertiser.create({
       name,
@@ -179,4 +193,53 @@ exports.changeAdvertiserStatus = async (req) => {
   await advertiser.save();
 
   return `Advertiser status updated to ${status}`;
+};
+
+exports.signUpAdvertiser = async (req) => {
+  const { subdomain, name, email, password } = req.body;
+  const defaultStatus = "Pending";
+
+  const companyId = await Company.findOne({
+    where: { subdomain },
+    attributes: ["id"],
+  });
+
+  if (!companyId) {
+    const error = new Error("Company not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  // Check if email already exists for the same company
+  const existingAdvertiser = await Advertiser.findOne({
+    where: {
+      email,
+      company_id: companyId.id,
+    },
+  });
+
+  if (existingAdvertiser) {
+    const error = new Error("Email already exists for this company");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  try {
+    const advertiser = await Advertiser.create({
+      name,
+      email,
+      password,
+      company_id: companyId.id,
+      status: defaultStatus,
+    });
+
+    return advertiser;
+  } catch (error) {
+    if (error instanceof UniqueConstraintError) {
+      const validationError = new Error("Email already exists");
+      validationError.statusCode = 400;
+      throw validationError;
+    }
+    throw error;
+  }
 };

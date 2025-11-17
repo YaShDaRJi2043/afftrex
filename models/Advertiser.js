@@ -39,10 +39,6 @@ module.exports = (sequelize, DataTypes) => {
       email: {
         type: DataTypes.STRING,
         allowNull: false,
-        unique: {
-          args: true,
-          msg: "Email already exists", // custom error for duplicate email
-        },
         validate: {
           isEmail: { msg: "Invalid email format" },
         },
