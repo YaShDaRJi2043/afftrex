@@ -47,6 +47,7 @@ exports.createPublisher = async (req) => {
   } = req.body;
 
   const companyId = req.user.company_id;
+  email = email.toLowerCase();
   const Password = password || generatePassword();
 
   // Check if email already exists in User, Advertiser, or Publisher tables for the same company
@@ -402,6 +403,7 @@ exports.removePublisherFromApprovedList = async (req) => {
 
 exports.signUpPublisher = async (req) => {
   const { subdomain, name, email, password } = req.body;
+  email = email.toLowerCase();
   const defaultStatus = "Pending";
 
   const companyId = await Company.findOne({

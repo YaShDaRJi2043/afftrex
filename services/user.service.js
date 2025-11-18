@@ -16,6 +16,7 @@ exports.createUser = async (req) => {
     status = "Active",
   } = req.body;
 
+  email = email.toLowerCase();
   const companyId = req.user.company_id;
 
   // Check if email already exists in User, Advertiser, or Publisher tables for the same company
