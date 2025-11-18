@@ -1,46 +1,43 @@
 const { Op } = require("sequelize");
 const { Campaign, CampaignTracking, PixelTracking } = require("@models");
 
-// ----------------- Utility functions -----------------
-function toISODate(d) {
-  return new Date(d).toISOString().slice(0, 10);
+// ----------------- IST Helpers -----------------
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+function istDateToUTC(dateStr, isStart = true) {
+  const [y, m, d] = dateStr.split("-").map(Number);
+
+  const hours = isStart ? 0 : 23;
+  const minutes = isStart ? 0 : 59;
+  const seconds = isStart ? 0 : 59;
+  const ms = isStart ? 0 : 999;
+
+  // Create IST time
+  const istDate = new Date(Date.UTC(y, m - 1, d, hours, minutes, seconds, ms));
+
+  // Convert IST → UTC
+  return new Date(istDate.getTime() - IST_OFFSET_MS);
 }
-function addDays(d, n) {
-  const x = new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate())
-  );
-  x.setUTCDate(x.getUTCDate() + n);
-  return x;
+
+// Convert UTC timestamp → IST date string (YYYY-MM-DD)
+function utcToISTDateKey(utcTimestamp) {
+  const d = new Date(utcTimestamp.getTime() + IST_OFFSET_MS);
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
 }
-function startOfDayUTC(d) {
-  return new Date(
-    Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 0, 0, 0, 0)
-  );
-}
-function endOfDayUTC(d) {
-  return new Date(
-    Date.UTC(
-      d.getUTCFullYear(),
-      d.getUTCMonth(),
-      d.getUTCDate(),
-      23,
-      59,
-      59,
-      999
-    )
-  );
-}
-function buildBuckets(from, to) {
+
+// Build IST date buckets
+function buildBucketsIST(fromUTC, toUTC) {
   const buckets = new Map();
-  let cur = new Date(
-    Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate())
-  );
-  const end = new Date(
-    Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), to.getUTCDate())
-  );
+
+  let cur = new Date(fromUTC.getTime());
+  const end = new Date(toUTC.getTime());
+
   while (cur <= end) {
-    const key = toISODate(cur);
-    // Initialize daily buckets including financial metrics
+    const key = utcToISTDateKey(cur);
+
     buckets.set(key, {
       date: key,
       clicks: 0,
@@ -49,87 +46,79 @@ function buildBuckets(from, to) {
       payout: 0,
       profit: 0,
     });
-    cur = addDays(cur, 1);
+
+    cur = new Date(cur.getTime() + 24 * 60 * 60 * 1000);
   }
+
   return buckets;
 }
-function dateKeyUTC(created_at) {
-  const d = new Date(created_at);
-  return toISODate(
-    new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()))
-  );
-}
 
-// ----------------- Helpers -----------------
+// ----------------- DB Helpers -----------------
 async function getCompanyCampaignIds(companyId) {
   const rows = await Campaign.findAll({
     where: { company_id: companyId },
     attributes: ["id"],
     raw: true,
   });
+
   return rows.map((r) => r.id);
 }
 
-async function getSeries(companyId, from, to) {
+// ----------------- Build Series -----------------
+async function getSeries(companyId, fromUTC, toUTC) {
   const campaignIds = await getCompanyCampaignIds(companyId);
   if (!campaignIds.length) return [];
 
-  const buckets = buildBuckets(from, to);
+  const buckets = buildBucketsIST(fromUTC, toUTC);
 
-  // Clicks (CampaignTracking) - use tracking timestamp
-  const clickRows = await CampaignTracking.findAll({
-    attributes: ["id", "timestamp"],
+  // Clicks
+  const clicks = await CampaignTracking.findAll({
+    attributes: ["timestamp"],
     where: {
       campaignId: { [Op.in]: campaignIds },
-      timestamp: { [Op.between]: [startOfDayUTC(from), endOfDayUTC(to)] },
+      timestamp: { [Op.between]: [fromUTC, toUTC] },
     },
     raw: true,
   });
 
-  for (const row of clickRows) {
-    const key = dateKeyUTC(row.timestamp);
+  for (const row of clicks) {
+    const key = utcToISTDateKey(new Date(row.timestamp));
     const b = buckets.get(key);
     if (b) b.clicks += 1;
   }
 
-  // Conversions (PixelTracking) - use conversionTime and eventType
-  const convRows = await PixelTracking.findAll({
-    attributes: [
-      "id",
-      "conversionTime",
-      "eventType",
-      "revenue",
-      "payout",
-      "profit",
-    ],
+  // Conversions
+  const conversions = await PixelTracking.findAll({
+    attributes: ["conversionTime", "revenue", "payout", "profit"],
     where: {
       campaignId: { [Op.in]: campaignIds },
       eventType: "conversion",
-      conversionTime: {
-        [Op.between]: [startOfDayUTC(from), endOfDayUTC(to)],
-      },
+      conversionTime: { [Op.between]: [fromUTC, toUTC] },
     },
     raw: true,
   });
 
-  for (const row of convRows) {
-    const key = dateKeyUTC(row.conversionTime);
+  for (const row of conversions) {
+    const key = utcToISTDateKey(new Date(row.conversionTime));
     const b = buckets.get(key);
+
     if (b) {
       b.conversions += 1;
-      // Sum up financials, ensuring numeric conversion (DECIMAL may come as string)
+
       const rev = Number(row.revenue) || 0;
       const pay = Number(row.payout) || 0;
-      const prof = Number(row.profit) || rev - pay; // fallback if not stored
+      const profit = Number(row.profit) || rev - pay;
+
       b.revenue += rev;
       b.payout += pay;
-      b.profit += prof;
+      b.profit += profit;
     }
   }
 
   return Array.from(buckets.values());
 }
 
+// ----------------- Tiles (Today / Yesterday / MTD) -----------------
 async function getTiles(companyId) {
   const campaignIds = await getCompanyCampaignIds(companyId);
   if (!campaignIds.length) {
@@ -139,55 +128,75 @@ async function getTiles(companyId) {
     };
   }
 
-  const now = new Date();
-  const todayStart = startOfDayUTC(now);
-  const todayEnd = endOfDayUTC(now);
-  const yStart = startOfDayUTC(addDays(todayStart, -1));
-  const yEnd = endOfDayUTC(addDays(todayStart, -1));
-  const mStart = new Date(
-    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1, 0, 0, 0)
-  );
-  const mEnd = now;
+  // Get IST "today"
+  const nowUTC = new Date();
+  const nowIST = new Date(nowUTC.getTime() + IST_OFFSET_MS);
+
+  const y = nowIST.getUTCFullYear();
+  const m = nowIST.getUTCMonth();
+  const d = nowIST.getUTCDate();
+
+  const todayStartUTC = istDateToUTC(`${y}-${m + 1}-${d}`, true);
+  const todayEndUTC = istDateToUTC(`${y}-${m + 1}-${d}`, false);
+
+  const yesterday = new Date(todayStartUTC.getTime() - 24 * 60 * 60 * 1000);
+  const yKey = utcToISTDateKey(yesterday);
+  const [yy, ym, yd] = yKey.split("-");
+
+  const yStartUTC = istDateToUTC(`${yy}-${ym}-${yd}`, true);
+  const yEndUTC = istDateToUTC(`${yy}-${ym}-${yd}`, false);
+
+  const mStartUTC = istDateToUTC(`${y}-${m + 1}-01`, true);
+  const mEndUTC = nowUTC;
 
   const base = { campaignId: { [Op.in]: campaignIds } };
 
   // Clicks
-  const [clicksToday, clicksYesterday, clicksMTD] = await Promise.all([
+  const [tClick, yClick, mClick] = await Promise.all([
     CampaignTracking.count({
-      where: { ...base, timestamp: { [Op.between]: [todayStart, todayEnd] } },
+      where: {
+        ...base,
+        timestamp: { [Op.between]: [todayStartUTC, todayEndUTC] },
+      },
     }),
     CampaignTracking.count({
-      where: { ...base, timestamp: { [Op.between]: [yStart, yEnd] } },
+      where: { ...base, timestamp: { [Op.between]: [yStartUTC, yEndUTC] } },
     }),
     CampaignTracking.count({
-      where: { ...base, timestamp: { [Op.between]: [mStart, mEnd] } },
+      where: { ...base, timestamp: { [Op.between]: [mStartUTC, mEndUTC] } },
     }),
   ]);
 
   // Conversions
   const convBase = { ...base, eventType: "conversion" };
-  const [convToday, convYesterday, convMTD] = await Promise.all([
+  const [tConv, yConv, mConv] = await Promise.all([
     PixelTracking.count({
       where: {
         ...convBase,
-        conversionTime: { [Op.between]: [todayStart, todayEnd] },
+        conversionTime: { [Op.between]: [todayStartUTC, todayEndUTC] },
       },
     }),
     PixelTracking.count({
-      where: { ...convBase, conversionTime: { [Op.between]: [yStart, yEnd] } },
+      where: {
+        ...convBase,
+        conversionTime: { [Op.between]: [yStartUTC, yEndUTC] },
+      },
     }),
     PixelTracking.count({
-      where: { ...convBase, conversionTime: { [Op.between]: [mStart, mEnd] } },
+      where: {
+        ...convBase,
+        conversionTime: { [Op.between]: [mStartUTC, mEndUTC] },
+      },
     }),
   ]);
 
   return {
-    clicks: { today: clicksToday, yesterday: clicksYesterday, mtd: clicksMTD },
-    conversions: { today: convToday, yesterday: convYesterday, mtd: convMTD },
+    clicks: { today: tClick, yesterday: yClick, mtd: mClick },
+    conversions: { today: tConv, yesterday: yConv, mtd: mConv },
   };
 }
 
-// ----------------- Main Service -----------------
+// ----------------- MAIN -----------------
 exports.getDashboard = async ({ company_id, from, to }) => {
   if (!company_id) {
     const err = new Error("companyId is required");
@@ -195,24 +204,28 @@ exports.getDashboard = async ({ company_id, from, to }) => {
     throw err;
   }
 
-  const today = new Date();
-  const defTo = new Date(
-    Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate())
-  );
-  const defFrom = addDays(defTo, -6);
+  // Default 7 days (IST)
+  const nowUTC = new Date();
+  const nowIST = new Date(nowUTC.getTime() + IST_OFFSET_MS);
 
-  // Align date bounds with other services: interpret from/to as dates (UTC day bounds)
-  const fromDate = from
-    ? startOfDayUTC(new Date(`${from}T00:00:00.000Z`))
-    : defFrom;
-  const toDate = to ? endOfDayUTC(new Date(`${to}T00:00:00.000Z`)) : defTo;
+  const y = nowIST.getUTCFullYear();
+  const m = nowIST.getUTCMonth();
+  const d = nowIST.getUTCDate();
+
+  const defaultToUTC = istDateToUTC(`${y}-${m + 1}-${d}`, false);
+  const defaultFromUTC = new Date(
+    defaultToUTC.getTime() - 6 * 24 * 60 * 60 * 1000
+  );
+
+  // Final date filters
+  const fromUTC = from ? istDateToUTC(from, true) : defaultFromUTC;
+  const toUTC = to ? istDateToUTC(to, false) : defaultToUTC;
 
   const [series, tiles] = await Promise.all([
-    getSeries(company_id, fromDate, toDate),
+    getSeries(company_id, fromUTC, toUTC),
     getTiles(company_id),
   ]);
 
-  // Return series directly in data and include clicks/conversions objects at the end
   return [
     ...series,
     { clicks: tiles.clicks },
