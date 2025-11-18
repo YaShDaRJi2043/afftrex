@@ -167,7 +167,7 @@ async function getTiles(companyId) {
   ]);
 
   // Conversions
-  const convBase = { ...base, eventType: "conversion" };
+  const convBase = { ...base };
   const [tConv, yConv, mConv] = await Promise.all([
     PixelTracking.count({
       where: {
