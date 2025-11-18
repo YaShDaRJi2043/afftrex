@@ -1,4 +1,4 @@
-const { Op, sequelize, UniqueConstraintError } = require("sequelize");
+const { Op, Sequelize, UniqueConstraintError } = require("sequelize");
 
 const {
   Publisher,
@@ -54,7 +54,10 @@ exports.createPublisher = async (req) => {
   const existingEmailInUser = await User.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -63,7 +66,10 @@ exports.createPublisher = async (req) => {
   const existingEmailInAdvertiser = await Advertiser.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -72,7 +78,10 @@ exports.createPublisher = async (req) => {
   const existingEmailInPublisher = await Publisher.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -427,7 +436,10 @@ exports.signUpPublisher = async (req) => {
   const existingEmailInUser = await User.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -436,7 +448,10 @@ exports.signUpPublisher = async (req) => {
   const existingEmailInAdvertiser = await Advertiser.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -445,7 +460,10 @@ exports.signUpPublisher = async (req) => {
   const existingEmailInPublisher = await Publisher.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },

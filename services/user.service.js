@@ -1,4 +1,4 @@
-const { Op, sequelize, UniqueConstraintError } = require("sequelize");
+const { Op, Sequelize, UniqueConstraintError } = require("sequelize");
 
 const { Company, User, Role, Advertiser, Publisher } = require("@models");
 const { generatePassword } = require("@utils/password");
@@ -23,7 +23,10 @@ exports.createUser = async (req) => {
   const existingEmailInUser = await User.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -32,7 +35,10 @@ exports.createUser = async (req) => {
   const existingEmailInAdvertiser = await Advertiser.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -41,7 +47,10 @@ exports.createUser = async (req) => {
   const existingEmailInPublisher = await Publisher.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },

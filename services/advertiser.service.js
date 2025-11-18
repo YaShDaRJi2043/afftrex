@@ -1,4 +1,4 @@
-const { Op, sequelize, UniqueConstraintError } = require("sequelize");
+const { Op, Sequelize, UniqueConstraintError } = require("sequelize");
 
 const { Advertiser, Company, User, Publisher } = require("@models");
 const { generatePassword } = require("@utils/password");
@@ -31,7 +31,10 @@ exports.createAdvertiser = async (req) => {
   const existingEmailInUser = await User.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -40,7 +43,10 @@ exports.createAdvertiser = async (req) => {
   const existingEmailInAdvertiser = await Advertiser.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -49,7 +55,10 @@ exports.createAdvertiser = async (req) => {
   const existingEmailInPublisher = await Publisher.findOne({
     where: {
       [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
+        Sequelize.where(
+          Sequelize.fn("LOWER", Sequelize.col("email")),
+          email.toLowerCase()
+        ),
         { company_id: companyId },
       ],
     },
@@ -239,28 +248,22 @@ exports.signUpAdvertiser = async (req) => {
   // Check if email already exists in User, Advertiser, or Publisher tables for the same company
   const existingEmailInUser = await User.findOne({
     where: {
-      [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
-        { company_id: companyId },
-      ],
+      email,
+      company_id: companyId.id,
     },
   });
 
   const existingEmailInAdvertiser = await Advertiser.findOne({
     where: {
-      [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
-        { company_id: companyId },
-      ],
+      email,
+      company_id: companyId.id,
     },
   });
 
   const existingEmailInPublisher = await Publisher.findOne({
     where: {
-      [Op.and]: [
-        sequelize.where(sequelize.fn("LOWER", sequelize.col("email")), email),
-        { company_id: companyId },
-      ],
+      email,
+      company_id: companyId.id,
     },
   });
 
