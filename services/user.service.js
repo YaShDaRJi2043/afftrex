@@ -1,4 +1,4 @@
-const { Op, UniqueConstraintError } = require("sequelize");
+const { Op, sequelize, UniqueConstraintError } = require("sequelize");
 
 const { Company, User, Role, Advertiser, Publisher } = require("@models");
 const { generatePassword } = require("@utils/password");
