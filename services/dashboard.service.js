@@ -92,7 +92,6 @@ async function getSeries(companyId, fromUTC, toUTC) {
     attributes: ["conversionTime", "revenue", "payout", "profit"],
     where: {
       campaignId: { [Op.in]: campaignIds },
-      eventType: "conversion",
       conversionTime: { [Op.between]: [fromUTC, toUTC] },
     },
     raw: true,
