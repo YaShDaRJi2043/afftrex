@@ -6,7 +6,7 @@ const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
 
 exports.createUser = async (req) => {
-  const {
+  let {
     name,
     email,
     password,

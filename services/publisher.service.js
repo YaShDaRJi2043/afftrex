@@ -14,7 +14,7 @@ const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
 
 exports.createPublisher = async (req) => {
-  const {
+  let {
     name,
     email,
     password,
@@ -402,7 +402,7 @@ exports.removePublisherFromApprovedList = async (req) => {
 };
 
 exports.signUpPublisher = async (req) => {
-  const { subdomain, name, email, password } = req.body;
+  let { subdomain, name, email, password } = req.body;
   email = email.toLowerCase();
   const defaultStatus = "Pending";
 

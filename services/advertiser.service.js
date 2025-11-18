@@ -6,7 +6,7 @@ const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
 
 exports.createAdvertiser = async (req) => {
-  const {
+  let {
     name,
     email,
     password,
@@ -215,7 +215,7 @@ exports.changeAdvertiserStatus = async (req) => {
 };
 
 exports.signUpAdvertiser = async (req) => {
-  const { subdomain, name, email, password } = req.body;
+  let { subdomain, name, email, password } = req.body;
   email = email.toLowerCase();
   const defaultStatus = "Pending";
 
