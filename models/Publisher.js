@@ -124,6 +124,12 @@ module.exports = (sequelize, DataTypes) => {
       updatedAt: "updated_at",
       hooks: {
         beforeSave: async (publisher) => {
+          // Normalize email
+          if (publisher.email) {
+            publisher.email = publisher.email.toLowerCase();
+          }
+
+          // Hash password
           if (publisher.changed("password")) {
             const salt = await bcrypt.genSalt(10);
             publisher.password = await bcrypt.hash(publisher.password, salt);
