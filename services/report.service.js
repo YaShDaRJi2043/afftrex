@@ -282,14 +282,14 @@ exports.getMainReport = async (req) => {
 
     // ✅ IST date filter
     if (startDate && endDate) {
-      filters += ` AND ct.timestamp BETWEEN :startDate AND :endDate`;
+      filters += ` AND pt.conversion_time BETWEEN :startDate AND :endDate`;
       replacements.startDate = istDateToUTC(startDate, true).toISOString();
       replacements.endDate = istDateToUTC(endDate, false).toISOString();
     } else if (startDate) {
-      filters += ` AND ct.timestamp >= :startDate`;
+      filters += ` AND pt.conversion_time >= :startDate`;
       replacements.startDate = istDateToUTC(startDate, true).toISOString();
     } else if (endDate) {
-      filters += ` AND ct.timestamp <= :endDate`;
+      filters += ` AND pt.conversion_time <= :endDate`;
       replacements.endDate = istDateToUTC(endDate, false).toISOString();
     }
 
