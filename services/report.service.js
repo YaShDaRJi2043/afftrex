@@ -1,3 +1,5 @@
+const { Op } = require("sequelize");
+
 const {
   CampaignTracking,
   PixelTracking,
@@ -6,25 +8,17 @@ const {
   Campaign,
   sequelize,
 } = require("@models");
-const { Op } = require("sequelize");
-
-const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // 5:30 in milliseconds
-
-// Helper: convert IST date string to UTC Date for DB filtering
-function istDateToUTC(startOrEnd, isStart = true) {
-  const [year, month, day] = startOrEnd.split("-").map(Number);
-  const hours = isStart ? 0 : 23;
-  const minutes = isStart ? 0 : 59;
-  const seconds = isStart ? 0 : 59;
-  const ms = isStart ? 0 : 999;
-
-  // Create local IST date
-  const istDate = new Date(
-    Date.UTC(year, month - 1, day, hours, minutes, seconds, ms)
-  );
-  // Subtract IST offset to get UTC equivalent
-  return new Date(istDate.getTime() - IST_OFFSET_MS);
-}
+const {
+  istDateToUTC,
+  createTimeGroupExpression,
+  buildGroupByMap,
+  buildSelectColumns,
+  buildFilters,
+  addDateFilter,
+  buildJoinConditions,
+  buildOrderByClause,
+  parseGroupByKeys,
+} = require("@helper/reportHelpers");
 
 exports.getCampaignTrackingByCampaignId = async (req) => {
   try {
@@ -62,7 +56,7 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
     if (publisherId) options.where.publisherId = publisherId;
     if (advertiserId) options.where.advertiserId = advertiserId;
 
-    // ✅ IST date filter
+    // IST date filter
     if (startDate && endDate) {
       options.where.timestamp = {
         [Op.between]: [
@@ -167,7 +161,7 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     options.where.advertiserId = { [Op.in]: advertiserArray };
   }
 
-  // ✅ IST date filter for conversionTime
+  // IST date filter for conversionTime
   if (startDate && endDate) {
     options.where.conversionTime = {
       [Op.between]: [
@@ -193,28 +187,6 @@ exports.getPixelTrackingByTrackingId = async (req) => {
   return { pixelTrackings, total };
 };
 
-const groupByMap = {
-  campaign: "c.title",
-  campaignId: "c.id",
-  campaignUniqueId: "c.unique_id",
-  campaignStatus: `c."campaignStatus"`,
-  campaignGeoCoverage: `CAST(c."geoCoverage" AS TEXT)`,
-  campaignAppName: `c."appName"`,
-  publisher: "pub.name",
-  publisherId: "pub.id",
-  publisherManager: "pub.managers",
-  advertiser: "adv.name",
-  advertiserId: "adv.id",
-  advertiserManager: "adv.managers",
-  device: "ct.device",
-  os: "ct.os",
-  country: "ct.country",
-  year: `TO_CHAR(pt.conversion_time + interval '5 hours 30 minutes', 'YYYY')`,
-  month: `TO_CHAR(pt.conversion_time + interval '5 hours 30 minutes', 'Mon')`,
-  week: `TO_CHAR(DATE_TRUNC('week', pt.conversion_time + interval '5 hours 30 minutes'), 'DD-MM-YYYY') || ' to ' || TO_CHAR(DATE_TRUNC('week', pt.conversion_time + interval '5 hours 30 minutes') + INTERVAL '6 days', 'DD-MM-YYYY')`,
-  day: `TO_CHAR(pt.conversion_time + interval '5 hours 30 minutes', 'DD-MM-YYYY')`,
-};
-
 exports.getMainReport = async (req) => {
   try {
     const {
@@ -232,124 +204,135 @@ exports.getMainReport = async (req) => {
     const limit = Number.parseInt(pageSize, 10);
     const offset = (Number.parseInt(page, 10) - 1) * limit;
 
-    const groupKeys = groupBy
-      .split(",")
-      .map((k) => k.trim())
+    // Parse and validate group keys
+    const groupKeys = parseGroupByKeys(groupBy);
+
+    // Build group by maps with time expressions
+    const conversionGroupMap = {
+      ...buildGroupByMap(),
+      year: createTimeGroupExpression("pt.conversion_time", "year"),
+      month: createTimeGroupExpression("pt.conversion_time", "month"),
+      week: createTimeGroupExpression("pt.conversion_time", "week"),
+      day: createTimeGroupExpression("pt.conversion_time", "day"),
+    };
+
+    const clickGroupMap = {
+      ...buildGroupByMap("click"),
+      year: createTimeGroupExpression("ct_click.created_at", "year"),
+      month: createTimeGroupExpression("ct_click.created_at", "month"),
+      week: createTimeGroupExpression("ct_click.created_at", "week"),
+      day: createTimeGroupExpression("ct_click.created_at", "day"),
+    };
+
+    // Build SELECT columns
+    const conversionSelectCols = buildSelectColumns(
+      groupKeys,
+      conversionGroupMap
+    );
+    const clickSelectCols = buildSelectColumns(groupKeys, clickGroupMap);
+
+    if (!conversionSelectCols.length || !clickSelectCols.length) {
+      throw new Error("Invalid groupBy field(s)");
+    }
+
+    // Build GROUP BY expressions
+    const conversionGroupExprs = groupKeys
+      .map((k) => conversionGroupMap[k])
       .filter(Boolean);
-    if (!groupKeys.length)
-      throw new Error("Please provide at least one groupBy field");
-
-    const groupColumns = groupKeys.map((k) => groupByMap[k]).filter(Boolean);
-    if (!groupColumns.length) throw new Error("Invalid groupBy field(s)");
-
-    let idColumns = [];
-    if (groupKeys.includes("campaign")) idColumns.push(`c.id AS "campaignId"`);
-    if (groupKeys.includes("publisher"))
-      idColumns.push(`pub.id AS "publisherId"`);
-    if (groupKeys.includes("advertiser"))
-      idColumns.push(`adv.id AS "advertiserId"`);
-
-    // ✅ Updated selectColumns: same as your old code
-    const selectColumns = [
-      ...groupColumns.map((col, index) => {
-        const key = groupKeys[index];
-        if (["day", "month", "year", "week"].includes(key)) {
-          return `${col} AS "${key.charAt(0).toUpperCase() + key.slice(1)}"`;
-        }
-        return `${col} AS "${key}"`;
-      }),
-      ...idColumns,
-    ].join(", ");
-
-    // ✅ Updated groupClause: use expressions, not aliases
-    const groupClauseExpressions = groupKeys
-      .map((k) => groupByMap[k])
+    const clickGroupExprs = groupKeys
+      .map((k) => clickGroupMap[k])
       .filter(Boolean);
 
-    const groupClauseArray = [...groupClauseExpressions];
-    if (idColumns.length) {
-      groupClauseArray.push(...idColumns.map((col) => col.split(" AS")[0]));
-    }
-    const groupClauseSQL = groupClauseArray.join(", ");
+    // Build filters
+    const filterParams = {
+      company,
+      startDate,
+      endDate,
+      campaign,
+      publisher,
+      advertiser,
+    };
 
-    let filters = "WHERE 1=1";
-    const replacements = { limit, offset };
+    const { filters: baseFilters, replacements } = buildFilters(filterParams);
 
-    if (company?.id) {
-      filters += " AND c.company_id = :companyId";
-      replacements.companyId = company.id;
-    }
-
-    // ✅ IST date filter
-    if (startDate && endDate) {
-      filters += ` AND pt.conversion_time BETWEEN :startDate AND :endDate`;
-      replacements.startDate = istDateToUTC(startDate, true).toISOString();
-      replacements.endDate = istDateToUTC(endDate, false).toISOString();
-    } else if (startDate) {
-      filters += ` AND pt.conversion_time >= :startDate`;
-      replacements.startDate = istDateToUTC(startDate, true).toISOString();
-    } else if (endDate) {
-      filters += ` AND pt.conversion_time <= :endDate`;
-      replacements.endDate = istDateToUTC(endDate, false).toISOString();
-    }
-
-    if (campaign) {
-      const campaignArray = Array.isArray(campaign)
-        ? campaign
-        : campaign.split(",").map((id) => id.trim());
-      filters += ` AND c.id IN (:campaignArray)`;
-      replacements.campaignArray = campaignArray;
-    }
-
-    if (publisher) {
-      const publisherArray = Array.isArray(publisher)
-        ? publisher
-        : publisher.split(",").map((id) => id.trim());
-      filters += ` AND pub.id IN (:publisherArray)`;
-      replacements.publisherArray = publisherArray;
-    }
-
-    if (advertiser) {
-      const advertiserArray = Array.isArray(advertiser)
-        ? advertiser
-        : advertiser.split(",").map((id) => id.trim());
-      filters += ` AND adv.id IN (:advertiserArray)`;
-      replacements.advertiserArray = advertiserArray;
-    }
-
-    const results = await sequelize.query(
-      `
-      SELECT 
-        ${selectColumns},
-        COUNT(DISTINCT ct.id) AS "grossClicks",
-        COUNT(DISTINCT pt.id) AS "totalConversions",
-        COALESCE(SUM(pt.revenue), 0) AS "totalRevenue",
-        COALESCE(SUM(pt.payout), 0) AS "totalPayout",
-        COALESCE(SUM(pt.profit), 0) AS "totalProfit"
-      FROM campaigns c
-      LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
-      LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
-      LEFT JOIN publishers pub ON pub.id = ct.publisher_id
-      LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
-      ${filters}
-      GROUP BY ${groupClauseSQL}
-      ORDER BY ${groupClauseSQL}
-      LIMIT :limit OFFSET :offset
-      `,
-      { replacements, type: sequelize.QueryTypes.SELECT }
+    const conversionFilters = addDateFilter(
+      baseFilters,
+      "pt.conversion_time",
+      startDate,
+      endDate
     );
 
-    const totalRecordsQuery = await sequelize.query(
+    const clickFilters = addDateFilter(
+      buildFilters(filterParams, {
+        ct: "ct_click",
+        pub: "pub_click",
+        adv: "adv_click",
+      }).filters,
+      "ct_click.created_at",
+      startDate,
+      endDate
+    );
+
+    // Add pagination to replacements
+    replacements.limit = limit;
+    replacements.offset = offset;
+
+    // Build JOIN and ORDER BY clauses
+    const joinConditions = buildJoinConditions(groupKeys);
+    const orderBy = buildOrderByClause(groupKeys);
+
+    // Execute main query
+    const results = await sequelize.query(
       `
-      SELECT COUNT(*) AS count FROM (
-        SELECT ${groupClauseExpressions.join(", ")}
+      WITH click_counts AS (
+        SELECT 
+          ${clickSelectCols.join(", ")},
+          COUNT(DISTINCT ct_click.id) AS "grossClicks"
+        FROM campaigns c
+        LEFT JOIN advertisers adv_click ON adv_click.id = c.advertiser_id
+        LEFT JOIN campaign_trackings ct_click ON ct_click.campaign_id = c.id
+        LEFT JOIN publishers pub_click ON pub_click.id = ct_click.publisher_id
+        ${clickFilters}
+        GROUP BY ${clickGroupExprs.join(", ")}
+      ),
+      conversion_data AS (
+        SELECT 
+          ${conversionSelectCols.join(", ")},
+          COUNT(DISTINCT pt.id) AS "totalConversions",
+          COALESCE(SUM(pt.revenue), 0) AS "totalRevenue",
+          COALESCE(SUM(pt.payout), 0) AS "totalPayout",
+          COALESCE(SUM(pt.profit), 0) AS "totalProfit"
         FROM campaigns c
         LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
         LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
         LEFT JOIN publishers pub ON pub.id = ct.publisher_id
         LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
-        ${filters}
-        GROUP BY ${groupClauseExpressions.join(", ")}
+        ${conversionFilters}
+        GROUP BY ${conversionGroupExprs.join(", ")}
+      )
+      SELECT 
+        cd.*,
+        COALESCE(cc."grossClicks", 0) AS "grossClicks"
+      FROM conversion_data cd
+      LEFT JOIN click_counts cc ON ${joinConditions}
+      ORDER BY ${orderBy}
+      LIMIT :limit OFFSET :offset
+      `,
+      { replacements, type: sequelize.QueryTypes.SELECT }
+    );
+
+    // Get total count
+    const totalRecordsQuery = await sequelize.query(
+      `
+      SELECT COUNT(*) AS count FROM (
+        SELECT ${conversionGroupExprs.join(", ")}
+        FROM campaigns c
+        LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
+        LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
+        LEFT JOIN publishers pub ON pub.id = ct.publisher_id
+        LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
+        ${conversionFilters}
+        GROUP BY ${conversionGroupExprs.join(", ")}
       ) sub
       `,
       { replacements, type: sequelize.QueryTypes.SELECT }
