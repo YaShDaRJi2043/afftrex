@@ -281,6 +281,25 @@ exports.getMainReport = async (req) => {
     const joinConditions = buildJoinConditions(groupKeys);
     const orderBy = buildOrderByClause(groupKeys);
 
+    // Build combined select for final query
+    const finalSelectCols = groupKeys
+      .map((key) => {
+        const alias = ["day", "month", "year", "week"].includes(key)
+          ? `"${key.charAt(0).toUpperCase() + key.slice(1)}"`
+          : `"${key}"`;
+        return `COALESCE(cd.${alias}, cc.${alias}) AS ${alias}`;
+      })
+      .join(", ");
+
+    const finalOrderBy = groupKeys
+      .map((key) => {
+        const alias = ["day", "month", "year", "week"].includes(key)
+          ? `"${key.charAt(0).toUpperCase() + key.slice(1)}"`
+          : `"${key}"`;
+        return alias;
+      })
+      .join(", ");
+
     // Execute main query
     const results = await sequelize.query(
       `
@@ -311,28 +330,53 @@ exports.getMainReport = async (req) => {
         GROUP BY ${conversionGroupExprs.join(", ")}
       )
       SELECT 
-        cd.*,
-        COALESCE(cc."grossClicks", 0) AS "grossClicks"
+        ${finalSelectCols},
+        COALESCE(cc."grossClicks", 0) AS "grossClicks",
+        COALESCE(cd."totalConversions", 0) AS "totalConversions",
+        COALESCE(cd."totalRevenue", 0) AS "totalRevenue",
+        COALESCE(cd."totalPayout", 0) AS "totalPayout",
+        COALESCE(cd."totalProfit", 0) AS "totalProfit"
       FROM conversion_data cd
-      LEFT JOIN click_counts cc ON ${joinConditions}
-      ORDER BY ${orderBy}
+      FULL OUTER JOIN click_counts cc ON ${joinConditions}
+      ORDER BY ${finalOrderBy}
       LIMIT :limit OFFSET :offset
       `,
       { replacements, type: sequelize.QueryTypes.SELECT }
     );
 
     // Get total count
+    const totalSelectCols = groupKeys
+      .map((key) => {
+        const alias = ["day", "month", "year", "week"].includes(key)
+          ? `"${key.charAt(0).toUpperCase() + key.slice(1)}"`
+          : `"${key}"`;
+        return `COALESCE(cd.${alias}, cc.${alias}) AS ${alias}`;
+      })
+      .join(", ");
+
     const totalRecordsQuery = await sequelize.query(
       `
       SELECT COUNT(*) AS count FROM (
-        SELECT ${conversionGroupExprs.join(", ")}
-        FROM campaigns c
-        LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
-        LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
-        LEFT JOIN publishers pub ON pub.id = ct.publisher_id
-        LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
-        ${conversionFilters}
-        GROUP BY ${conversionGroupExprs.join(", ")}
+        SELECT ${totalSelectCols}
+        FROM (
+          SELECT ${conversionSelectCols.join(", ")}
+          FROM campaigns c
+          LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
+          LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
+          LEFT JOIN publishers pub ON pub.id = ct.publisher_id
+          LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
+          ${conversionFilters}
+          GROUP BY ${conversionGroupExprs.join(", ")}
+        ) cd
+        FULL OUTER JOIN (
+          SELECT ${clickSelectCols.join(", ")}
+          FROM campaigns c
+          LEFT JOIN advertisers adv_click ON adv_click.id = c.advertiser_id
+          LEFT JOIN campaign_trackings ct_click ON ct_click.campaign_id = c.id
+          LEFT JOIN publishers pub_click ON pub_click.id = ct_click.publisher_id
+          ${clickFilters}
+          GROUP BY ${clickGroupExprs.join(", ")}
+        ) cc ON ${joinConditions}
       ) sub
       `,
       { replacements, type: sequelize.QueryTypes.SELECT }
