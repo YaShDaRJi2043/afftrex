@@ -52,9 +52,26 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
       where: {},
     };
 
-    if (campaignId) options.where.campaignId = campaignId;
-    if (publisherId) options.where.publisherId = publisherId;
-    if (advertiserId) options.where.advertiserId = advertiserId;
+    if (campaignId) {
+      const campaignArray = Array.isArray(campaignId)
+        ? campaignId
+        : campaignId.split(",").map((id) => id.trim());
+      options.where.campaignId = { [Op.in]: campaignArray };
+    }
+
+    if (publisherId) {
+      const publisherArray = Array.isArray(publisherId)
+        ? publisherId
+        : publisherId.split(",").map((id) => id.trim());
+      options.where.publisherId = { [Op.in]: publisherArray };
+    }
+
+    if (advertiserId) {
+      const advertiserArray = Array.isArray(advertiserId)
+        ? advertiserId
+        : advertiserId.split(",").map((id) => id.trim());
+      options.where.advertiserId = { [Op.in]: advertiserArray };
+    }
 
     // IST date filter
     if (startDate && endDate) {
@@ -143,7 +160,12 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     where: {},
   };
 
-  if (campaignId) options.where.campaignId = campaignId;
+  if (campaignId) {
+    const campaignArray = Array.isArray(campaignId)
+      ? campaignId
+      : campaignId.split(",").map((id) => id.trim());
+    options.where.campaignId = { [Op.in]: campaignArray };
+  }
 
   // Handle multiple publisherId values
   if (publisherId) {
