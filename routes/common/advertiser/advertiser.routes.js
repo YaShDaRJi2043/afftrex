@@ -56,4 +56,11 @@ router.patch(
   advertiserController.changeAdvertiserStatus
 );
 
+// New route for listing users with role 'advertiser manager'
+router.get(
+  "/users/advertiser-managers",
+  checkFeature("advertiser_manager_view"),
+  advertiserController.listAdvertiserManagers
+);
+
 module.exports = router;

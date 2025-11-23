@@ -13,6 +13,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "advertiser_id",
         as: "campaigns",
       });
+      Advertiser.belongsTo(models.User, {
+        foreignKey: "manager_id",
+        as: "manager",
+      });
     }
 
     async validPassword(password) {
@@ -74,7 +78,18 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "Pending",
       },
       reference_id: DataTypes.STRING,
-      managers: DataTypes.STRING,
+      managers: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      manager_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
+      },
       state: DataTypes.STRING,
       website_url: DataTypes.STRING,
       phone: DataTypes.STRING,

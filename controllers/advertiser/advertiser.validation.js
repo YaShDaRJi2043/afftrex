@@ -25,7 +25,9 @@ const createAdvertiserSchema = Joi.object({
     }),
 
   reference_id: Joi.string().optional().allow(null, ""),
-  managers: Joi.string().optional().allow(null, ""),
+  manager_id: Joi.number().integer().optional().allow(null).messages({
+    "number.base": "Manager ID must be a number",
+  }),
   notes: Joi.string().optional().allow(null, ""),
   phone: Joi.string()
     .pattern(/^\+?\d{10,15}$/)
@@ -64,7 +66,9 @@ const updateAdvertiserSchema = Joi.object({
     }),
 
   reference_id: Joi.string().optional().allow(null, ""),
-  managers: Joi.string().optional().allow(null, ""),
+  manager_id: Joi.number().integer().optional().allow(null).messages({
+    "number.base": "Manager ID must be a number",
+  }),
   notes: Joi.string().optional().allow(null, ""),
   phone: Joi.string()
     .pattern(/^\+?\d{10,15}$/)

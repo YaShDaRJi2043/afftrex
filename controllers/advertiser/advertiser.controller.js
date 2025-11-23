@@ -98,3 +98,17 @@ exports.signUpAdvertiser = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.listAdvertiserManagers = async (req, res) => {
+  try {
+    const result = await advertiserService.listAdvertiserManagers(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Advertiser managers fetched successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

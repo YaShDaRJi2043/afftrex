@@ -52,9 +52,15 @@ module.exports = {
         type: Sequelize.STRING,
         allowNull: true,
       },
-      managers: {
-        type: Sequelize.STRING,
+      manager_id: {
+        type: Sequelize.INTEGER,
         allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
       },
       state: {
         type: Sequelize.STRING,

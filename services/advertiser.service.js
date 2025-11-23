@@ -1,6 +1,6 @@
 const { Op, Sequelize, UniqueConstraintError } = require("sequelize");
 
-const { Advertiser, Company, User, Publisher } = require("@models");
+const { Advertiser, Company, User, Publisher, Role } = require("@models");
 const { generatePassword } = require("@utils/password");
 const mailer = require("@utils/mail");
 const { serverInfo } = require("@config/config");
@@ -13,7 +13,7 @@ exports.createAdvertiser = async (req) => {
     notify = false,
     status = "Active",
     reference_id = null,
-    managers = null,
+    manager_id = null, // Updated field
     notes = null,
     state = null,
     phone = null,
@@ -81,7 +81,7 @@ exports.createAdvertiser = async (req) => {
       password: Password,
       status,
       reference_id,
-      managers,
+      manager_id, // Updated field
       notes,
       state,
       phone,
@@ -138,7 +138,7 @@ exports.getAllAdvertisers = async (req) => {
     "name",
     "email",
     "reference_id",
-    "managers",
+    "manager_id",
     "notes",
     "state",
     "phone",
@@ -295,4 +295,26 @@ exports.signUpAdvertiser = async (req) => {
     }
     throw error;
   }
+};
+
+exports.listAdvertiserManagers = async (req) => {
+  const companyId = req.user.company_id;
+
+  const advertiserManagers = await User.findAll({
+    where: {
+      company_id: companyId,
+      "$role.name$": "advertiser manager",
+    },
+    include: [
+      {
+        model: Role,
+        as: "role",
+        attributes: ["id", "name"],
+      },
+    ],
+    attributes: ["id", "name", "email", "status"],
+    order: [["name", "ASC"]],
+  });
+
+  return advertiserManagers;
 };
