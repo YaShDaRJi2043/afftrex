@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "company_id",
         as: "company",
       });
+
+      User.hasMany(models.Advertiser, {
+        foreignKey: "manager_id",
+        as: "managedAdvertisers",
+      });
     }
 
     async validPassword(password) {
