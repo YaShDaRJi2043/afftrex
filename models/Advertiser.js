@@ -78,10 +78,6 @@ module.exports = (sequelize, DataTypes) => {
         defaultValue: "Pending",
       },
       reference_id: DataTypes.STRING,
-      managers: {
-        type: DataTypes.STRING,
-        allowNull: true,
-      },
       manager_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
