@@ -157,3 +157,17 @@ exports.signUpPublisher = async (req, res) => {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
   }
 };
+
+exports.listPublisherManagers = async (req, res) => {
+  try {
+    const result = await publisherService.listPublisherManagers(req);
+    responseHelper.successResponse(
+      req,
+      res,
+      "Publisher managers fetched successfully",
+      result
+    );
+  } catch (err) {
+    responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);
+  }
+};

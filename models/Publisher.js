@@ -9,6 +9,10 @@ module.exports = (sequelize, DataTypes) => {
         foreignKey: "company_id",
         as: "companyInfo",
       });
+      Publisher.belongsTo(models.User, {
+        foreignKey: "manager_id",
+        as: "manager",
+      });
     }
 
     async validPassword(password) {
@@ -87,7 +91,14 @@ module.exports = (sequelize, DataTypes) => {
       promotion_method: DataTypes.STRING,
       tax_id: DataTypes.STRING,
       referred_by: DataTypes.STRING,
-      managers: DataTypes.STRING,
+      manager_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
+      },
       tags: {
         type: DataTypes.ARRAY(DataTypes.STRING),
         allowNull: true,

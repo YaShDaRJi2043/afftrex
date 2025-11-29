@@ -55,7 +55,9 @@ const createPublisherSchema = Joi.object({
   promotion_method: Joi.string().optional().allow(null, ""),
   tax_id: Joi.string().optional().allow(null, ""),
   referred_by: Joi.string().optional().allow(null, ""),
-  managers: Joi.string().optional().allow(null, ""),
+  manager_id: Joi.number().integer().optional().allow(null).messages({
+    "number.base": "Manager ID must be a number",
+  }),
   tags: Joi.array().items(Joi.string()).optional(),
 
   companyName: Joi.string().optional().allow(null, ""),
@@ -112,7 +114,9 @@ const updatePublisherSchema = Joi.object({
   promotion_method: Joi.string().optional().allow(null, ""),
   tax_id: Joi.string().optional().allow(null, ""),
   referred_by: Joi.string().optional().allow(null, ""),
-  managers: Joi.string().optional().allow(null, ""),
+  manager_id: Joi.number().integer().optional().allow(null).messages({
+    "number.base": "Manager ID must be a number",
+  }),
   tags: Joi.array().items(Joi.string()).optional(),
 
   companyName: Joi.string().optional().allow(null, ""),

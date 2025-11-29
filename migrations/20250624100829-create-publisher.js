@@ -70,7 +70,16 @@ module.exports = {
       promotion_method: { type: Sequelize.STRING, allowNull: true },
       tax_id: { type: Sequelize.STRING, allowNull: true },
       referred_by: { type: Sequelize.STRING, allowNull: true },
-      managers: { type: Sequelize.STRING, allowNull: true },
+      manager_id: {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: "users",
+          key: "id",
+        },
+        onUpdate: "CASCADE",
+        onDelete: "SET NULL",
+      },
       tags: { type: Sequelize.ARRAY(Sequelize.STRING), allowNull: true },
       last_login: { type: Sequelize.DATE, allowNull: true },
       notify: { type: Sequelize.BOOLEAN, defaultValue: false },

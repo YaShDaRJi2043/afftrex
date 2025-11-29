@@ -8,6 +8,7 @@ const {
   ApprovedCampaignPublisher,
   User,
   Advertiser,
+  Role,
 } = require("@models");
 const { generatePassword } = require("@utils/password");
 const mailer = require("@utils/mail");
@@ -497,4 +498,26 @@ exports.signUpPublisher = async (req) => {
     }
     throw error;
   }
+};
+
+exports.listPublisherManagers = async (req) => {
+  const companyId = req.user.company_id;
+
+  const publisherManagers = await User.findAll({
+    where: {
+      company_id: companyId,
+      "$role.name$": "publisher manager",
+    },
+    include: [
+      {
+        model: Role,
+        as: "role",
+        attributes: ["id", "name"],
+      },
+    ],
+    attributes: ["id", "name", "email", "status"],
+    order: [["name", "ASC"]],
+  });
+
+  return publisherManagers;
 };

@@ -81,4 +81,11 @@ router.post(
   publisherController.removePublisherFromApprovedList
 );
 
+// New route for listing users with role 'publisher manager'
+router.get(
+  "/users/publisher-managers",
+  checkFeature("publisher_manager_view"),
+  publisherController.listPublisherManagers
+);
+
 module.exports = router;
