@@ -174,18 +174,55 @@ exports.getAllAdvertisers = async (req) => {
         attributes: ["id", "name", "admin_email"],
         required: false,
       },
+      {
+        model: User,
+        as: "manager",
+        attributes: ["id", "name"],
+        required: false,
+      },
     ],
     order: [["created_at", "DESC"]],
   });
 
-  return advertisers;
+  return advertisers.map((advertiser) => {
+    const { manager_id, ...rest } = advertiser.toJSON();
+    return {
+      ...rest,
+      manager: advertiser.manager
+        ? { id: advertiser.manager.id, name: advertiser.manager.name }
+        : null,
+    };
+  });
 };
 
 exports.getAdvertiserById = async (req) => {
   const { id } = req.params;
-  const advertiser = await Advertiser.findByPk(id);
+  const advertiser = await Advertiser.findByPk(id, {
+    include: [
+      {
+        model: Company,
+        as: "companyInfo",
+        attributes: ["id", "name", "admin_email"],
+        required: false,
+      },
+      {
+        model: User,
+        as: "manager",
+        attributes: ["id", "name"],
+        required: false,
+      },
+    ],
+  });
+
   if (!advertiser) throw new Error("Advertiser not found");
-  return advertiser;
+
+  const { manager_id, ...rest } = advertiser.toJSON();
+  return {
+    ...rest,
+    manager: advertiser.manager
+      ? { id: advertiser.manager.id, name: advertiser.manager.name }
+      : null,
+  };
 };
 
 exports.updateAdvertiser = async (req) => {
