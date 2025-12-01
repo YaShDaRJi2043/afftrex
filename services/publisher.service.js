@@ -37,7 +37,7 @@ exports.createPublisher = async (req) => {
     promotion_method = null,
     tax_id = null,
     referred_by = null,
-    managers = null,
+    manager_id = null,
     tags = [],
     companyName = null,
     companyAddress = null,
@@ -120,7 +120,7 @@ exports.createPublisher = async (req) => {
       promotion_method,
       tax_id,
       referred_by,
-      managers,
+      manager_id,
       tags,
       companyName,
       companyAddress,
@@ -243,11 +243,25 @@ exports.getAllPublishers = async (req) => {
         attributes: ["id", "name", "admin_email"],
         required: false,
       },
+      {
+        model: User,
+        as: "manager",
+        attributes: ["id", "name"],
+        required: false,
+      },
     ],
     order: [["created_at", "DESC"]],
   });
 
-  return publishers;
+  return publishers.map((publisher) => {
+    const { manager_id, ...rest } = publisher.toJSON();
+    return {
+      ...rest,
+      manager: publisher.manager
+        ? { id: publisher.manager.id, name: publisher.manager.name }
+        : null,
+    };
+  });
 };
 
 exports.getPublisherById = async (req) => {
@@ -257,10 +271,31 @@ exports.getPublisherById = async (req) => {
       id,
       company_id: req.user.company_id,
     },
+    include: [
+      {
+        model: Company,
+        as: "companyInfo",
+        attributes: ["id", "name", "admin_email"],
+        required: false,
+      },
+      {
+        model: User,
+        as: "manager",
+        attributes: ["id", "name"],
+        required: false,
+      },
+    ],
   });
 
   if (!publisher) throw new Error("Publisher not found");
-  return publisher;
+
+  const { manager_id, ...rest } = publisher.toJSON();
+  return {
+    ...rest,
+    manager: publisher.manager
+      ? { id: publisher.manager.id, name: publisher.manager.name }
+      : null,
+  };
 };
 
 exports.updatePublisher = async (req) => {
