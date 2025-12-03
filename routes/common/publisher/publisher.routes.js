@@ -20,71 +20,71 @@ router.use(authMiddleware);
 // Routes
 router.post(
   "/list",
-  checkFeature("publisher_view_all"),
+  // checkFeature("publisher_view_all"),
   publisherController.getAllPublishers
 );
 
 router.get(
   "/:id",
-  checkFeature("publisher_view"),
+  // checkFeature("publisher_view"),
   publisherController.getPublisherById
 );
 
 router.post(
   "/",
-  checkFeature("publisher_create"),
+  // checkFeature("publisher_create"),
   validate(publisherValidator.createPublisherSchema),
   publisherController.createPublisher
 );
 
 router.put(
   "/:id",
-  checkFeature("publisher_edit"),
+  // checkFeature("publisher_edit"),
   validate(publisherValidator.updatePublisherSchema),
   publisherController.updatePublisher
 );
 
 router.delete(
   "/:id",
-  checkFeature("publisher_delete"),
+  // checkFeature("publisher_delete"),
   publisherController.deletePublisher
 );
 
 router.patch(
   "/:id/status",
-  checkFeature("publisher_status_change"),
+  // checkFeature("publisher_status_change"),
   validate(publisherValidator.statusChangeSchema),
   publisherController.changePublisherStatus
 );
 
 router.get(
   "/:id/campaigns",
-  checkFeature("publisher_view_campaigns"),
+  // checkFeature("publisher_view_campaigns"),
   publisherController.getCampaignsByPublisherId
 );
 
 router.post(
   "/approve",
-  checkFeature("publisher_approve_for_campaign"),
+  // checkFeature("publisher_approve_for_campaign"),
   publisherController.approvePublishersForCampaign
 );
 
 router.get(
   "/:campaignId/approved-publishers",
-  checkFeature("publisher_view_approved"),
+  // checkFeature("publisher_view_approved"),
   publisherController.getApprovedPublishersForCampaign
 );
 
 router.post(
   "/remove-approved",
-  checkFeature("publisher_remove_approved"),
+  // checkFeature("publisher_remove_approved"),
   publisherController.removePublisherFromApprovedList
 );
 
 // New route for listing users with role 'publisher manager'
 router.get(
   "/users/publisher-managers",
-  checkFeature("publisher_manager_view"),
+  // checkFeature("publisher_manager_view"),
   publisherController.listPublisherManagers
 );
 

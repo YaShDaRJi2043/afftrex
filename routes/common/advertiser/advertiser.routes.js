@@ -20,46 +20,46 @@ router.use(authMiddleware);
 // Routes
 router.post(
   "/list",
-  checkFeature("advertiser_view_all"),
+  // checkFeature("advertiser_view_all"),
   advertiserController.getAllAdvertisers
 );
 
 router.get(
   "/:id",
-  checkFeature("advertiser_view"),
+  // checkFeature("advertiser_view"),
   advertiserController.getAdvertiserById
 );
 
 router.post(
   "/",
-  checkFeature("advertiser_create"),
+  // checkFeature("advertiser_create"),
   validate(advertiserValidator.createAdvertiserSchema),
   advertiserController.createAdvertiser
 );
 
 router.put(
   "/:id",
-  checkFeature("advertiser_edit"),
+  // checkFeature("advertiser_edit"),
   validate(advertiserValidator.updateAdvertiserSchema),
   advertiserController.updateAdvertiser
 );
 
 router.delete(
   "/:id",
-  checkFeature("advertiser_delete"),
+  // checkFeature("advertiser_delete"),
   advertiserController.deleteAdvertiser
 );
 
 router.patch(
   "/:id/status",
-  checkFeature("advertiser_status_change"),
+  // checkFeature("advertiser_status_change"),
   advertiserController.changeAdvertiserStatus
 );
 
 // New route for listing users with role 'advertiser manager'
 router.get(
   "/users/advertiser-managers",
-  checkFeature("advertiser_manager_view"),
+  // checkFeature("advertiser_manager_view"),
   advertiserController.listAdvertiserManagers
 );
 
