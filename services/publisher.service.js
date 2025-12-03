@@ -255,12 +255,19 @@ exports.getAllPublishers = async (req) => {
 
   return publishers.map((publisher) => {
     const { manager_id, ...rest } = publisher.toJSON();
-    return {
+    const response = {
       ...rest,
       manager: publisher.manager
         ? { id: publisher.manager.id, name: publisher.manager.name }
         : null,
     };
+
+    // Exclude publisher name if role is advertiser manager
+    if (req.user.role === "advertiser manager") {
+      delete response.name;
+    }
+
+    return response;
   });
 };
 
@@ -429,7 +436,16 @@ exports.getApprovedPublishersForCampaign = async (req) => {
     attributes: ["id", "name", "email"],
   });
 
-  return publishers;
+  return publishers.map((publisher) => {
+    const response = publisher.toJSON();
+
+    // Exclude publisher name if role is advertiser manager
+    if (req.user.role === "advertiser manager") {
+      delete response.name;
+    }
+
+    return response;
+  });
 };
 
 exports.removePublisherFromApprovedList = async (req) => {
