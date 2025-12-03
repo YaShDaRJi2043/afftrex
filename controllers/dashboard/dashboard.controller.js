@@ -5,7 +5,12 @@ exports.getDashboard = async (req, res) => {
   try {
     const { from, to } = req.query;
     const { company_id } = req.user;
-    const data = await DashboardService.getDashboard({ company_id, from, to });
+    const data = await DashboardService.getDashboard({
+      company_id,
+      from,
+      to,
+      user: req.user,
+    });
     responseHelper.successResponse(req, res, "Dashboard loaded", data);
   } catch (err) {
     responseHelper.errorResponse(req, res, err.message, err.statusCode || 500);

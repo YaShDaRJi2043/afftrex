@@ -1,5 +1,11 @@
 const { Op } = require("sequelize");
-const { Campaign, CampaignTracking, PixelTracking } = require("@models");
+const {
+  Campaign,
+  CampaignTracking,
+  PixelTracking,
+  Advertiser,
+  Publisher,
+} = require("@models");
 
 // ----------------- IST Helpers -----------------
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
@@ -64,20 +70,79 @@ async function getCompanyCampaignIds(companyId) {
   return rows.map((r) => r.id);
 }
 
+// Get role-based filters: campaignIds for advertiser managers, publisherIds for publisher managers
+async function getRoleFilters(companyId, user) {
+  const result = { managedCampaignIds: null, managedPublisherIds: null };
+  if (!user || !user.role) return result;
+
+  const role = String(user.role).toLowerCase();
+
+  if (role === "advertiser manager") {
+    // Find advertisers managed by the user within the same company
+    const advertisers = await Advertiser.findAll({
+      where: { company_id: companyId, manager_id: user.id },
+      attributes: ["id"],
+      raw: true,
+    });
+
+    const advertiserIds = advertisers.map((a) => a.id);
+    if (advertiserIds.length) {
+      const campaigns = await Campaign.findAll({
+        where: {
+          company_id: companyId,
+          advertiser_id: { [Op.in]: advertiserIds },
+        },
+        attributes: ["id"],
+        raw: true,
+      });
+
+      result.managedCampaignIds = campaigns.map((c) => c.id);
+    } else {
+      result.managedCampaignIds = [];
+    }
+  } else if (role === "publisher manager") {
+    // Find publishers managed by the user within the same company
+    const publishers = await Publisher.findAll({
+      where: { company_id: companyId, manager_id: user.id },
+      attributes: ["id"],
+      raw: true,
+    });
+    result.managedPublisherIds = publishers.map((p) => p.id);
+  }
+
+  return result;
+}
+
 // ----------------- Build Series -----------------
-async function getSeries(companyId, fromUTC, toUTC) {
+async function getSeries(companyId, fromUTC, toUTC, user) {
   const campaignIds = await getCompanyCampaignIds(companyId);
   if (!campaignIds.length) return [];
 
   const buckets = buildBucketsIST(fromUTC, toUTC);
 
+  // Role filters
+  const { managedCampaignIds, managedPublisherIds } = await getRoleFilters(
+    companyId,
+    user
+  );
+
   // Clicks
+  const clickWhere = {
+    campaignId: { [Op.in]: campaignIds },
+    timestamp: { [Op.between]: [fromUTC, toUTC] },
+  };
+  // If advertiser manager, restrict to managed campaigns
+  if (managedCampaignIds) {
+    clickWhere.campaignId = { [Op.in]: managedCampaignIds };
+  }
+  // If publisher manager, restrict to managed publishers
+  if (managedPublisherIds) {
+    clickWhere.publisherId = { [Op.in]: managedPublisherIds };
+  }
+
   const clicks = await CampaignTracking.findAll({
     attributes: ["timestamp"],
-    where: {
-      campaignId: { [Op.in]: campaignIds },
-      timestamp: { [Op.between]: [fromUTC, toUTC] },
-    },
+    where: clickWhere,
     raw: true,
   });
 
@@ -88,12 +153,20 @@ async function getSeries(companyId, fromUTC, toUTC) {
   }
 
   // Conversions
+  const convWhere = {
+    campaignId: { [Op.in]: campaignIds },
+    conversionTime: { [Op.between]: [fromUTC, toUTC] },
+  };
+  if (managedCampaignIds) {
+    convWhere.campaignId = { [Op.in]: managedCampaignIds };
+  }
+  if (managedPublisherIds) {
+    convWhere.publisherId = { [Op.in]: managedPublisherIds };
+  }
+
   const conversions = await PixelTracking.findAll({
     attributes: ["conversionTime", "revenue", "payout", "profit"],
-    where: {
-      campaignId: { [Op.in]: campaignIds },
-      conversionTime: { [Op.between]: [fromUTC, toUTC] },
-    },
+    where: convWhere,
     raw: true,
   });
 
@@ -118,7 +191,7 @@ async function getSeries(companyId, fromUTC, toUTC) {
 }
 
 // ----------------- Tiles (Today / Yesterday / MTD) -----------------
-async function getTiles(companyId) {
+async function getTiles(companyId, user) {
   const campaignIds = await getCompanyCampaignIds(companyId);
   if (!campaignIds.length) {
     return {
@@ -126,6 +199,12 @@ async function getTiles(companyId) {
       conversions: { today: 0, yesterday: 0, mtd: 0 },
     };
   }
+
+  // Role filters
+  const { managedCampaignIds, managedPublisherIds } = await getRoleFilters(
+    companyId,
+    user
+  );
 
   // Get IST "today"
   const nowUTC = new Date();
@@ -148,26 +227,43 @@ async function getTiles(companyId) {
   const mStartUTC = istDateToUTC(`${y}-${m + 1}-01`, true);
   const mEndUTC = nowUTC;
 
-  const base = { campaignId: { [Op.in]: campaignIds } };
+  let base = { campaignId: { [Op.in]: campaignIds } };
+  if (managedCampaignIds) {
+    base = { campaignId: { [Op.in]: managedCampaignIds } };
+  }
+  // For publisher manager, clicks should be restricted by publisherId
+  let clickBase = { ...base };
+  if (managedPublisherIds) {
+    clickBase.publisherId = { [Op.in]: managedPublisherIds };
+  }
 
   // Clicks
   const [tClick, yClick, mClick] = await Promise.all([
     CampaignTracking.count({
       where: {
-        ...base,
+        ...clickBase,
         timestamp: { [Op.between]: [todayStartUTC, todayEndUTC] },
       },
     }),
     CampaignTracking.count({
-      where: { ...base, timestamp: { [Op.between]: [yStartUTC, yEndUTC] } },
+      where: {
+        ...clickBase,
+        timestamp: { [Op.between]: [yStartUTC, yEndUTC] },
+      },
     }),
     CampaignTracking.count({
-      where: { ...base, timestamp: { [Op.between]: [mStartUTC, mEndUTC] } },
+      where: {
+        ...clickBase,
+        timestamp: { [Op.between]: [mStartUTC, mEndUTC] },
+      },
     }),
   ]);
 
   // Conversions
-  const convBase = { ...base };
+  // For publisher manager, conversions should be restricted by publisherId on pixel trackings
+  const convBase = managedPublisherIds
+    ? { ...base, publisherId: { [Op.in]: managedPublisherIds } }
+    : { ...base };
   const [tConv, yConv, mConv] = await Promise.all([
     PixelTracking.count({
       where: {
@@ -196,7 +292,7 @@ async function getTiles(companyId) {
 }
 
 // ----------------- MAIN -----------------
-exports.getDashboard = async ({ company_id, from, to }) => {
+exports.getDashboard = async ({ company_id, from, to, user }) => {
   if (!company_id) {
     const err = new Error("companyId is required");
     err.statusCode = 400;
@@ -221,8 +317,8 @@ exports.getDashboard = async ({ company_id, from, to }) => {
   const toUTC = to ? istDateToUTC(to, false) : defaultToUTC;
 
   const [series, tiles] = await Promise.all([
-    getSeries(company_id, fromUTC, toUTC),
-    getTiles(company_id),
+    getSeries(company_id, fromUTC, toUTC, user),
+    getTiles(company_id, user),
   ]);
 
   return [

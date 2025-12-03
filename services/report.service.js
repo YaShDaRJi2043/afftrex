@@ -31,7 +31,7 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
       startDate,
       endDate,
     } = req.query;
-    const { company } = req.user;
+    const { company, role } = req.user;
 
     const limit = Number.parseInt(pageSize, 10);
     const offset = (Number.parseInt(page, 10) - 1) * limit;
@@ -53,38 +53,40 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
     };
 
     if (campaignId) {
-      const campaignArray = Array.isArray(campaignId)
-        ? campaignId
-        : campaignId.split(",").map((id) => id.trim());
-      options.where.campaignId = { [Op.in]: campaignArray };
+      options.where.campaignId = campaignId;
     }
 
     if (publisherId) {
-      const publisherArray = Array.isArray(publisherId)
-        ? publisherId
-        : publisherId.split(",").map((id) => id.trim());
-      options.where.publisherId = { [Op.in]: publisherArray };
+      options.where.publisherId = publisherId;
     }
 
     if (advertiserId) {
-      const advertiserArray = Array.isArray(advertiserId)
-        ? advertiserId
-        : advertiserId.split(",").map((id) => id.trim());
-      options.where.advertiserId = { [Op.in]: advertiserArray };
+      options.where.advertiserId = advertiserId;
     }
 
     // IST date filter
     if (startDate && endDate) {
-      options.where.timestamp = {
+      options.where.createdAt = {
         [Op.between]: [
           istDateToUTC(startDate, true),
           istDateToUTC(endDate, false),
         ],
       };
     } else if (startDate) {
-      options.where.timestamp = { [Op.gte]: istDateToUTC(startDate, true) };
+      options.where.createdAt = {
+        [Op.gte]: istDateToUTC(startDate, true),
+      };
     } else if (endDate) {
-      options.where.timestamp = { [Op.lte]: istDateToUTC(endDate, false) };
+      options.where.createdAt = {
+        [Op.lte]: istDateToUTC(endDate, false),
+      };
+    }
+
+    // Role-based filtering
+    if (role === "advertiser manager") {
+      options.include[1].where = { manager_id: req.user.id }; // Filter advertisers managed by the user
+    } else if (role === "publisher manager") {
+      options.include[0].where = { manager_id: req.user.id }; // Filter publishers managed by the user
     }
 
     const [trackings, total] = await Promise.all([
@@ -98,8 +100,11 @@ exports.getCampaignTrackingByCampaignId = async (req) => {
 
     // Modify referer if it is 302 with hide referrer
     trackings.forEach((tracking) => {
-      if (tracking?.campaign?.redirectType === "302 with hide referrer") {
-        tracking.referer = "Hide Referrer";
+      if (
+        tracking.campaign.redirectType === "302" &&
+        tracking.campaign.hideReferer
+      ) {
+        tracking.referer = "Hidden";
       }
     });
 
@@ -120,7 +125,7 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     page = 1,
     pageSize = 10,
   } = req.query;
-  const { company } = req.user;
+  const { company, role } = req.user;
 
   const limit = Number.parseInt(pageSize, 10);
   const offset = (Number.parseInt(page, 10) - 1) * limit;
@@ -197,6 +202,13 @@ exports.getPixelTrackingByTrackingId = async (req) => {
     options.where.conversionTime = { [Op.lte]: istDateToUTC(endDate, false) };
   }
 
+  // Role-based filtering
+  if (role === "advertiser manager") {
+    options.include[1].where = { manager_id: req.user.id }; // Filter advertisers managed by the user
+  } else if (role === "publisher manager") {
+    options.include[0].where = { manager_id: req.user.id }; // Filter publishers managed by the user
+  }
+
   const [pixelTrackings, total] = await Promise.all([
     PixelTracking.findAll(options),
     PixelTracking.count({
@@ -221,7 +233,7 @@ exports.getMainReport = async (req) => {
       publisher,
       advertiser,
     } = req.query;
-    const { company } = req.user;
+    const { company, role, id: userId } = req.user;
 
     const limit = Number.parseInt(pageSize, 10);
     const offset = (Number.parseInt(page, 10) - 1) * limit;
@@ -277,14 +289,28 @@ exports.getMainReport = async (req) => {
 
     const { filters: baseFilters, replacements } = buildFilters(filterParams);
 
-    const conversionFilters = addDateFilter(
+    // Inject role-based filtering into replacements and filters
+    let conversionRoleFilter = "";
+    let clickRoleFilter = "";
+    if (role === "advertiser manager") {
+      conversionRoleFilter = " AND adv.manager_id = :managerId";
+      clickRoleFilter = " AND adv_click.manager_id = :managerId";
+      replacements.managerId = userId;
+    } else if (role === "publisher manager") {
+      conversionRoleFilter = " AND pub.manager_id = :managerId";
+      clickRoleFilter = " AND pub_click.manager_id = :managerId";
+      replacements.managerId = userId;
+    }
+
+    let conversionFilters = addDateFilter(
       baseFilters,
       "pt.conversion_time",
       startDate,
       endDate
     );
+    conversionFilters += conversionRoleFilter;
 
-    const clickFilters = addDateFilter(
+    let clickFilters = addDateFilter(
       buildFilters(filterParams, {
         ct: "ct_click",
         pub: "pub_click",
@@ -294,6 +320,7 @@ exports.getMainReport = async (req) => {
       startDate,
       endDate
     );
+    clickFilters += clickRoleFilter;
 
     // Add pagination to replacements
     replacements.limit = limit;
@@ -365,6 +392,60 @@ exports.getMainReport = async (req) => {
       `,
       { replacements, type: sequelize.QueryTypes.SELECT }
     );
+
+    // If grouped by day, append a totals row for key metrics (unpaginated)
+    if (groupKeys.includes("day")) {
+      const totalsAgg = await sequelize.query(
+        `
+        WITH click_counts AS (
+          SELECT 
+            ${clickSelectCols.join(", ")},
+            COUNT(DISTINCT ct_click.id) AS "grossClicks"
+          FROM campaigns c
+          LEFT JOIN advertisers adv_click ON adv_click.id = c.advertiser_id
+          LEFT JOIN campaign_trackings ct_click ON ct_click.campaign_id = c.id
+          LEFT JOIN publishers pub_click ON pub_click.id = ct_click.publisher_id
+          ${clickFilters}
+          GROUP BY ${clickGroupExprs.join(", ")}
+        ),
+        conversion_data AS (
+          SELECT 
+            ${conversionSelectCols.join(", ")},
+            COUNT(DISTINCT pt.id) AS "totalConversions",
+            COALESCE(SUM(pt.revenue), 0) AS "totalRevenue",
+            COALESCE(SUM(pt.payout), 0) AS "totalPayout",
+            COALESCE(SUM(pt.profit), 0) AS "totalProfit"
+          FROM campaigns c
+          LEFT JOIN advertisers adv ON adv.id = c.advertiser_id
+          LEFT JOIN campaign_trackings ct ON ct.campaign_id = c.id
+          LEFT JOIN publishers pub ON pub.id = ct.publisher_id
+          LEFT JOIN pixel_tracking pt ON pt.tracking_id = ct.id
+          ${conversionFilters}
+          GROUP BY ${conversionGroupExprs.join(", ")}
+        )
+        SELECT 
+          SUM(COALESCE(cc."grossClicks", 0)) AS "grossClicks",
+          SUM(COALESCE(cd."totalConversions", 0)) AS "totalConversions",
+          SUM(COALESCE(cd."totalRevenue", 0)) AS "totalRevenue",
+          SUM(COALESCE(cd."totalPayout", 0)) AS "totalPayout",
+          SUM(COALESCE(cd."totalProfit", 0)) AS "totalProfit"
+        FROM conversion_data cd
+        FULL OUTER JOIN click_counts cc ON ${joinConditions}
+        `,
+        { replacements, type: sequelize.QueryTypes.SELECT }
+      );
+
+      const totalsRow = {
+        Day: "Total",
+        grossClicks: Number(totalsAgg[0].grossClicks || 0),
+        totalConversions: Number(totalsAgg[0].totalConversions || 0),
+        totalRevenue: Number(totalsAgg[0].totalRevenue || 0),
+        totalPayout: Number(totalsAgg[0].totalPayout || 0),
+        totalProfit: Number(totalsAgg[0].totalProfit || 0),
+      };
+
+      results.push(totalsRow);
+    }
 
     // Get total count
     const totalSelectCols = groupKeys

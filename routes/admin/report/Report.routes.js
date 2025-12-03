@@ -9,19 +9,19 @@ router.use(authMiddleware);
 
 router.get(
   "/campaign-trackings",
-  checkFeature("report_view_campaign_tracking"),
+  // checkFeature("report_view_campaign_tracking"),
   trackingController.getCampaignTrackingByCampaignId
 );
 
 router.get(
   "/conversion-trackings",
-  checkFeature("report_view_conversion_tracking"),
+  // checkFeature("report_view_conversion_tracking"),
   trackingController.getPixelTrackingByTrackingId
 );
 
 router.get(
   "/main-report",
-  checkFeature("report_view_main"),
+  // checkFeature("report_view_main"),
   trackingController.getMainReport
 );
 
