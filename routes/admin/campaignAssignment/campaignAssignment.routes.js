@@ -11,7 +11,7 @@ router.use(authMiddleware);
 
 router.post(
   "/assign",
-  checkFeature("campaign_assign"),
+  // checkFeature("campaign_assign"),
   validate(campaignAssignmentValidator.assignCampaignValidator),
   campaignAssignmentController.assignCampaign
 );
