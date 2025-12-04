@@ -38,7 +38,7 @@ exports.assignCampaignToPublishers = async ({
     // ✅ Optional placeholder for referer (in case you add later tracking logic)
     queryParams.append("ref", "{ref}");
 
-    const publisherLink = `${company.subdomain}.afftrex.org/public/c/${
+    const publisherLink = `https://${company.subdomain}.afftrex.org/public/c/${
       campaign.unique_id
     }?${queryParams.toString()}`;
 

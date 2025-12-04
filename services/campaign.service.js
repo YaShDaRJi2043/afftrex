@@ -471,7 +471,7 @@ exports.generateTrackingScript = async ({
       await campaign.update({ security_token: securityToken });
 
       script = `
-${company.subdomain}.afftrex.org/postback/${trackingSlug}?click_id=REPLACE_CLICK_ID_VAR&event_type=conversion&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR&security_token=${securityToken}
+https://${company.subdomain}.afftrex.org/postback/${trackingSlug}?click_id=REPLACE_CLICK_ID_VAR&event_type=conversion&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR&security_token=${securityToken}
 `.trim();
       break;
     }
@@ -480,7 +480,7 @@ ${company.subdomain}.afftrex.org/postback/${trackingSlug}?click_id=REPLACE_CLICK
     case "image_pixel":
       script = `
 <iframe 
-  src="${company.subdomain}.afftrex.org/pixel/${trackingSlug}?event_type=click&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR" 
+  src="https://${company.subdomain}.afftrex.org/pixel/${trackingSlug}?event_type=click&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR" 
   width="1" 
   height="1" 
   frameborder="0" 
