@@ -452,26 +452,19 @@ exports.generateTrackingScript = async ({
 
   let script = "";
 
-  const campaign = await Campaign.findByPk(campaignId);
-  if (!campaign) {
-    throw new Error("Campaign not found");
-  }
-
-  const company = await Company.findByPk(campaign.company_id);
-  if (!company) {
-    throw new Error("Company not found");
-  }
-
   switch (conversionTracking) {
     case "server_postback": {
       // Generate security token
       const securityToken = generateSecurityToken(campaignId, scheduleDate);
 
       // Store the security token in the database
-      await campaign.update({ security_token: securityToken });
+      const campaign = await Campaign.findByPk(campaignId);
+      if (campaign) {
+        await campaign.update({ security_token: securityToken });
+      }
 
       script = `
-https://${company.subdomain}.afftrex.org/postback/${trackingSlug}?click_id=REPLACE_CLICK_ID_VAR&event_type=conversion&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR&security_token=${securityToken}
+${serverInfo.api_url}/postback/${trackingSlug}?click_id=REPLACE_CLICK_ID_VAR&event_type=conversion&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR&security_token=${securityToken}
 `.trim();
       break;
     }
@@ -480,7 +473,7 @@ https://${company.subdomain}.afftrex.org/postback/${trackingSlug}?click_id=REPLA
     case "image_pixel":
       script = `
 <iframe 
-  src="https://${company.subdomain}.afftrex.org/pixel/${trackingSlug}?event_type=click&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR" 
+  src="${serverInfo.api_url}/pixel/${trackingSlug}?event_type=click&campaign_id=${uniqueId}&transaction_id=REPLACE_TRANSACTION_ID_VAR&saleAmount=REPLACE_SALE_AMOUNT_VAR&currency=REPLACE_CURRENCY_VAR&conversionStatus=REPLACE_ORDER_STATUS_VAR" 
   width="1" 
   height="1" 
   frameborder="0" 

@@ -1,4 +1,4 @@
-const { Campaign, Publisher, CampaignAssignment, Company } = require("@models");
+const { Campaign, Publisher, CampaignAssignment } = require("@models");
 const { serverInfo } = require("@config/config");
 const crypto = require("crypto");
 
@@ -18,9 +18,6 @@ exports.assignCampaignToPublishers = async ({
   const campaign = await Campaign.findByPk(campaignId);
   if (!campaign) throw new Error("Campaign not found");
 
-  const company = await Company.findByPk(campaign.company_id);
-  if (!company) throw new Error("Company not found");
-
   const assignments = [];
 
   for (const publisherId of publisherIds) {
@@ -38,7 +35,7 @@ exports.assignCampaignToPublishers = async ({
     // ✅ Optional placeholder for referer (in case you add later tracking logic)
     queryParams.append("ref", "{ref}");
 
-    const publisherLink = `https://${company.subdomain}.afftrex.org/public/c/${
+    const publisherLink = `${serverInfo.api_url}/public/c/${
       campaign.unique_id
     }?${queryParams.toString()}`;
 
